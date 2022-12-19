@@ -1,0 +1,8 @@
+-std=gnu99
+-I/usr/local/include
+-I/usr/include
+-I./tmp/include
+-I./include
+
+
+-I./build/_deps/memo_static-src/include
