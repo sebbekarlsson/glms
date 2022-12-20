@@ -67,8 +67,6 @@ JSCRIPTAST *jscript_parser_parse_number(JSCRIPTParser *parser) {
   ast->as.number.value =
       atof(jscript_string_view_get_value(&parser->token.value));
   jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_NUMBER);
-
-  printf("%12.6f\n", ast->as.number.value);
   return ast;
 }
 
