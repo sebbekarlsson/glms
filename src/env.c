@@ -16,34 +16,26 @@ int jscript_env_init(
 
   memo_init(&env->memo_ast, (MemoConfig){ .item_size = sizeof(JSCRIPTAST), .page_capacity = JSCRIPT_MEMO_AST_PAGE_CAPACITY });
   jscript_lexer_init(&env->lexer, env->source);
+  jscript_parser_init(&env->parser, env);
 
   return 1;
 }
 
-JSCRIPTAST* jscript_env_new_ast(JSCRIPTEnv* env) {
+JSCRIPTAST* jscript_env_new_ast(JSCRIPTEnv* env, JSCRIPTASTType type) {
   if (!env) return 0;
   if (!env->initialized) JSCRIPT_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
-  return (JSCRIPTAST*)memo_malloc(&env->memo_ast);
+  JSCRIPTAST* ast = (JSCRIPTAST*)memo_malloc(&env->memo_ast);
+
+  ast->type = type;
+  return ast;
 }
 
 JSCRIPTAST* jscript_env_exec(JSCRIPTEnv* env) {
   if (!env) return 0;
   if (!env->initialized) JSCRIPT_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
-  JSCRIPTToken token = {0};
-  while (jscript_lexer_next(&env->lexer, &token)) {
-
-    if (token.type == JSCRIPT_TOKEN_TYPE_ID) {
-      const char* value = jscript_string_view_get_value(&token.value);
-      printf("ID: (%s)\n", value);
-    } else if (token.type == JSCRIPT_TOKEN_TYPE_NUMBER) {
-      const char* value = jscript_string_view_get_value(&token.value);
-      printf("Number: (%s)\n", value);
-    } else {
-      printf("Token: %c\n", token.c);
-    }
-  }
+  jscript_parser_parse(&env->parser);
 
   return 0;
 }

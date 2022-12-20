@@ -95,7 +95,7 @@ int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
   out->c = 0;
   out->value.ptr = 0;
   out->value.length = 0;
-  out->type=  JSCRIPT_TOKEN_TYPE_NONE;
+  out->type=  JSCRIPT_TOKEN_TYPE_EOF;
 
   while (JSCRIPT_LEXER_HAS_WHITESPACE) {
     if (!jscript_lexer_skip_whitespace(lexer)) return 0;

@@ -38,8 +38,8 @@ FetchContent_Declare(
   memo_static
   URL /home/ianertson/workspace/memo
 )
-
 FetchContent_MakeAvailable(memo_static)
+
 
 set(JSCRIPT_DEPS m memo_static)
 
