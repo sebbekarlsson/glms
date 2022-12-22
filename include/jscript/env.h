@@ -4,6 +4,9 @@
 #include <jscript/ast.h>
 #include <jscript/lexer.h>
 #include <jscript/parser.h>
+#include <jscript/eval.h>
+#include <jscript/fptr.h>
+#include <hashy/hashy.h>
 #include <stdbool.h>
 
 typedef struct {
@@ -18,6 +21,9 @@ typedef struct JSCRIPT_ENV_STRUCT {
 
   JSCRIPTLexer lexer;
   JSCRIPTParser parser;
+  JSCRIPTEval eval;
+
+  HashyMap globals;
 } JSCRIPTEnv;
 
 
@@ -29,6 +35,12 @@ int jscript_env_init(
 
 JSCRIPTAST* jscript_env_new_ast(JSCRIPTEnv* env, JSCRIPTASTType type);
 
+JSCRIPTAST* jscript_env_new_ast_number(JSCRIPTEnv* env, float v);
+
 JSCRIPTAST* jscript_env_exec(JSCRIPTEnv* env);
+
+JSCRIPTAST* jscript_env_register_function(JSCRIPTEnv* env, const char* name, JSCRIPTFPTR fptr);
+
+JSCRIPTAST* jscript_env_lookup_function(JSCRIPTEnv* env, const char* name);
 
 #endif

@@ -40,8 +40,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(memo_static)
 
+FetchContent_Declare(
+  hashy_static
+  URL /home/ianertson/workspace/hashy
+)
+FetchContent_MakeAvailable(hashy_static)
 
-set(JSCRIPT_DEPS m memo_static)
+set(JSCRIPT_DEPS m memo_static hashy_static)
 
 target_link_libraries(jscript ${JSCRIPT_DEPS})
 target_link_libraries(jscript_e ${JSCRIPT_DEPS})

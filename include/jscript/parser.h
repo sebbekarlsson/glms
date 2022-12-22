@@ -31,6 +31,7 @@ JSCRIPTAST* jscript_parser_parse_expr(JSCRIPTParser* parser);
 
 JSCRIPTAST* jscript_parser_parse_term(JSCRIPTParser* parser);
 JSCRIPTAST* jscript_parser_parse_factor(JSCRIPTParser* parser);
+JSCRIPTAST* jscript_parser_parse_call(JSCRIPTParser* parser, JSCRIPTAST* left);
 
 
 JSCRIPTAST* jscript_parser_parse_binop(JSCRIPTParser* parser, JSCRIPTAST* left);

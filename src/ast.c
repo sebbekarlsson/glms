@@ -12,7 +12,6 @@ bool jscript_ast_is_iterable(JSCRIPTAST* ast) {
 
 JSCRIPTAST* jscript_ast_push(JSCRIPTAST* parent, JSCRIPTAST* child) {
   if (!parent || !child) return 0;
-  if (!jscript_ast_is_iterable(parent)) JSCRIPT_WARNING_RETURN(0, stderr, "ast not iterable.\n");
 
   if (!parent->children) {
     parent->children = NEW(JSCRIPTASTList);

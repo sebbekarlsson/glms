@@ -49,14 +49,24 @@ JSCRIPTAST *jscript_parser_parse_id(JSCRIPTParser *parser) {
 
   JSCRIPTTokenType next_type = parser->token.type;
 
-  if (next_type == JSCRIPT_TOKEN_TYPE_ID) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_ID);
-    JSCRIPTAST *next_ast =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ID);
-    next_ast->as.id.flag = ast;
-    next_ast->as.id.value = parser->token.value;
+  switch (next_type) {
+    case JSCRIPT_TOKEN_TYPE_LPAREN: {
+      return jscript_parser_parse_call(parser, ast);
+    }; break;
+    case JSCRIPT_TOKEN_TYPE_ID: {
+      jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_ID);
+      JSCRIPTAST *next_ast =
+          jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ID);
+      next_ast->as.id.flag = ast;
+      next_ast->as.id.value = parser->token.value;
 
-    ast = next_ast;
+      ast = next_ast;
+    }; break;
+    default: {}; break;
+  }
+
+  if (next_type == JSCRIPT_TOKEN_TYPE_ID) {
+
   }
 
   return ast;
@@ -150,6 +160,26 @@ JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
   return left;
 }
 
+JSCRIPTAST* jscript_parser_parse_call(JSCRIPTParser* parser, JSCRIPTAST* left) {
+  JSCRIPTAST* ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_CALL);
+  ast->as.call.left = left;
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
+
+  JSCRIPTAST* arg = jscript_parser_parse_expr(parser);
+  jscript_ast_push(ast, arg);
+
+  while (parser->token.type == JSCRIPT_TOKEN_TYPE_COMMA) {
+    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COMMA);
+    JSCRIPTAST* arg = jscript_parser_parse_expr(parser);
+    jscript_ast_push(ast, arg);
+  }
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+
+  return ast;
+}
+
 JSCRIPTAST *jscript_parser_parse(JSCRIPTParser *parser) {
   if (!parser)
     return 0;
@@ -177,5 +207,5 @@ JSCRIPTAST *jscript_parser_parse(JSCRIPTParser *parser) {
     }
   }
 
-  return jscript_parser_parse_noop(parser);
+  return ast;
 }
