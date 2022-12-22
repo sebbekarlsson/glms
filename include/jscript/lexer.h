@@ -19,6 +19,9 @@ int jscript_lexer_init(
 );
 
 
+#define JSCRIPT_LEXER_SPECIAL_SYMBOL_FUNCTION "function"
+#define JSCRIPT_LEXER_SPECIAL_SYMBOL_RETURN "return"
+
 int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out);
 
 #endif

@@ -25,3 +25,24 @@ JSCRIPTAST* jscript_ast_push(JSCRIPTAST* parent, JSCRIPTAST* child) {
 
   return child;
 }
+
+const char* jscript_ast_get_name(JSCRIPTAST* ast) {
+  if (!ast) return 0;
+
+  switch (ast->type) {
+    case JSCRIPT_AST_TYPE_BINOP: {
+      return jscript_ast_get_name(ast->as.binop.left);
+    }; break;
+    case JSCRIPT_AST_TYPE_ID: {
+      return jscript_string_view_get_value(&ast->as.id.value);
+    }; break;
+    case JSCRIPT_AST_TYPE_STRING: {
+      return jscript_string_view_get_value(&ast->as.string.value);
+    }; break;
+    case JSCRIPT_AST_TYPE_FUNC: {
+      if (!ast->as.func.id) return 0;
+      return jscript_string_view_get_value(&ast->as.func.id->as.id.value);
+    }; break;
+    default: { return 0; }; break;
+  }
+}

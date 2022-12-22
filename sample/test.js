@@ -1,1 +1,4 @@
-const x = 2 - (5 + 2134.2213) * 4;
+const main = () => "hello world";
+
+
+print(main());

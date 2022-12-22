@@ -46,6 +46,20 @@ static int jscript_lexer_skip_whitespace(JSCRIPTLexer* lexer) {
   return lexer->c != 0 && lexer->i < lexer->length;
 }
 
+static void jscript_lexer_parse_special_id(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
+  const char* value = jscript_string_view_get_value(&out->value);
+
+  JSCRIPTTokenType type = out->type;
+
+  if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_FUNCTION) == 0) {
+    type = JSCRIPT_TOKEN_TYPE_SPECIAL_FUNCTION;
+  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_RETURN) == 0) {
+    type = JSCRIPT_TOKEN_TYPE_SPECIAL_RETURN;
+  }
+
+  out->type = type;
+}
+
 static int jscript_lexer_parse_id(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
@@ -57,6 +71,26 @@ static int jscript_lexer_parse_id(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
   }
 
   out->type = JSCRIPT_TOKEN_TYPE_ID;
+
+  jscript_lexer_parse_special_id(lexer, out);
+
+  return 1;
+}
+
+static int jscript_lexer_parse_string(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
+  out->value.length = 0;
+  jscript_lexer_advance(lexer);
+  out->value.ptr = &lexer->source[lexer->i];
+
+
+  while (lexer->c != '"' && lexer->c != 0) {
+    jscript_lexer_advance(lexer);
+    out->value.length++;
+  }
+
+  jscript_lexer_advance(lexer);
+  out->type = JSCRIPT_TOKEN_TYPE_STRING;
+
 
   return 1;
 }
@@ -170,6 +204,9 @@ int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
       }
     } break;
     default: {
+      if (lexer->c == '"') {
+        return jscript_lexer_parse_string(lexer, out);
+      }
       if (isdigit(lexer->c)) {
         return jscript_lexer_parse_number(lexer, out);
       }

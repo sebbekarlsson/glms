@@ -46,8 +46,10 @@ JSCRIPTAST* jscript_env_exec(JSCRIPTEnv* env) {
   if (!env->initialized) JSCRIPT_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
   JSCRIPTAST* root = jscript_parser_parse(&env->parser);
-  root = jscript_eval(&env->eval, root);
-
+  JSCRIPTStack stack = {0};
+  jscript_stack_init(&stack);
+  root = jscript_eval(&env->eval, root, &stack);
+  jscript_stack_dump(&stack);
   return 0;
 }
 

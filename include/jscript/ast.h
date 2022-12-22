@@ -16,7 +16,8 @@ JSCRIPT_AST_TYPE_NUMBER,
 JSCRIPT_AST_TYPE_BINOP,
 JSCRIPT_AST_TYPE_UNOP,
 JSCRIPT_AST_TYPE_CALL,
-JSCRIPT_AST_TYPE_FUNC
+JSCRIPT_AST_TYPE_FUNC,
+JSCRIPT_AST_TYPE_RETURN
 } JSCRIPTASTType;
 
 struct JSCRIPT_BUFFER_JSCRIPTAST;
@@ -55,9 +56,15 @@ typedef struct JSCRIPT_AST_STRUCT {
     } call;
 
     struct {
+      JAST* id;
+      JAST* body;
+    } func;
+
+    struct {
       JSCRIPTTokenType op;
       JAST* right;
     } unop;
+
   } as;
 
   JSCRIPTASTType type;
@@ -71,6 +78,8 @@ JSCRIPT_DEFINE_LIST(JSCRIPTAST);
 JSCRIPTAST* jscript_ast_push(JSCRIPTAST* parent, JSCRIPTAST* child);
 
 bool jscript_ast_is_iterable(JSCRIPTAST* ast);
+
+const char* jscript_ast_get_name(JSCRIPTAST* ast);
 
 #define JSCRIPTAST_VALUE(ast) (ast->as.number.value)
 
