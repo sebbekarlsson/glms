@@ -23,6 +23,8 @@ JSCRIPTAST* jscript_stack_push(JSCRIPTStack* stack, const char* name, JSCRIPTAST
   hashy_map_set(&stack->locals, name, ast);
   jscript_JSCRIPTAST_list_push(&stack->list, ast);
 
+  stack->names[stack->names_length++] = name;
+
   return ast;
 }
 JSCRIPTAST* jscript_stack_get(JSCRIPTStack* stack, const char* name) {

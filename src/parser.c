@@ -111,6 +111,10 @@ JSCRIPTAST* jscript_parser_parse_unop(JSCRIPTParser* parser) {
 }
 
 JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
+  if (parser->token.type == JSCRIPT_TOKEN_TYPE_SUB || parser->token.type == JSCRIPT_TOKEN_TYPE_ADD) {
+    return jscript_parser_parse_unop(parser);
+  }
+
   if (parser->token.type == JSCRIPT_TOKEN_TYPE_LPAREN) {
 
     if (jscript_parser_peek_check_arrow_function(parser)) {
@@ -142,6 +146,9 @@ JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
   }; break;
   case JSCRIPT_TOKEN_TYPE_SPECIAL_RETURN: {
     return jscript_parser_parse_unop(parser);
+  }; break;
+  case JSCRIPT_TOKEN_TYPE_SPECIAL_IF: {
+    return jscript_parser_parse_block(parser);
   }; break;
   case JSCRIPT_TOKEN_TYPE_EOF: {
     return jscript_parser_parse_eof(parser);
@@ -285,6 +292,33 @@ JSCRIPTAST* jscript_parser_parse_function(JSCRIPTParser* parser) {
   }
 
   jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+
+  return ast;
+}
+
+JSCRIPTAST* jscript_parser_parse_block(JSCRIPTParser* parser) {
+  JSCRIPTAST* ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BLOCK);
+  ast->as.block.op = parser->token.type;
+  jscript_parser_eat(parser, parser->token.type);
+
+
+  if (parser->token.type == JSCRIPT_TOKEN_TYPE_LPAREN) {
+    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
+    ast->as.block.expr = jscript_parser_parse_expr(parser);
+    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+  }
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACE);
+
+  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RBRACE) {
+    ast->as.block.body = jscript_parser_parse_compound(parser, true);
+  }
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+
+  if (parser->token.type == JSCRIPT_TOKEN_TYPE_SPECIAL_ELSE) {
+    ast->as.block.next = jscript_parser_parse_block(parser);
+  }
 
   return ast;
 }

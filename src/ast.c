@@ -46,3 +46,19 @@ const char* jscript_ast_get_name(JSCRIPTAST* ast) {
     default: { return 0; }; break;
   }
 }
+
+const char* jscript_ast_to_string(JSCRIPTAST* ast) {
+  return JSCRIPT_AST_TYPE_STR[ast->type];
+}
+
+bool jscript_ast_is_truthy(JSCRIPTAST* ast) {
+  if (!ast) return false;
+
+  switch (ast->type) {
+    case JSCRIPT_AST_TYPE_NUMBER: { return ast->as.number.value > 0; }; break;
+    case JSCRIPT_AST_TYPE_STRING: { return ast->as.string.value.length > 0 && ast->as.string.value.ptr != 0; }; break;
+    default: { return true; }; break;
+  }
+
+  return true;
+}

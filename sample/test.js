@@ -1,4 +1,8 @@
-const main = () => "hello world";
+const x = 123;
 
 
-print(main());
+if (x) {
+  print("Truthy!");
+} else {
+  print("False!");
+}

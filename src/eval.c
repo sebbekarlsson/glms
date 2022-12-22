@@ -52,6 +52,7 @@ JSCRIPTAST* jscript_eval(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack
     case JSCRIPT_AST_TYPE_UNOP: { return jscript_eval_unop(eval, ast, stack); }; break;
     case JSCRIPT_AST_TYPE_CALL: { return jscript_eval_call(eval, ast, stack); }; break;
     case JSCRIPT_AST_TYPE_FUNC: { return jscript_eval_function(eval, ast, stack); }; break;
+    case JSCRIPT_AST_TYPE_BLOCK: { return jscript_eval_block(eval, ast, stack); }; break;
     case JSCRIPT_AST_TYPE_ID: { return jscript_eval_id(eval, ast, stack); }; break;
     default: { return ast; }; break;
   }
@@ -93,10 +94,31 @@ JSCRIPTAST* jscript_eval_call(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* 
   if (func->fptr != 0) {
     return func->fptr(eval, ast, ast->children, stack);
   } else if (func->as.func.body != 0) {
-    return jscript_eval(eval, func->as.func.body, stack);
+
+    JSCRIPTStack tmp_stack = {0};
+    jscript_stack_init(&tmp_stack);
+    jscript_stack_copy(*stack, &tmp_stack);
+
+    if (ast->children != 0 && func->children != 0) {
+      for (int64_t i = 0; i < MIN(ast->children->length, func->children->length); i++) {
+        JSCRIPTAST* arg_value = jscript_eval(eval, ast->children->items[i], &tmp_stack);
+        JSCRIPTAST* arg_func = func->children->items[i];
+
+        const char* arg_name = jscript_ast_get_name(arg_func);
+        if (!arg_name) continue;
+
+        jscript_stack_push(&tmp_stack, arg_name, arg_value);
+      }
+    }
+
+    JSCRIPTAST* result =  jscript_eval(eval, func->as.func.body, &tmp_stack);
+    jscript_stack_clear(&tmp_stack);
+    return result;
   } else {
     return ast;
   }
+
+  return ast;
 }
 
 JSCRIPTAST* jscript_eval_unop(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack) {
@@ -106,6 +128,14 @@ JSCRIPTAST* jscript_eval_unop(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* 
       jscript_stack_push(stack, "return", retval);
       stack->return_flag = true;
       return retval;
+    }; break;
+    case JSCRIPT_TOKEN_TYPE_SUB: {
+      ast->as.binop.right = jscript_eval(eval, ast->as.unop.right, stack);
+      return jscript_env_new_ast_number(eval->env, -JSCRIPTAST_VALUE(ast->as.unop.right));
+    }; break;
+    case JSCRIPT_TOKEN_TYPE_ADD: {
+      ast->as.binop.right = jscript_eval(eval, ast->as.unop.right, stack);
+      return jscript_env_new_ast_number(eval->env, +JSCRIPTAST_VALUE(ast->as.unop.right));
     }; break;
     default: { return ast; }; break;
   }
@@ -149,9 +179,7 @@ JSCRIPTAST* jscript_eval_binop(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack*
       jscript_stack_push(stack, jscript_ast_get_name(ast), ast->as.binop.right);
 
       if (stack->return_flag) {
-        printf("yes\n");
         JSCRIPTAST* retval = jscript_eval_lookup(eval, "return", stack);
-
         if (retval) return retval;
       }
     }; break;
@@ -169,6 +197,37 @@ JSCRIPTAST* jscript_eval_function(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTSta
   if (!fname) JSCRIPT_WARNING_RETURN(ast, stderr, "Expected a name to exist.\n");
 
   jscript_stack_push(stack, fname, ast);
+
+  return ast;
+}
+
+JSCRIPTAST* jscript_eval_block_condition(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack) {
+  if (ast->as.block.expr) {
+    JSCRIPTAST* expr = jscript_eval(eval, ast->as.block.expr, stack);
+
+    if (ast->as.block.body && jscript_ast_is_truthy(expr)) {
+      return jscript_eval(eval, ast->as.block.body, stack);
+    } else {
+      if (ast->as.block.next) {
+        return jscript_eval(eval, ast->as.block.next, stack);
+      }
+      return ast;
+    }
+  }
+
+  if (ast->as.block.next) {
+    return jscript_eval(eval, ast->as.block.next, stack);
+  }
+
+  return jscript_eval(eval, ast->as.block.body, stack);
+}
+
+JSCRIPTAST* jscript_eval_block(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack) {
+  switch (ast->as.block.op) {
+    case JSCRIPT_TOKEN_TYPE_SPECIAL_IF: { return jscript_eval_block_condition(eval, ast, stack); }; break;
+    case JSCRIPT_TOKEN_TYPE_SPECIAL_ELSE: { return jscript_eval_block_condition(eval, ast, stack); }; break;
+    default: { return ast; }; break;
+  }
 
   return ast;
 }

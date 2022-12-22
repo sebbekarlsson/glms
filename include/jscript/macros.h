@@ -47,6 +47,7 @@
     return ret;                                                                \
   }
 
-
+#define JSCRIPT_GENERATE_ENUM(ENUM) ENUM,
+#define JSCRIPT_GENERATE_STRING(STRING) #STRING,
 
 #endif
