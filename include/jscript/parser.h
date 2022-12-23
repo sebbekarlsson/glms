@@ -30,6 +30,7 @@ JSCRIPTAST* jscript_parser_parse_number(JSCRIPTParser* parser);
 JSCRIPTAST* jscript_parser_parse_bool(JSCRIPTParser* parser);
 JSCRIPTAST* jscript_parser_parse_string(JSCRIPTParser* parser);
 JSCRIPTAST* jscript_parser_parse_array(JSCRIPTParser* parser);
+JSCRIPTAST* jscript_parser_parse_object(JSCRIPTParser* parser);
 
 JSCRIPTAST* jscript_parser_parse_expr(JSCRIPTParser* parser);
 

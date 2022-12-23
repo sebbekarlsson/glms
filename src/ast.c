@@ -104,6 +104,19 @@ JSCRIPTAST* jscript_ast_access_by_index(JSCRIPTAST* ast, int64_t index, JSCRIPTE
   return ast;
 }
 
+JSCRIPTAST* jscript_ast_access_by_key(JSCRIPTAST* ast, const char* key, JSCRIPTEnv* env) {
+  if (!ast || !key) return 0;
+
+  if (ast->type == JSCRIPT_AST_TYPE_UNDEFINED) JSCRIPT_WARNING_RETURN(ast, stderr, "cannot index undefined.\n");
+  if (ast->type == JSCRIPT_AST_TYPE_NUMBER) JSCRIPT_WARNING_RETURN(ast, stderr, "cannot index number.\n");
+  if (!ast->props.initialized) jscript_env_new_ast(env, JSCRIPT_AST_TYPE_UNDEFINED);
+  JSCRIPTAST* value = (JSCRIPTAST*)hashy_map_get(&ast->props, key);
+  if (!value) jscript_env_new_ast(env, JSCRIPT_AST_TYPE_UNDEFINED);
+
+
+  return value;
+}
+
 bool jscript_ast_compare_equals_equals(JSCRIPTAST* a, JSCRIPTAST* b) {
   if (a->type != b->type) return false;
 
@@ -201,4 +214,21 @@ bool jscript_ast_compare_lte(JSCRIPTAST* a, JSCRIPTAST* b) {
   }
 
   return false;
+}
+
+JSCRIPTAST* jscript_ast_object_set_property(JSCRIPTAST* obj, const char* key, JSCRIPTAST* value) {
+  if (!obj || !key) return 0;
+  if (obj->type != JSCRIPT_AST_TYPE_OBJECT) JSCRIPT_WARNING_RETURN(obj, stderr, "not an object.\n");
+
+  if (!obj->props.initialized) {
+    hashy_map_init_v2(&obj->props, (HashyMapConfig){ .capacity = 256, .remember_keys = true });
+  }
+
+  if (value == 0) {
+    hashy_map_unset(&obj->props, key);
+  } else {
+    hashy_map_set(&obj->props, key, value);
+  }
+
+  return obj;
 }

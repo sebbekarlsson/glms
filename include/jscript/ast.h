@@ -6,18 +6,21 @@
 #include <jscript/list.h>
 #include <jscript/fptr.h>
 #include <jscript/macros.h>
+#include <hashy/hashy.h>
 
 struct JSCRIPT_ENV_STRUCT;
 
 #define JSCRIPT_FOREACH_AST_TYPE(TOK)           \
   TOK(JSCRIPT_AST_TYPE_EOF)                     \
   TOK(JSCRIPT_AST_TYPE_NOOP)\
+  TOK(JSCRIPT_AST_TYPE_UNDEFINED)\
   TOK(JSCRIPT_AST_TYPE_COMPOUND)\
   TOK(JSCRIPT_AST_TYPE_ID)\
   TOK(JSCRIPT_AST_TYPE_STRING)\
   TOK(JSCRIPT_AST_TYPE_NUMBER)\
   TOK(JSCRIPT_AST_TYPE_BOOL)\
   TOK(JSCRIPT_AST_TYPE_ARRAY)\
+  TOK(JSCRIPT_AST_TYPE_OBJECT)\
   TOK(JSCRIPT_AST_TYPE_BINOP)\
   TOK(JSCRIPT_AST_TYPE_UNOP)\
   TOK(JSCRIPT_AST_TYPE_ACCESS)\
@@ -95,6 +98,7 @@ typedef struct JSCRIPT_AST_STRUCT {
   } as;
 
   JSCRIPTASTType type;
+  HashyMap props;
   struct JSCRIPT_JSCRIPTAST_LIST_STRUCT* children;
   JSCRIPTFPTR fptr;
 } JSCRIPTAST;
@@ -120,7 +124,10 @@ bool jscript_ast_compare_gte(JSCRIPTAST* a, JSCRIPTAST* b);
 bool jscript_ast_compare_lt(JSCRIPTAST* a, JSCRIPTAST* b);
 bool jscript_ast_compare_lte(JSCRIPTAST* a, JSCRIPTAST* b);
 
+JSCRIPTAST* jscript_ast_object_set_property(JSCRIPTAST* obj, const char* key, JSCRIPTAST* value);
+
 JSCRIPTAST* jscript_ast_access_by_index(JSCRIPTAST* ast, int64_t index, struct JSCRIPT_ENV_STRUCT* env);
+JSCRIPTAST* jscript_ast_access_by_key(JSCRIPTAST* ast, const char* key, struct JSCRIPT_ENV_STRUCT* env);
 
 #define JSCRIPTAST_VALUE(ast) (ast->as.number.value)
 

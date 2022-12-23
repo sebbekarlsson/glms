@@ -169,6 +169,9 @@ int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
     case ',': {
       out->type = JSCRIPT_TOKEN_TYPE_COMMA;
     } break;
+    case '.': {
+      out->type = JSCRIPT_TOKEN_TYPE_DOT;
+    } break;
     case ':': {
       out->type = JSCRIPT_TOKEN_TYPE_COLON;
     } break;

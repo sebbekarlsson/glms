@@ -69,11 +69,35 @@ static void test_sample_if() {
   JSCRIPT_ASSERT(JSCRIPTAST_VALUE(x) == 1);
 }
 
+static void test_sample_object() {
+  JSCRIPTEnv env = {0};
+  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/object.js");
+
+  JSCRIPT_ASSERT(ast != 0);
+  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
+  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_OBJECT);
+
+
+  JSCRIPTAST* nested = jscript_ast_access_by_key(x, "nested", &env);
+
+  JSCRIPT_ASSERT(nested != 0);
+  JSCRIPT_ASSERT(nested->type == JSCRIPT_AST_TYPE_OBJECT);
+
+  JSCRIPTAST* other = jscript_ast_access_by_key(nested, "other", &env);
+  JSCRIPT_ASSERT(other != 0);
+  JSCRIPT_ASSERT(other->type == JSCRIPT_AST_TYPE_OBJECT);
+
+  JSCRIPTAST* name = jscript_ast_access_by_key(other, "name", &env);
+  JSCRIPT_ASSERT(name != 0);
+  JSCRIPT_ASSERT(name->type == JSCRIPT_AST_TYPE_STRING);
+}
+
 int main(int argc, char* argv[]) {
   test_sample_var();
   test_sample_func();
   test_sample_arrow_func();
   test_sample_array();
   test_sample_if();
+  test_sample_object();
   return 0;
 }
