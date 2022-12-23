@@ -6,11 +6,12 @@
 #include <jscript/parser.h>
 #include <jscript/eval.h>
 #include <jscript/fptr.h>
+#include <jscript/stack.h>
 #include <hashy/hashy.h>
 #include <stdbool.h>
 
 typedef struct {
-
+  bool debug;
 } JSCRIPTConfig;
 
 typedef struct JSCRIPT_ENV_STRUCT {
@@ -22,6 +23,7 @@ typedef struct JSCRIPT_ENV_STRUCT {
   JSCRIPTLexer lexer;
   JSCRIPTParser parser;
   JSCRIPTEval eval;
+  JSCRIPTStack stack;
 
   HashyMap globals;
 } JSCRIPTEnv;

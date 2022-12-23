@@ -13,6 +13,7 @@ typedef struct JSCRIPT_STACK_STRUCT {
 
   const char* names[JSCRIPT_STACK_CAPACITY];
   int names_length;
+  int depth;
 
 
   bool return_flag;

@@ -51,3 +51,6 @@ set(JSCRIPT_DEPS m memo_static hashy_static)
 target_link_libraries(jscript ${JSCRIPT_DEPS})
 target_link_libraries(jscript_e ${JSCRIPT_DEPS})
 target_link_libraries(jscript_static ${JSCRIPT_DEPS})
+
+
+add_subdirectory(test)

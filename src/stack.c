@@ -11,6 +11,7 @@ int jscript_stack_init(JSCRIPTStack* stack) {
   jscript_JSCRIPTAST_list_init(&stack->list);
   stack->names_length = 0;
   stack->return_flag = false;
+  stack->depth = 0;
 
   return 1;
 }

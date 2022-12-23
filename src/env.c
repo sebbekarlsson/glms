@@ -1,6 +1,7 @@
 #include <jscript/env.h>
 #include <jscript/constants.h>
 #include <jscript/macros.h>
+#include <jscript/io.h>
 
 
 int jscript_env_init(
@@ -56,11 +57,9 @@ JSCRIPTAST* jscript_env_exec(JSCRIPTEnv* env) {
   if (!env->initialized) JSCRIPT_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
   JSCRIPTAST* root = jscript_parser_parse(&env->parser);
-  JSCRIPTStack stack = {0};
-  jscript_stack_init(&stack);
-  root = jscript_eval(&env->eval, root, &stack);
-  jscript_stack_dump(&stack);
-  return 0;
+  jscript_stack_init(&env->stack);
+  root = jscript_eval(&env->eval, root, &env->stack);
+  return root;
 }
 
 JSCRIPTAST* jscript_env_register_function(JSCRIPTEnv* env, const char* name, JSCRIPTFPTR fptr) {

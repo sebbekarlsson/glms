@@ -259,6 +259,7 @@ JSCRIPTAST* jscript_eval_compound(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTSta
 
 
   JSCRIPTStack local_stack = {0};
+  local_stack.depth = stack->depth + 1;
   jscript_stack_init(&local_stack);
   jscript_stack_copy(*stack, &local_stack);
 
@@ -280,6 +281,10 @@ JSCRIPTAST* jscript_eval_compound(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTSta
       jscript_stack_clear(&local_stack);
       return child;
     }
+  }
+
+  if (stack->depth <= 0) {
+    jscript_stack_copy(local_stack, stack);
   }
 
   jscript_stack_clear(&local_stack);
