@@ -41,6 +41,16 @@ JSCRIPTAST* jscript_env_new_ast_number(JSCRIPTEnv* env, float v) {
   return ast;
 }
 
+JSCRIPTAST* jscript_env_new_ast_string(JSCRIPTEnv* env, const char* value) {
+  JSCRIPTAST* ast = jscript_env_new_ast(env, JSCRIPT_AST_TYPE_STRING);
+
+  if (value != 0) {
+    ast->as.string.heap = strdup(value);
+  }
+
+  return ast;
+}
+
 JSCRIPTAST* jscript_env_exec(JSCRIPTEnv* env) {
   if (!env) return 0;
   if (!env->initialized) JSCRIPT_WARNING_RETURN(0, stderr, "env not initialized.\n");

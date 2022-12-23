@@ -1,5 +1,6 @@
 #include <jscript/ast.h>
 #include <jscript/macros.h>
+#include <jscript/env.h>
 
 
 JSCRIPT_IMPLEMENT_BUFFER(JSCRIPTAST);
@@ -47,6 +48,13 @@ const char* jscript_ast_get_name(JSCRIPTAST* ast) {
   }
 }
 
+const char* jscript_ast_get_string_value(JSCRIPTAST* ast) {
+  if (ast->type == JSCRIPT_AST_TYPE_STRING && ast->as.string.heap != 0) {
+    return ast->as.string.heap;
+  }
+  return jscript_ast_get_name(ast);
+}
+
 const char* jscript_ast_to_string(JSCRIPTAST* ast) {
   return JSCRIPT_AST_TYPE_STR[ast->type];
 }
@@ -61,4 +69,37 @@ bool jscript_ast_is_truthy(JSCRIPTAST* ast) {
   }
 
   return true;
+}
+
+JSCRIPTAST* jscript_ast_access_child_by_index(JSCRIPTAST* ast, int64_t index) {
+  if (!ast) return 0;
+  if (ast->children == 0 || ast->children->length <= 0) return 0;
+
+  if (index < 0 || index >= ast->children->length) JSCRIPT_WARNING_RETURN(ast, stderr, "index out of bounds.\n");
+
+  return ast->children->items[index];
+}
+
+JSCRIPTAST* jscript_ast_access_by_index(JSCRIPTAST* ast, int64_t index, JSCRIPTEnv* env) {
+  if (!ast) return 0;
+
+  switch (ast->type) {
+    case JSCRIPT_AST_TYPE_ARRAY: {
+      return jscript_ast_access_child_by_index(ast, index);
+    }; break;
+    case JSCRIPT_AST_TYPE_STRING: {
+      const char* string_value = jscript_ast_get_string_value(ast);
+      if (!string_value) JSCRIPT_WARNING_RETURN(ast, stderr, "string == null.\n");
+      int64_t len = strlen(string_value);
+      if (index < 0 || index >= len) JSCRIPT_WARNING_RETURN(ast, stderr, "index out of bounds.\n");
+      char tmp[3];
+      sprintf(tmp, "%c", string_value[index]);
+      return jscript_env_new_ast_string(env, tmp);
+    }; break;
+    default: {
+      JSCRIPT_WARNING_RETURN(ast, stderr, "value cannot be indexed.\n");
+    }; break;
+  }
+
+  return ast;
 }

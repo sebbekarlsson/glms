@@ -28,6 +28,7 @@ JSCRIPTAST* jscript_parser_parse_id(JSCRIPTParser* parser, bool skip_next);
 
 JSCRIPTAST* jscript_parser_parse_number(JSCRIPTParser* parser);
 JSCRIPTAST* jscript_parser_parse_string(JSCRIPTParser* parser);
+JSCRIPTAST* jscript_parser_parse_array(JSCRIPTParser* parser);
 
 JSCRIPTAST* jscript_parser_parse_expr(JSCRIPTParser* parser);
 

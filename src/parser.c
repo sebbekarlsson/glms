@@ -92,6 +92,25 @@ JSCRIPTAST* jscript_parser_parse_string(JSCRIPTParser* parser) {
   return ast;
 }
 
+JSCRIPTAST* jscript_parser_parse_array(JSCRIPTParser* parser) {
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACKET);
+
+  JSCRIPTAST* ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ARRAY);
+
+  JSCRIPTAST* arg = jscript_parser_parse_expr(parser);
+  jscript_ast_push(ast, arg);
+
+  while (parser->token.type == JSCRIPT_TOKEN_TYPE_COMMA) {
+    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COMMA);
+    JSCRIPTAST* arg = jscript_parser_parse_expr(parser);
+    jscript_ast_push(ast, arg);
+  }
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACKET);
+
+  return ast;
+}
+
 JSCRIPTAST *jscript_parser_parse_binop(JSCRIPTParser *parser,
                                        JSCRIPTAST *left) {
   JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
@@ -132,6 +151,9 @@ JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
     return next ? next : jscript_parser_error(parser);
   }
   switch (parser->token.type) {
+  case JSCRIPT_TOKEN_TYPE_LBRACKET: {
+    return jscript_parser_parse_array(parser);
+  }; break;
   case JSCRIPT_TOKEN_TYPE_ID: {
     return jscript_parser_parse_id(parser, false);
   }; break;
@@ -182,6 +204,16 @@ JSCRIPTAST *jscript_parser_parse_term(JSCRIPTParser *parser) {
 JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
   JSCRIPTAST *left = jscript_parser_parse_term(parser);
 
+
+  while (
+    parser->token.type == JSCRIPT_TOKEN_TYPE_LBRACKET
+  ) {
+    JSCRIPTAST* access = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ACCESS);
+    access->as.access.left = left;
+    access->as.access.right = jscript_parser_parse_expr(parser);
+    left = access;
+  }
+
   while (
     parser->token.type == JSCRIPT_TOKEN_TYPE_ADD ||
     parser->token.type == JSCRIPT_TOKEN_TYPE_SUB
@@ -202,6 +234,8 @@ JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
     binop->as.binop.right = jscript_parser_parse_expr(parser);
     left = binop;
   }
+
+
 
   return left;
 }

@@ -7,6 +7,8 @@
 #include <jscript/fptr.h>
 #include <jscript/macros.h>
 
+struct JSCRIPT_ENV_STRUCT;
+
 #define JSCRIPT_FOREACH_AST_TYPE(TOK)           \
   TOK(JSCRIPT_AST_TYPE_EOF)                     \
   TOK(JSCRIPT_AST_TYPE_NOOP)\
@@ -14,8 +16,10 @@
   TOK(JSCRIPT_AST_TYPE_ID)\
   TOK(JSCRIPT_AST_TYPE_STRING)\
   TOK(JSCRIPT_AST_TYPE_NUMBER)\
+  TOK(JSCRIPT_AST_TYPE_ARRAY)\
   TOK(JSCRIPT_AST_TYPE_BINOP)\
   TOK(JSCRIPT_AST_TYPE_UNOP)\
+  TOK(JSCRIPT_AST_TYPE_ACCESS)\
   TOK(JSCRIPT_AST_TYPE_BLOCK)\
   TOK(JSCRIPT_AST_TYPE_CALL)\
   TOK(JSCRIPT_AST_TYPE_FUNC)\
@@ -51,6 +55,7 @@ typedef struct JSCRIPT_AST_STRUCT {
 
     struct {
       JSCRIPTStringView value;
+      char* heap;
     } string;
 
     struct {
@@ -63,6 +68,11 @@ typedef struct JSCRIPT_AST_STRUCT {
       JAST* left;
       JAST* right;
     } call;
+
+    struct {
+      JAST* left;
+      JAST* right;
+    } access;
 
     struct {
       JAST* id;
@@ -97,9 +107,13 @@ bool jscript_ast_is_iterable(JSCRIPTAST* ast);
 
 const char* jscript_ast_get_name(JSCRIPTAST* ast);
 
+const char* jscript_ast_get_string_value(JSCRIPTAST* ast);
+
 const char* jscript_ast_to_string(JSCRIPTAST* ast);
 
 bool jscript_ast_is_truthy(JSCRIPTAST* ast);
+
+JSCRIPTAST* jscript_ast_access_by_index(JSCRIPTAST* ast, int64_t index, struct JSCRIPT_ENV_STRUCT* env);
 
 #define JSCRIPTAST_VALUE(ast) (ast->as.number.value)
 

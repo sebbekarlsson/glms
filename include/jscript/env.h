@@ -37,6 +37,8 @@ JSCRIPTAST* jscript_env_new_ast(JSCRIPTEnv* env, JSCRIPTASTType type);
 
 JSCRIPTAST* jscript_env_new_ast_number(JSCRIPTEnv* env, float v);
 
+JSCRIPTAST* jscript_env_new_ast_string(JSCRIPTEnv* env, const char* value);
+
 JSCRIPTAST* jscript_env_exec(JSCRIPTEnv* env);
 
 JSCRIPTAST* jscript_env_register_function(JSCRIPTEnv* env, const char* name, JSCRIPTFPTR fptr);

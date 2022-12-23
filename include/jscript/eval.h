@@ -19,6 +19,8 @@ JSCRIPTAST* jscript_eval(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack
 
 JSCRIPTAST* jscript_eval_id(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack);
 
+JSCRIPTAST* jscript_eval_access(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack);
+
 JSCRIPTAST* jscript_eval_binop(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack);
 
 JSCRIPTAST* jscript_eval_unop(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack);

@@ -7,14 +7,20 @@ JSCRIPTAST* jscript_fptr_print(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTASTLis
 
   for (int64_t i = 0; i < args->length; i++) {
     JSCRIPTAST* arg = jscript_eval(eval, args->items[i], stack);
+    if (!arg) continue;
     switch (arg->type) {
       case JSCRIPT_AST_TYPE_NUMBER: {printf("%1.6f\n", arg->as.number.value);}; break;
       case JSCRIPT_AST_TYPE_STRING: {
-        const char* value = jscript_string_view_get_value(&arg->as.string.value);
-        printf("%s\n", value);
+        const char* value = jscript_ast_get_string_value(arg);
+
+        if (value) {
+          printf("%s\n", value);
+        } else {
+          printf("(null)\n");
+        }
       }; break;
       default: {
-        printf("%p\n", arg);
+        printf("%p => %s\n", arg, jscript_ast_to_string(arg));
       }; break;
     }
 
@@ -54,6 +60,7 @@ JSCRIPTAST* jscript_eval(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack
     case JSCRIPT_AST_TYPE_FUNC: { return jscript_eval_function(eval, ast, stack); }; break;
     case JSCRIPT_AST_TYPE_BLOCK: { return jscript_eval_block(eval, ast, stack); }; break;
     case JSCRIPT_AST_TYPE_ID: { return jscript_eval_id(eval, ast, stack); }; break;
+    case JSCRIPT_AST_TYPE_ACCESS: { return jscript_eval_access(eval, ast, stack); }; break;
     default: { return ast; }; break;
   }
 
@@ -119,6 +126,21 @@ JSCRIPTAST* jscript_eval_call(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* 
   }
 
   return ast;
+}
+
+JSCRIPTAST* jscript_eval_access(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack) {
+  JSCRIPTAST* left = jscript_eval(eval, ast->as.access.left, stack);
+  JSCRIPTAST* right = jscript_eval(eval, ast->as.access.right, stack);
+
+  if (right->type != JSCRIPT_AST_TYPE_ARRAY) JSCRIPT_WARNING_RETURN(ast, stderr, "invalid accessor.\n");
+
+  JSCRIPTAST* right_value = right->children != 0 && right->children->length > 0 ? right->children->items[0] : 0;
+
+  right_value = right_value ? jscript_eval(eval, right_value, stack) : 0;
+
+  int64_t idx = right_value ? (int64_t)(JSCRIPTAST_VALUE(right_value)) : 0;
+
+  return jscript_eval(eval, jscript_ast_access_by_index(left, idx, eval->env), stack);
 }
 
 JSCRIPTAST* jscript_eval_unop(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack) {
