@@ -168,7 +168,7 @@ JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
     return jscript_parser_parse_string(parser);
   }; break;
   case JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE: case JSCRIPT_TOKEN_TYPE_SPECIAL_TRUE: {
-    return jscript_parser_parse_number(parser);
+    return jscript_parser_parse_bool(parser);
   }; break;
   case JSCRIPT_TOKEN_TYPE_NUMBER: {
     return jscript_parser_parse_number(parser);

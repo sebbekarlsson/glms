@@ -1,6 +1,6 @@
 let x = 3;
 
-if (x > 3) {
+if (false) {
   x = 0;
 } else {
   x = 1;
