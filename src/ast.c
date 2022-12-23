@@ -103,3 +103,102 @@ JSCRIPTAST* jscript_ast_access_by_index(JSCRIPTAST* ast, int64_t index, JSCRIPTE
 
   return ast;
 }
+
+bool jscript_ast_compare_equals_equals(JSCRIPTAST* a, JSCRIPTAST* b) {
+  if (a->type != b->type) return false;
+
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+
+  switch (a->type) {
+    case JSCRIPT_AST_TYPE_NUMBER: { return JSCRIPTAST_VALUE(a) == JSCRIPTAST_VALUE(b); }; break;
+    case JSCRIPT_AST_TYPE_STRING: {
+      const char* str_a = jscript_ast_get_string_value(a);
+      const char* str_b = jscript_ast_get_string_value(a);
+
+      if (str_a == str_b) return true;
+      if (!str_a || !str_b) return false;
+
+      return strcmp(str_a, str_b) == 0;
+    }; break;
+    default: { return a == b; }; break;
+  }
+
+  return a == b;
+}
+bool jscript_ast_compare_gt(JSCRIPTAST* a, JSCRIPTAST* b) {
+  if (a->type != b->type) return false;
+
+  if (a && !b) return true;
+  if (!a && b) return false;
+  if (!a || !b) return false;
+
+  switch (a->type) {
+    case JSCRIPT_AST_TYPE_NUMBER: { return JSCRIPTAST_VALUE(a) > JSCRIPTAST_VALUE(b); }; break;
+    default: {
+      if (a->children && b->children) {
+        return a->children->length > b->children->length;
+      } else {
+        return false;
+      }
+    }; break;
+  }
+
+  return false;
+}
+bool jscript_ast_compare_gte(JSCRIPTAST* a, JSCRIPTAST* b) {
+  if (a->type != b->type) return false;
+
+  if (!a || !b) return false;
+
+  switch (a->type) {
+    case JSCRIPT_AST_TYPE_NUMBER: { return JSCRIPTAST_VALUE(a) >= JSCRIPTAST_VALUE(b); }; break;
+    default: {
+      if (a->children && b->children) {
+        return a->children->length >= b->children->length;
+      } else {
+        return false;
+      }
+    }; break;
+  }
+
+  return false;
+}
+bool jscript_ast_compare_lt(JSCRIPTAST* a, JSCRIPTAST* b) {
+  if (a->type != b->type) return false;
+
+  if (!a && b) return true;
+  if (a && !b) return false;
+  if (!a || !b) return false;
+
+  switch (a->type) {
+    case JSCRIPT_AST_TYPE_NUMBER: { return JSCRIPTAST_VALUE(a) < JSCRIPTAST_VALUE(b); }; break;
+    default: {
+      if (a->children && b->children) {
+        return a->children->length < b->children->length;
+      } else {
+        return false;
+      }
+    }; break;
+  }
+
+  return false;
+}
+bool jscript_ast_compare_lte(JSCRIPTAST* a, JSCRIPTAST* b) {
+  if (a->type != b->type) return false;
+
+  if (!a || !b) return false;
+
+  switch (a->type) {
+    case JSCRIPT_AST_TYPE_NUMBER: { return JSCRIPTAST_VALUE(a) <= JSCRIPTAST_VALUE(b); }; break;
+    default: {
+      if (a->children && b->children) {
+        return a->children->length <= b->children->length;
+      } else {
+        return false;
+      }
+    }; break;
+  }
+
+  return false;
+}

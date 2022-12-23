@@ -23,6 +23,8 @@ int jscript_lexer_init(
 #define JSCRIPT_LEXER_SPECIAL_SYMBOL_RETURN "return"
 #define JSCRIPT_LEXER_SPECIAL_SYMBOL_IF "if"
 #define JSCRIPT_LEXER_SPECIAL_SYMBOL_ELSE "else"
+#define JSCRIPT_LEXER_SPECIAL_SYMBOL_FALSE "false"
+#define JSCRIPT_LEXER_SPECIAL_SYMBOL_TRUE "true"
 
 int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out);
 

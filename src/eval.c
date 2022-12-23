@@ -191,6 +191,31 @@ JSCRIPTAST* jscript_eval_binop(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack*
       ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
       return jscript_env_new_ast_number(eval->env, (int)JSCRIPTAST_VALUE(ast->as.binop.left) % (int)JSCRIPTAST_VALUE(ast->as.binop.right));
     };break;
+    case JSCRIPT_TOKEN_TYPE_EQUALS_EQUALS:{
+      ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
+      ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
+      return jscript_env_new_ast_number(eval->env, (float)jscript_ast_compare_equals_equals(ast->as.binop.left, ast->as.binop.right));
+    };break;
+    case JSCRIPT_TOKEN_TYPE_GT:{
+      ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
+      ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
+      return jscript_env_new_ast_number(eval->env, (float)jscript_ast_compare_gt(ast->as.binop.left, ast->as.binop.right));
+    };break;
+    case JSCRIPT_TOKEN_TYPE_GTE:{
+      ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
+      ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
+      return jscript_env_new_ast_number(eval->env, (float)jscript_ast_compare_gte(ast->as.binop.left, ast->as.binop.right));
+    };break;
+    case JSCRIPT_TOKEN_TYPE_LT:{
+      ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
+      ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
+      return jscript_env_new_ast_number(eval->env, (float)jscript_ast_compare_lt(ast->as.binop.left, ast->as.binop.right));
+    };break;
+    case JSCRIPT_TOKEN_TYPE_LTE:{
+      ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
+      ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
+      return jscript_env_new_ast_number(eval->env, (float)jscript_ast_compare_lte(ast->as.binop.left, ast->as.binop.right));
+    };break;
     case JSCRIPT_TOKEN_TYPE_EQUALS: {
       if (ast->as.binop.right->type == JSCRIPT_AST_TYPE_FUNC && !jscript_ast_get_name(ast->as.binop.right)) {
         if (ast->as.binop.left->type == JSCRIPT_AST_TYPE_ID) {

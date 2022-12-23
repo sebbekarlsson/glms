@@ -85,6 +85,13 @@ JSCRIPTAST *jscript_parser_parse_number(JSCRIPTParser *parser) {
   return ast;
 }
 
+JSCRIPTAST* jscript_parser_parse_bool(JSCRIPTParser* parser) {
+  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_NUMBER);
+  ast->as.number.value = parser->token.type == JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE ? 0 : 1;
+  jscript_parser_eat(parser, parser->token.type);
+  return ast;
+}
+
 JSCRIPTAST* jscript_parser_parse_string(JSCRIPTParser* parser) {
   JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_STRING);
   ast->as.string.value = parser->token.value;
@@ -160,6 +167,9 @@ JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
   case JSCRIPT_TOKEN_TYPE_STRING: {
     return jscript_parser_parse_string(parser);
   }; break;
+  case JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE: case JSCRIPT_TOKEN_TYPE_SPECIAL_TRUE: {
+    return jscript_parser_parse_number(parser);
+  }; break;
   case JSCRIPT_TOKEN_TYPE_NUMBER: {
     return jscript_parser_parse_number(parser);
   }; break;
@@ -227,6 +237,21 @@ JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
   }
 
   while (parser->token.type == JSCRIPT_TOKEN_TYPE_EQUALS) {
+    JSCRIPTAST* binop = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
+    binop->as.binop.left = left;
+    binop->as.binop.op = parser->token.type;
+    jscript_parser_eat(parser, parser->token.type);
+    binop->as.binop.right = jscript_parser_parse_expr(parser);
+    left = binop;
+  }
+
+  while (
+    parser->token.type == JSCRIPT_TOKEN_TYPE_GT ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_LT ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_GTE ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_LTE ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_EQUALS_EQUALS
+  ) {
     JSCRIPTAST* binop = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;

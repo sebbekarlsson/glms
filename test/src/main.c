@@ -59,10 +59,21 @@ static void test_sample_array() {
   JSCRIPT_ASSERT(arr->type == JSCRIPT_AST_TYPE_ARRAY);
 }
 
+static void test_sample_if() {
+  JSCRIPTEnv env = {0};
+  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/if.js");
+
+  JSCRIPT_ASSERT(ast != 0);
+  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
+  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_NUMBER);
+  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(x) == 1);
+}
+
 int main(int argc, char* argv[]) {
   test_sample_var();
   test_sample_func();
   test_sample_arrow_func();
   test_sample_array();
+  test_sample_if();
   return 0;
 }

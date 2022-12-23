@@ -59,6 +59,10 @@ static void jscript_lexer_parse_special_id(JSCRIPTLexer* lexer, JSCRIPTToken* ou
     type = JSCRIPT_TOKEN_TYPE_SPECIAL_IF;
   } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_ELSE) == 0) {
     type = JSCRIPT_TOKEN_TYPE_SPECIAL_ELSE;
+  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_FALSE) == 0) {
+    type = JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE;
+  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_TRUE) == 0) {
+    type = JSCRIPT_TOKEN_TYPE_SPECIAL_TRUE;
   }
 
   out->type = type;

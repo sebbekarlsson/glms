@@ -16,6 +16,7 @@ struct JSCRIPT_ENV_STRUCT;
   TOK(JSCRIPT_AST_TYPE_ID)\
   TOK(JSCRIPT_AST_TYPE_STRING)\
   TOK(JSCRIPT_AST_TYPE_NUMBER)\
+  TOK(JSCRIPT_AST_TYPE_BOOL)\
   TOK(JSCRIPT_AST_TYPE_ARRAY)\
   TOK(JSCRIPT_AST_TYPE_BINOP)\
   TOK(JSCRIPT_AST_TYPE_UNOP)\
@@ -112,6 +113,12 @@ const char* jscript_ast_get_string_value(JSCRIPTAST* ast);
 const char* jscript_ast_to_string(JSCRIPTAST* ast);
 
 bool jscript_ast_is_truthy(JSCRIPTAST* ast);
+
+bool jscript_ast_compare_equals_equals(JSCRIPTAST* a, JSCRIPTAST* b);
+bool jscript_ast_compare_gt(JSCRIPTAST* a, JSCRIPTAST* b);
+bool jscript_ast_compare_gte(JSCRIPTAST* a, JSCRIPTAST* b);
+bool jscript_ast_compare_lt(JSCRIPTAST* a, JSCRIPTAST* b);
+bool jscript_ast_compare_lte(JSCRIPTAST* a, JSCRIPTAST* b);
 
 JSCRIPTAST* jscript_ast_access_by_index(JSCRIPTAST* ast, int64_t index, struct JSCRIPT_ENV_STRUCT* env);
 
