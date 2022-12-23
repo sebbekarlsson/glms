@@ -124,6 +124,8 @@ bool jscript_ast_compare_gte(JSCRIPTAST* a, JSCRIPTAST* b);
 bool jscript_ast_compare_lt(JSCRIPTAST* a, JSCRIPTAST* b);
 bool jscript_ast_compare_lte(JSCRIPTAST* a, JSCRIPTAST* b);
 
+float jscript_ast_get_number_by_key(JSCRIPTAST* ast, const char* key);
+
 JSCRIPTAST* jscript_ast_object_set_property(JSCRIPTAST* obj, const char* key, JSCRIPTAST* value);
 
 JSCRIPTAST* jscript_ast_access_by_index(JSCRIPTAST* ast, int64_t index, struct JSCRIPT_ENV_STRUCT* env);

@@ -2,6 +2,7 @@
 #include <jscript/constants.h>
 #include <jscript/macros.h>
 #include <jscript/io.h>
+#include <jscript/builtin.h>
 
 
 int jscript_env_init(
@@ -20,6 +21,7 @@ int jscript_env_init(
   jscript_lexer_init(&env->lexer, env->source);
   jscript_parser_init(&env->parser, env);
   jscript_eval_init(&env->eval, env);
+  jscript_builtin_init(env);
 
 
   return 1;

@@ -232,3 +232,15 @@ JSCRIPTAST* jscript_ast_object_set_property(JSCRIPTAST* obj, const char* key, JS
 
   return obj;
 }
+
+float jscript_ast_get_number_by_key(JSCRIPTAST* ast, const char* key) {
+  if (!ast || !key) return 0.0f;
+  if (!ast->props.initialized) return 0.0f;
+
+  JSCRIPTAST* value = (JSCRIPTAST*)hashy_map_get(&ast->props, key);
+
+  if (!value) return 0.0f;
+  if (value->type != JSCRIPT_AST_TYPE_NUMBER) return 0.0f;
+
+  return JSCRIPTAST_VALUE(value);
+}

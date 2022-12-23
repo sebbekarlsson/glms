@@ -1,37 +1,8 @@
 #include <jscript/env.h>
 #include <jscript/eval.h>
 #include <jscript/macros.h>
+#include <jscript/builtin.h>
 
-JSCRIPTAST *jscript_fptr_print(JSCRIPTEval *eval, JSCRIPTAST *ast,
-                               JSCRIPTASTList *args, JSCRIPTStack *stack) {
-  if (!args)
-    return ast;
-
-  for (int64_t i = 0; i < args->length; i++) {
-    JSCRIPTAST *arg = jscript_eval(eval, args->items[i], stack);
-    if (!arg)
-      continue;
-    switch (arg->type) {
-    case JSCRIPT_AST_TYPE_NUMBER: {
-      printf("%1.6f\n", arg->as.number.value);
-    }; break;
-    case JSCRIPT_AST_TYPE_STRING: {
-      const char *value = jscript_ast_get_string_value(arg);
-
-      if (value) {
-        printf("%s\n", value);
-      } else {
-        printf("(null)\n");
-      }
-    }; break;
-    default: {
-      printf("%p => %s\n", arg, jscript_ast_to_string(arg));
-    }; break;
-    }
-  }
-
-  return ast;
-}
 
 int jscript_eval_init(JSCRIPTEval *eval, struct JSCRIPT_ENV_STRUCT *env) {
   if (!eval || !env)
@@ -40,7 +11,6 @@ int jscript_eval_init(JSCRIPTEval *eval, struct JSCRIPT_ENV_STRUCT *env) {
     return 1;
   eval->initialized = true;
   eval->env = env;
-  jscript_env_register_function(env, "print", jscript_fptr_print);
   return 1;
 }
 
