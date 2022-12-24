@@ -25,6 +25,7 @@ struct JSCRIPT_ENV_STRUCT;
   TOK(JSCRIPT_AST_TYPE_UNOP)\
   TOK(JSCRIPT_AST_TYPE_ACCESS)\
   TOK(JSCRIPT_AST_TYPE_BLOCK)\
+  TOK(JSCRIPT_AST_TYPE_FOR)\
   TOK(JSCRIPT_AST_TYPE_CALL)\
   TOK(JSCRIPT_AST_TYPE_FUNC)\
   TOK(JSCRIPT_AST_TYPE_RETURN)
@@ -71,6 +72,7 @@ typedef struct JSCRIPT_AST_STRUCT {
     struct {
       JAST* left;
       JAST* right;
+      JAST* func;
     } call;
 
     struct {
@@ -84,8 +86,13 @@ typedef struct JSCRIPT_AST_STRUCT {
     } func;
 
     struct {
+      JAST* body;
+    } forloop;
+
+    struct {
       JSCRIPTTokenType op;
       JAST* right;
+      JAST* left;
     } unop;
 
     struct {

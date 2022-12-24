@@ -236,6 +236,9 @@ JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
   case JSCRIPT_TOKEN_TYPE_SPECIAL_IF: {
     return jscript_parser_parse_block(parser);
   }; break;
+  case JSCRIPT_TOKEN_TYPE_SPECIAL_FOR: {
+    return jscript_parser_parse_for(parser);
+  }; break;
   case JSCRIPT_TOKEN_TYPE_EOF: {
     return jscript_parser_parse_eof(parser);
   }; break;
@@ -274,8 +277,11 @@ JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
     left = access;
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_ADD ||
-         parser->token.type == JSCRIPT_TOKEN_TYPE_SUB) {
+  while (
+    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_SUB ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD_EQUALS
+  ) {
     JSCRIPTAST *binop =
         jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
     binop->as.binop.left = left;
@@ -321,6 +327,7 @@ JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
     access->as.access.right = jscript_parser_parse_term(parser);
     left = access;
   }
+
 
   return left;
 }
@@ -386,7 +393,10 @@ JSCRIPTAST *jscript_parser_parse_arrow_function(JSCRIPTParser *parser) {
 JSCRIPTAST *jscript_parser_parse_function(JSCRIPTParser *parser) {
   JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_FUNC);
   jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_SPECIAL_FUNCTION);
-  ast->as.func.id = jscript_parser_parse_id(parser, true);
+
+  if (parser->token.type == JSCRIPT_TOKEN_TYPE_ID) {
+    ast->as.func.id = jscript_parser_parse_id(parser, true);
+  }
 
   jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
 
@@ -436,6 +446,37 @@ JSCRIPTAST *jscript_parser_parse_block(JSCRIPTParser *parser) {
   if (parser->token.type == JSCRIPT_TOKEN_TYPE_SPECIAL_ELSE) {
     ast->as.block.next = jscript_parser_parse_block(parser);
   }
+
+  return ast;
+}
+
+JSCRIPTAST *jscript_parser_parse_for(JSCRIPTParser *parser) {
+  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_FOR);
+  jscript_parser_eat(parser, parser->token.type);
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
+
+  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RPAREN) {
+    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
+    jscript_ast_push(ast, arg);
+
+    while (parser->token.type == JSCRIPT_TOKEN_TYPE_SEMI) {
+      jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_SEMI);
+      JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
+      jscript_ast_push(ast, arg);
+    }
+  }
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACE);
+
+  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RBRACE) {
+    ast->as.forloop.body = jscript_parser_parse_compound(parser, true);
+  }
+
+  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+
 
   return ast;
 }

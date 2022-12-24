@@ -33,4 +33,6 @@ JSCRIPTAST* jscript_eval_call(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* 
 
 JSCRIPTAST* jscript_eval_block(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack);
 
+JSCRIPTAST* jscript_eval_for(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack);
+
 #endif

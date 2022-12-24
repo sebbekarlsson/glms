@@ -92,6 +92,17 @@ static void test_sample_object() {
   JSCRIPT_ASSERT(name->type == JSCRIPT_AST_TYPE_STRING);
 }
 
+
+static void test_sample_varfunc() {
+  JSCRIPTEnv env = {0};
+  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/varfunc.js");
+
+  JSCRIPT_ASSERT(ast != 0);
+  JSCRIPTAST* w = jscript_eval_lookup(&env.eval, "w", &env.stack); JSCRIPT_ASSERT(w != 0);
+  JSCRIPT_ASSERT(w->type == JSCRIPT_AST_TYPE_NUMBER);
+  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(w) == 44);
+}
+
 int main(int argc, char* argv[]) {
   test_sample_var();
   test_sample_func();
@@ -99,5 +110,6 @@ int main(int argc, char* argv[]) {
   test_sample_array();
   test_sample_if();
   test_sample_object();
+  test_sample_varfunc();
   return 0;
 }

@@ -51,6 +51,9 @@ JSCRIPTAST *jscript_eval(JSCRIPTEval *eval, JSCRIPTAST *ast,
   case JSCRIPT_AST_TYPE_BLOCK: {
     return jscript_eval_block(eval, ast, stack);
   }; break;
+  case JSCRIPT_AST_TYPE_FOR: {
+    return jscript_eval_for(eval, ast, stack);
+  }; break;
   case JSCRIPT_AST_TYPE_ID: {
     return jscript_eval_id(eval, ast, stack);
   }; break;
@@ -91,6 +94,10 @@ JSCRIPTAST *jscript_eval_call(JSCRIPTEval *eval, JSCRIPTAST *ast,
   }
 
   JSCRIPTAST *func = jscript_eval_lookup(eval, fname, stack);
+
+  if (!func && ast->as.call.func != 0) {
+    func = ast->as.call.func;
+  }
 
   if (func->type != JSCRIPT_AST_TYPE_FUNC)
     func = 0;
@@ -140,11 +147,16 @@ JSCRIPTAST *jscript_eval_access(JSCRIPTEval *eval, JSCRIPTAST *ast,
 
   if (right->type != JSCRIPT_AST_TYPE_ARRAY) {
     const char *key = jscript_ast_get_string_value(right);
-    if (!key)
-      JSCRIPT_WARNING_RETURN(ast, stderr, "key == null.\n");
+    if (!key) {
+      return right;
+    }
     JSCRIPTAST *value = jscript_ast_access_by_key(left, key, eval->env);
 
-    return value;
+    if (value->type == JSCRIPT_AST_TYPE_FUNC && right->type == JSCRIPT_AST_TYPE_CALL) {
+      right->as.call.func = value;
+      return jscript_eval(eval, right, stack);
+    }
+    return value;//jscript_eval(eval, value, stack);
   }
 
   JSCRIPTAST *right_value = right->children != 0 && right->children->length > 0
@@ -159,7 +171,27 @@ JSCRIPTAST *jscript_eval_access(JSCRIPTEval *eval, JSCRIPTAST *ast,
                       stack);
 }
 
-JSCRIPTAST *jscript_eval_unop(JSCRIPTEval *eval, JSCRIPTAST *ast,
+JSCRIPTAST *jscript_eval_unop_left(JSCRIPTEval *eval, JSCRIPTAST *ast,
+                              JSCRIPTStack *stack) {
+  switch (ast->as.unop.op) {
+  case JSCRIPT_TOKEN_TYPE_SUB: {
+    ast->as.binop.left = jscript_eval(eval, ast->as.unop.left, stack);
+    return jscript_env_new_ast_number(eval->env,
+                                      -JSCRIPTAST_VALUE(ast->as.unop.left));
+  }; break;
+  case JSCRIPT_TOKEN_TYPE_ADD: {
+    ast->as.binop.left = jscript_eval(eval, ast->as.unop.left, stack);
+    return jscript_env_new_ast_number(eval->env,
+                                      +JSCRIPTAST_VALUE(ast->as.unop.left));
+  }; break;
+  default: {
+    return ast;
+  }; break;
+  }
+  return ast;
+}
+
+JSCRIPTAST *jscript_eval_unop_right(JSCRIPTEval *eval, JSCRIPTAST *ast,
                               JSCRIPTStack *stack) {
   switch (ast->as.unop.op) {
   case JSCRIPT_TOKEN_TYPE_SPECIAL_RETURN: {
@@ -185,6 +217,12 @@ JSCRIPTAST *jscript_eval_unop(JSCRIPTEval *eval, JSCRIPTAST *ast,
   return ast;
 }
 
+JSCRIPTAST *jscript_eval_unop(JSCRIPTEval *eval, JSCRIPTAST *ast,
+                              JSCRIPTStack *stack) {
+  if (ast->as.unop.left) return jscript_eval_unop_left(eval, ast, stack);
+  return jscript_eval_unop_right(eval, ast, stack);
+}
+
 JSCRIPTAST *jscript_eval_binop(JSCRIPTEval *eval, JSCRIPTAST *ast,
                                JSCRIPTStack *stack) {
   switch (ast->as.binop.op) {
@@ -201,6 +239,12 @@ JSCRIPTAST *jscript_eval_binop(JSCRIPTEval *eval, JSCRIPTAST *ast,
     return jscript_env_new_ast_number(
         eval->env, JSCRIPTAST_VALUE(ast->as.binop.left) /
                        JSCRIPTAST_VALUE(ast->as.binop.right));
+  }; break;
+  case JSCRIPT_TOKEN_TYPE_ADD_EQUALS: {
+    ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
+    ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
+    ast->as.binop.left->as.number.value += ast->as.binop.right->as.number.value;
+    return ast->as.binop.left;
   }; break;
   case JSCRIPT_TOKEN_TYPE_ADD: {
     ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
@@ -330,6 +374,22 @@ JSCRIPTAST *jscript_eval_block(JSCRIPTEval *eval, JSCRIPTAST *ast,
   default: {
     return ast;
   }; break;
+  }
+
+  return ast;
+}
+
+JSCRIPTAST* jscript_eval_for(JSCRIPTEval* eval, JSCRIPTAST* ast, JSCRIPTStack* stack) {
+  if (!ast->as.forloop.body) return ast;
+  if (ast->children == 0 || ast->children->length <= 0) return ast;
+
+  JAST* init = ast->children->items[0];
+  JAST* cond = ast->children->items[1];
+  JAST* step = ast->children->items[2];
+
+
+  for (jscript_eval(eval, init, stack); jscript_ast_is_truthy(jscript_eval(eval, cond, stack)); jscript_eval(eval, step, stack)) {
+    jscript_eval(eval, ast->as.forloop.body, stack);
   }
 
   return ast;

@@ -44,6 +44,10 @@ const char* jscript_ast_get_name(JSCRIPTAST* ast) {
       if (!ast->as.func.id) return 0;
       return jscript_string_view_get_value(&ast->as.func.id->as.id.value);
     }; break;
+    case JSCRIPT_AST_TYPE_CALL: {
+      if (!ast->as.call.left) return 0;
+      return jscript_ast_get_name(ast->as.call.left);
+    }; break;
     default: { return 0; }; break;
   }
 }
