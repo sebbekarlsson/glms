@@ -4,11 +4,12 @@
 #include <jscript/macros.h>
 
 #define JSCRIPT_ASSERT(expr) {\
-  printf("Test: %s\n", __func__);\
   if (!(expr)) { JSCRIPT_WARNING(stderr, "%s failed.\n", #expr);  } \
   assert(expr);\
   printf(JSCRIPT_CLI_GREEN "%s: OK.\n" JSCRIPT_CLI_RESET, #expr);\
 }
+
+#define JSCRIPT_TEST_BEGIN() printf("*============= %s =============*\n", __func__)
 
 static JSCRIPTAST* jscript_exec_file(JSCRIPTEnv* env, const char* path) {
   char* source = jscript_get_file_contents(path);
@@ -18,6 +19,7 @@ static JSCRIPTAST* jscript_exec_file(JSCRIPTEnv* env, const char* path) {
 }
 
 static void test_sample_var() {
+  JSCRIPT_TEST_BEGIN();
   JSCRIPTEnv env = {0};
   JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/var.js");
 
@@ -28,6 +30,7 @@ static void test_sample_var() {
 }
 
 static void test_sample_func() {
+  JSCRIPT_TEST_BEGIN();
   JSCRIPTEnv env = {0};
   JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/func.js");
 
@@ -40,6 +43,7 @@ static void test_sample_func() {
 
 
 static void test_sample_arrow_func() {
+  JSCRIPT_TEST_BEGIN();
   JSCRIPTEnv env = {0};
   JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/arrow_func.js");
 
@@ -49,6 +53,7 @@ static void test_sample_arrow_func() {
 }
 
 static void test_sample_array() {
+  JSCRIPT_TEST_BEGIN();
   JSCRIPTEnv env = {0};
   JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/array.js");
 
@@ -60,6 +65,7 @@ static void test_sample_array() {
 }
 
 static void test_sample_if() {
+  JSCRIPT_TEST_BEGIN();
   JSCRIPTEnv env = {0};
   JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/if.js");
 
@@ -70,6 +76,7 @@ static void test_sample_if() {
 }
 
 static void test_sample_object() {
+  JSCRIPT_TEST_BEGIN();
   JSCRIPTEnv env = {0};
   JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/object.js");
 
@@ -94,6 +101,7 @@ static void test_sample_object() {
 
 
 static void test_sample_varfunc() {
+  JSCRIPT_TEST_BEGIN();
   JSCRIPTEnv env = {0};
   JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/varfunc.js");
 
@@ -101,6 +109,50 @@ static void test_sample_varfunc() {
   JSCRIPTAST* w = jscript_eval_lookup(&env.eval, "w", &env.stack); JSCRIPT_ASSERT(w != 0);
   JSCRIPT_ASSERT(w->type == JSCRIPT_AST_TYPE_NUMBER);
   JSCRIPT_ASSERT(JSCRIPTAST_VALUE(w) == 44);
+}
+
+static void test_sample_add_add() {
+  JSCRIPT_TEST_BEGIN();
+  JSCRIPTEnv env = {0};
+  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/add_add.js");
+
+  JSCRIPT_ASSERT(ast != 0);
+  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
+  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_NUMBER);
+  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(x) == 1);
+}
+
+static void test_sample_sub_sub() {
+  JSCRIPT_TEST_BEGIN();
+  JSCRIPTEnv env = {0};
+  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/sub_sub.js");
+
+  JSCRIPT_ASSERT(ast != 0);
+  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
+  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_NUMBER);
+  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(x) == 2);
+}
+
+static void test_sample_while() {
+  JSCRIPT_TEST_BEGIN();
+  JSCRIPTEnv env = {0};
+  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/while.js");
+
+  JSCRIPT_ASSERT(ast != 0);
+  JSCRIPTAST* y = jscript_eval_lookup(&env.eval, "y", &env.stack); JSCRIPT_ASSERT(y != 0);
+  JSCRIPT_ASSERT(y->type == JSCRIPT_AST_TYPE_NUMBER);
+  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(y) == 500);
+}
+
+static void test_sample_for() {
+  JSCRIPT_TEST_BEGIN();
+  JSCRIPTEnv env = {0};
+  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/for.js");
+
+  JSCRIPT_ASSERT(ast != 0);
+  JSCRIPTAST* y = jscript_eval_lookup(&env.eval, "y", &env.stack); JSCRIPT_ASSERT(y != 0);
+  JSCRIPT_ASSERT(y->type == JSCRIPT_AST_TYPE_NUMBER);
+  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(y) == 16);
 }
 
 int main(int argc, char* argv[]) {
@@ -111,5 +163,9 @@ int main(int argc, char* argv[]) {
   test_sample_if();
   test_sample_object();
   test_sample_varfunc();
+  test_sample_add_add();
+  test_sample_sub_sub();
+  test_sample_while();
+  test_sample_for();
   return 0;
 }

@@ -233,6 +233,7 @@ JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
   case JSCRIPT_TOKEN_TYPE_SPECIAL_RETURN: {
     return jscript_parser_parse_unop(parser);
   }; break;
+  case JSCRIPT_TOKEN_TYPE_SPECIAL_WHILE:
   case JSCRIPT_TOKEN_TYPE_SPECIAL_IF: {
     return jscript_parser_parse_block(parser);
   }; break;
@@ -251,6 +252,17 @@ JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
 
 JSCRIPTAST *jscript_parser_parse_term(JSCRIPTParser *parser) {
   JSCRIPTAST *left = jscript_parser_parse_factor(parser);
+
+  while (
+    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD_ADD ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_SUB_SUB
+  ) {
+    JSCRIPTAST* unop = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_UNOP);
+    unop->as.unop.left = left;
+    unop->as.unop.op = parser->token.type;
+    jscript_parser_eat(parser, parser->token.type);
+    left = unop;
+  }
 
   while (parser->token.type == JSCRIPT_TOKEN_TYPE_MUL ||
          parser->token.type == JSCRIPT_TOKEN_TYPE_DIV) {
@@ -280,7 +292,8 @@ JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
   while (
     parser->token.type == JSCRIPT_TOKEN_TYPE_ADD ||
     parser->token.type == JSCRIPT_TOKEN_TYPE_SUB ||
-    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD_EQUALS
+    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD_EQUALS ||
+    parser->token.type == JSCRIPT_TOKEN_TYPE_SUB_EQUALS
   ) {
     JSCRIPTAST *binop =
         jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);

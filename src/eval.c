@@ -78,7 +78,7 @@ JSCRIPTAST *jscript_eval_id(JSCRIPTEval *eval, JSCRIPTAST *ast,
   JSCRIPTAST *value = jscript_eval_lookup(eval, name, stack);
 
   if (!value) {
-    JSCRIPT_WARNING_RETURN(ast, stderr, "`%s` is undefined.\n", name);
+    JSCRIPT_WARNING_RETURN(eval->env->undefined, stderr, "`%s` is undefined.\n", name);
   }
 
   return value;
@@ -184,6 +184,14 @@ JSCRIPTAST *jscript_eval_unop_left(JSCRIPTEval *eval, JSCRIPTAST *ast,
     return jscript_env_new_ast_number(eval->env,
                                       +JSCRIPTAST_VALUE(ast->as.unop.left));
   }; break;
+  case JSCRIPT_TOKEN_TYPE_ADD_ADD: {
+    ast->as.binop.left = jscript_eval(eval, ast->as.unop.left, stack);
+    ast->as.binop.left->as.number.value++;
+  }; break;
+  case JSCRIPT_TOKEN_TYPE_SUB_SUB: {
+    ast->as.binop.left = jscript_eval(eval, ast->as.unop.left, stack);
+    ast->as.binop.left->as.number.value--;
+  }; break;
   default: {
     return ast;
   }; break;
@@ -244,6 +252,12 @@ JSCRIPTAST *jscript_eval_binop(JSCRIPTEval *eval, JSCRIPTAST *ast,
     ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
     ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
     ast->as.binop.left->as.number.value += ast->as.binop.right->as.number.value;
+    return ast->as.binop.left;
+  }; break;
+  case JSCRIPT_TOKEN_TYPE_SUB_EQUALS: {
+    ast->as.binop.left = jscript_eval(eval, ast->as.binop.left, stack);
+    ast->as.binop.right = jscript_eval(eval, ast->as.binop.right, stack);
+    ast->as.binop.left->as.number.value -= ast->as.binop.right->as.number.value;
     return ast->as.binop.left;
   }; break;
   case JSCRIPT_TOKEN_TYPE_ADD: {
@@ -362,9 +376,23 @@ JSCRIPTAST *jscript_eval_block_condition(JSCRIPTEval *eval, JSCRIPTAST *ast,
   return jscript_eval(eval, ast->as.block.body, stack);
 }
 
+JSCRIPTAST *jscript_eval_block_while(JSCRIPTEval *eval, JSCRIPTAST *ast,
+                                     JSCRIPTStack *stack) {
+  if (!ast->as.block.body || !ast->as.block.expr) return ast;
+
+  while (jscript_ast_is_truthy(jscript_eval(eval, ast->as.block.expr, stack))) {
+    jscript_eval(eval, ast->as.block.body, stack);
+  }
+
+  return ast;
+}
+
 JSCRIPTAST *jscript_eval_block(JSCRIPTEval *eval, JSCRIPTAST *ast,
                                JSCRIPTStack *stack) {
   switch (ast->as.block.op) {
+  case JSCRIPT_TOKEN_TYPE_SPECIAL_WHILE: {
+    return jscript_eval_block_while(eval, ast, stack);
+  }; break;
   case JSCRIPT_TOKEN_TYPE_SPECIAL_IF: {
     return jscript_eval_block_condition(eval, ast, stack);
   }; break;

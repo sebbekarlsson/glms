@@ -26,6 +26,9 @@ typedef struct JSCRIPT_ENV_STRUCT {
   JSCRIPTStack stack;
 
   HashyMap globals;
+
+
+  JSCRIPTAST* undefined;
 } JSCRIPTEnv;
 
 

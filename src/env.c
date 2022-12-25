@@ -16,8 +16,11 @@ int jscript_env_init(
   env->config = cfg;
   env->source = source;
   hashy_map_init(&env->globals, 256);
-
   memo_init(&env->memo_ast, (MemoConfig){ .item_size = sizeof(JSCRIPTAST), .page_capacity = JSCRIPT_MEMO_AST_PAGE_CAPACITY });
+
+
+  env->undefined = jscript_env_new_ast(env, JSCRIPT_AST_TYPE_UNDEFINED);
+
   jscript_lexer_init(&env->lexer, env->source);
   jscript_parser_init(&env->parser, env);
   jscript_eval_init(&env->eval, env);

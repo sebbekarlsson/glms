@@ -26,6 +26,7 @@ int jscript_lexer_init(
 #define JSCRIPT_LEXER_SPECIAL_SYMBOL_FALSE "false"
 #define JSCRIPT_LEXER_SPECIAL_SYMBOL_TRUE "true"
 #define JSCRIPT_LEXER_SPECIAL_SYMBOL_FOR "for"
+#define JSCRIPT_LEXER_SPECIAL_SYMBOL_WHILE "while"
 
 int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out);
 

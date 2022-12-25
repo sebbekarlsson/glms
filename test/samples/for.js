@@ -1,3 +1,7 @@
+let y = 0;
+
 for (let i = 0; i < 16; i+=1) {
-  print(i);
+  y++;
 }
+
+print(y);

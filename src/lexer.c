@@ -63,8 +63,10 @@ static void jscript_lexer_parse_special_id(JSCRIPTLexer* lexer, JSCRIPTToken* ou
     type = JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE;
   } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_TRUE) == 0) {
     type = JSCRIPT_TOKEN_TYPE_SPECIAL_TRUE;
-  }  else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_FOR) == 0) {
+  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_FOR) == 0) {
     type = JSCRIPT_TOKEN_TYPE_SPECIAL_FOR;
+  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_WHILE) == 0) {
+    type = JSCRIPT_TOKEN_TYPE_SPECIAL_WHILE;
   }
 
   out->type = type;
@@ -183,6 +185,9 @@ int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
       if (jscript_lexer_peek(lexer, 1) == '=') {
         out->type = JSCRIPT_TOKEN_TYPE_ADD_EQUALS;
         jscript_lexer_advance(lexer);
+      } else if (jscript_lexer_peek(lexer, 1) == '+') {
+        out->type = JSCRIPT_TOKEN_TYPE_ADD_ADD;
+        jscript_lexer_advance(lexer);
       }
     } break;
     case '*': {
@@ -190,6 +195,14 @@ int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
     } break;
     case '-': {
       out->type = JSCRIPT_TOKEN_TYPE_SUB;
+
+      if (jscript_lexer_peek(lexer, 1) == '=') {
+        out->type = JSCRIPT_TOKEN_TYPE_SUB_EQUALS;
+        jscript_lexer_advance(lexer);
+      } else if (jscript_lexer_peek(lexer, 1) == '-') {
+        out->type = JSCRIPT_TOKEN_TYPE_SUB_SUB;
+        jscript_lexer_advance(lexer);
+      }
     } break;
     case '/': {
       out->type = JSCRIPT_TOKEN_TYPE_DIV;

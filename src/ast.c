@@ -69,6 +69,9 @@ bool jscript_ast_is_truthy(JSCRIPTAST* ast) {
   switch (ast->type) {
     case JSCRIPT_AST_TYPE_NUMBER: { return ast->as.number.value > 0; }; break;
     case JSCRIPT_AST_TYPE_STRING: { return ast->as.string.value.length > 0 && ast->as.string.value.ptr != 0; }; break;
+    case JSCRIPT_AST_TYPE_UNDEFINED: { return false; }; break;
+    case JSCRIPT_AST_TYPE_EOF: { return false; }; break;
+    case JSCRIPT_AST_TYPE_NOOP: { return false; }; break;
     default: { return true; }; break;
   }
 

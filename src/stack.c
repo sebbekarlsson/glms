@@ -20,10 +20,14 @@ JSCRIPTAST* jscript_stack_push(JSCRIPTStack* stack, const char* name, JSCRIPTAST
   if (!stack || !name || !ast) return 0;
   if (!stack->initialized) JSCRIPT_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
-  if (stack->names_length >= JSCRIPT_STACK_CAPACITY) JSCRIPT_WARNING_RETURN(0, stderr, "Stackoverflow\n");
+  if (stack->names_length >= JSCRIPT_STACK_CAPACITY) {
+    JSCRIPT_WARNING(stderr, "Stack Stackoverflow: %d\n", stack->names_length);
+    jscript_stack_dump(stack);
+    return 0;
+  }
   hashy_map_set(&stack->locals, name, ast);
-  jscript_JSCRIPTAST_list_push(&stack->list, ast);
 
+  jscript_JSCRIPTAST_list_push(&stack->list, ast);
   stack->names[stack->names_length++] = name;
 
   return ast;
@@ -72,6 +76,9 @@ int jscript_stack_copy(JSCRIPTStack src, JSCRIPTStack* dest) {
 
     jscript_stack_push(dest, src.names[i], ast);
   }
+
+  dest->names_length = src.names_length;
+  memcpy(&dest->names[0], &src.names[0], JSCRIPT_STACK_CAPACITY * sizeof(char));
 
   return 1;
 }
