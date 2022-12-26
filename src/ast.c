@@ -529,6 +529,19 @@ void glms_ast_destructor_binop(GLMSAST* ast) {
     ast->as.binop.right = 0;
   }
 }
+
+void glms_ast_destructor_unop(GLMSAST* ast) {
+  if (ast->as.unop.left != 0) {
+    glms_ast_destructor(ast->as.unop.left);
+    ast->as.unop.left = 0;
+  }
+
+  if (ast->as.unop.right != 0) {
+    glms_ast_destructor(ast->as.unop.right);
+    ast->as.unop.right = 0;
+  }
+}
+
 void glms_ast_destructor_access(GLMSAST* ast) {
   if (ast->as.access.left != 0) {
     glms_ast_destructor(ast->as.access.left);
@@ -577,16 +590,49 @@ void glms_ast_destructor_func(GLMSAST* ast) {
   }
 }
 
+
+void glms_ast_destructor_typedef(GLMSAST* ast) {
+  if (ast->as.tdef.id != 0) {
+    glms_ast_destructor(ast->as.tdef.id);
+    ast->as.tdef.id = 0;
+  }
+
+  if (ast->as.tdef.factor != 0) {
+    glms_ast_destructor(ast->as.tdef.factor);
+    ast->as.tdef.factor = 0;
+  }
+}
+
+void glms_ast_destructor_block(GLMSAST* ast) {
+  if (ast->as.block.body != 0) {
+    glms_ast_destructor(ast->as.block.body);
+    ast->as.block.body = 0;
+  }
+
+  if (ast->as.block.expr != 0) {
+    glms_ast_destructor(ast->as.block.expr);
+    ast->as.block.expr = 0;
+  }
+
+  if (ast->as.block.next != 0) {
+    glms_ast_destructor(ast->as.block.next);
+    ast->as.block.next = 0;
+  }
+}
+
 void glms_ast_destructor(GLMSAST* ast) {
   if (!ast) return;
 
   switch (ast->type) {
     case GLMS_AST_TYPE_BINOP: { glms_ast_destructor_binop(ast); }; break;
+    case GLMS_AST_TYPE_UNOP: { glms_ast_destructor_unop(ast); }; break;
     case GLMS_AST_TYPE_ACCESS: { glms_ast_destructor_access(ast); }; break;
     case GLMS_AST_TYPE_STRING: { glms_ast_destructor_string(ast); }; break;
     case GLMS_AST_TYPE_ID: { glms_ast_destructor_id(ast); }; break;
     case GLMS_AST_TYPE_CALL: { glms_ast_destructor_call(ast); }; break;
     case GLMS_AST_TYPE_FUNC: { glms_ast_destructor_func(ast); }; break;
+    case GLMS_AST_TYPE_TYPEDEF: { glms_ast_destructor_typedef(ast); }; break;
+    case GLMS_AST_TYPE_BLOCK: { glms_ast_destructor_block(ast); }; break;
     default: {}; break;
   }
 
