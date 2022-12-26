@@ -154,6 +154,8 @@ GLMSAST* glms_ast_get_type(GLMSAST* ast);
 
 GLMSAST* glms_ast_copy(GLMSAST src, struct GLMS_ENV_STRUCT* env);
 
+void glms_ast_destructor(GLMSAST* ast);
+
 #define GLMSAST_VALUE(ast) (ast->as.number.value)
 
 #endif

@@ -90,6 +90,7 @@ GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
   if (parser->token.type == GLMS_TOKEN_TYPE_ID) {
     id_ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
     id_ast->as.id.value = parser->token.value;
+    id_ast->as.id.heap = 0;
     id_ast->flags = flags;
     glms_parser_eat(parser, parser->token.type);
   } else if (flags && flags->length == 1) {

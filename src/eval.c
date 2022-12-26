@@ -114,7 +114,7 @@ GLMSAST *glms_eval_id(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
         return glms_env_new_ast_number(eval->env, 0.0f);
       }; break;
       case GLMS_TOKEN_TYPE_SPECIAL_STRING: {
-        return glms_env_new_ast_string(eval->env, "");
+        return glms_env_new_ast_string(eval->env, 0);
       }; break;
       default: {
         return ast;
@@ -433,16 +433,25 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     bool same_type = (left->type == right->type);
 
     if (same_type) {
-      switch (ast->as.binop.left->type) {
+      switch (left->type) {
       case GLMS_AST_TYPE_NUMBER: {
         left->as.number.value = right->as.number.value;
       }; break;
-      case GLMS_AST_TYPE_STRING: {
-        left->as.string.value = right->as.string.value;
+        case GLMS_AST_TYPE_STRING: {
+          const char* strval = glms_ast_get_string_value(right);
+          if (strval != 0) {
+            if (left->as.string.heap != 0) {
+              free(left->as.string.heap);
+              left->as.string.heap = 0;
+            }
+
+            left->as.string.heap = strdup(strval);
+          }
+          // left->as.string.value = right->as.string.value;
       }; break;
-      default: {
+        default: {
         // TODO: This is most definitely a memory leak.
-        *left = *right;
+        //*left = *right;
       }; break;
       }
     }

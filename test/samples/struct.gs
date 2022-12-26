@@ -3,10 +3,8 @@ typedef struct {
   string name;
 } Person;
 
-Person p;
+Person p = Person(33, "John doe");
 
-p.age = 33;
-p.name = "John doe";
 print(p);
 
 Person p2;

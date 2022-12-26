@@ -15,7 +15,7 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   hashy_map_init(&env->globals, 256);
   memo_init(&env->memo_ast,
             (MemoConfig){.item_size = sizeof(GLMSAST),
-                         .page_capacity = GLMS_MEMO_AST_PAGE_CAPACITY});
+            .page_capacity = GLMS_MEMO_AST_PAGE_CAPACITY, .destructor = (MemoDestructorFunc)glms_ast_destructor});
 
   env->undefined = glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED);
 
@@ -29,6 +29,25 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   return 1;
 }
 
+
+int glms_env_clear(GLMSEnv* env) {
+  if (!env) return 0;
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+
+  env->source = 0;
+  hashy_map_clear(&env->parser.symbols, false);
+  hashy_map_clear(&env->globals, false);
+  glms_stack_clear(&env->stack);
+  env->undefined = 0;
+  memo_clear(&env->memo_ast);
+
+  env->initialized = false;
+
+  return 1;
+}
+
 GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type) {
   if (!env)
     return 0;
@@ -38,6 +57,7 @@ GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type) {
   GLMSAST *ast = (GLMSAST *)memo_malloc(&env->memo_ast);
   if (!ast)
     GLMS_WARNING_RETURN(0, stderr, "Failed to allocate AST.\n");
+
 
   ast->type = type;
   return ast;
@@ -57,7 +77,7 @@ GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast) {
 
 GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name) {
   GLMSAST *ast = glms_env_new_ast(env, GLMS_AST_TYPE_ID);
-  ast->as.id.heap = strdup(name);
+  ast->as.id.heap = name ? strdup(name) : 0;
   GLMSAST* flag = glms_env_new_ast(env, GLMS_AST_TYPE_ID);
   flag->as.id.op = data_type;
   glms_ast_push_flag(ast, flag);

@@ -38,6 +38,8 @@ int glms_env_init(
   GLMSConfig cfg
 );
 
+int glms_env_clear(GLMSEnv* env);
+
 GLMSAST* glms_env_new_ast(GLMSEnv* env, GLMSASTType type);
 
 GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast);

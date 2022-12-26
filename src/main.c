@@ -13,8 +13,12 @@ int main(int argc, char *argv[]) {
   GLMSEnv env = {0};
 
   glms_env_init(&env, source, (GLMSConfig){});
-
   glms_env_exec(&env);
+
+  glms_env_clear(&env);
+
+  free(source);
+  source = 0;
 
   return 0;
 }
