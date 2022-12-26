@@ -150,13 +150,30 @@ const char* glms_ast_to_string_typedef(GLMSAST* ast) {
   return glms_ast_to_string(ast->as.tdef.factor);
 }
 
+const char* glms_ast_to_string_number(GLMSAST* ast) {
+  char tmp[256];
+  sprintf(tmp, "%1.6f", ast->as.number.value);
+
+  if (ast->string_rep) {
+    free(ast->string_rep);
+    ast->string_rep = 0;
+  }
+
+  ast->string_rep = strdup(tmp);
+  return ast->string_rep;
+}
+
 const char* glms_ast_to_string(GLMSAST* ast) {
   if (ast->type == GLMS_AST_TYPE_OBJECT || ast->type == GLMS_AST_TYPE_STRUCT) {
     return glms_ast_to_string_object(ast);
   } else if (ast->type == GLMS_AST_TYPE_ID) {
     return glms_ast_to_string_id(ast);
-  }  else if (ast->type == GLMS_AST_TYPE_TYPEDEF) {
+  } else if (ast->type == GLMS_AST_TYPE_TYPEDEF) {
     return glms_ast_to_string_typedef(ast);
+  } else if (ast->type == GLMS_AST_TYPE_NUMBER) {
+    return glms_ast_to_string_number(ast);
+}  else if (ast->type == GLMS_AST_TYPE_STRING) {
+    return glms_ast_get_string_value(ast);
   }
   return GLMS_AST_TYPE_STR[ast->type];
 }
