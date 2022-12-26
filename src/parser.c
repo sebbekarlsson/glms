@@ -24,14 +24,14 @@ int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
 
   if (parser->token.type != token_type) {
     GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%s`\n",
-                           GLMS_TOKEN_TYPE_STR[parser->token.type]);
+                        GLMS_TOKEN_TYPE_STR[parser->token.type]);
   }
 
   if (!glms_lexer_next(&parser->env->lexer, &parser->token))
     return 0;
 
-
-  GLMSAST* known = glms_parser_lookup(parser, glms_string_view_get_value(&parser->token.value));
+  GLMSAST *known = glms_parser_lookup(
+      parser, glms_string_view_get_value(&parser->token.value));
 
   if (known && known->type == GLMS_AST_TYPE_TYPEDEF) {
     parser->token.type = GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE;
@@ -42,7 +42,7 @@ int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
 
 static GLMSAST *glms_parser_error(GLMSParser *parser) {
   GLMS_WARNING(stderr, "Unexpected token `%s`\n",
-                  GLMS_TOKEN_TYPE_STR[parser->token.type]);
+               GLMS_TOKEN_TYPE_STR[parser->token.type]);
   parser->error = true;
 
   return glms_env_new_ast(parser->env, GLMS_AST_TYPE_EOF);
@@ -59,25 +59,19 @@ static GLMSAST *glms_parser_parse_eof(GLMSParser *parser) {
 }
 
 GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
-  GLMSASTList* flags = 0;
+  GLMSASTList *flags = 0;
 
-  if (
-    parser->token.type != GLMS_TOKEN_TYPE_ID
-  ) {
+  if (parser->token.type != GLMS_TOKEN_TYPE_ID) {
     flags = NEW(GLMSASTList);
     glms_GLMSAST_list_init(flags);
 
-    while (
-      parser->token.type != GLMS_TOKEN_TYPE_ID
-    ) {
+    while (parser->token.type != GLMS_TOKEN_TYPE_ID) {
       GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
       ast->as.id.op = parser->token.type;
       ast->as.id.value = parser->token.value;
       glms_parser_eat(parser, parser->token.type);
       glms_GLMSAST_list_push(flags, ast);
     }
-
-
   }
 
   GLMSAST *id_ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
@@ -87,7 +81,6 @@ GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
 
   if (skip_next)
     return id_ast;
-
 
   GLMSTokenType next_type = parser->token.type;
 
@@ -102,11 +95,9 @@ GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
   return id_ast;
 }
 
-
 GLMSAST *glms_parser_parse_number(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER);
-  ast->as.number.value =
-      atof(glms_string_view_get_value(&parser->token.value));
+  ast->as.number.value = atof(glms_string_view_get_value(&parser->token.value));
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_NUMBER);
   return ast;
 }
@@ -145,8 +136,7 @@ GLMSAST *glms_parser_parse_array(GLMSParser *parser) {
   return ast;
 }
 
-static GLMSAST *glms_parser_parse_kv(GLMSParser *parser,
-                                           const char **key) {
+static GLMSAST *glms_parser_parse_kv(GLMSParser *parser, const char **key) {
   GLMSAST *ast_key = glms_parser_parse_factor(parser);
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_COLON);
   GLMSAST *ast_value = glms_parser_parse_expr(parser);
@@ -190,8 +180,7 @@ GLMSAST *glms_parser_parse_object(GLMSParser *parser) {
   return ast;
 }
 
-GLMSAST *glms_parser_parse_binop(GLMSParser *parser,
-                                       GLMSAST *left) {
+GLMSAST *glms_parser_parse_binop(GLMSParser *parser, GLMSAST *left) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
   ast->as.binop.left = left;
   ast->as.binop.op = parser->token.type;
@@ -200,15 +189,15 @@ GLMSAST *glms_parser_parse_binop(GLMSParser *parser,
   return ast;
 }
 
-GLMSAST* glms_parser_parse_struct(GLMSParser* parser) {
+GLMSAST *glms_parser_parse_struct(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_STRUCT);
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_STRUCT);
 
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACE);
 
   if (parser->token.type != GLMS_TOKEN_TYPE_RBRACE) {
-    GLMSAST* field = glms_parser_parse_expr(parser);
-    const char* key = glms_ast_get_string_value(field);
+    GLMSAST *field = glms_parser_parse_expr(parser);
+    const char *key = glms_ast_get_string_value(field);
     if (!key) {
       GLMS_WARNING(stderr, "key == null.\n");
     }
@@ -218,16 +207,16 @@ GLMSAST* glms_parser_parse_struct(GLMSParser* parser) {
   while (parser->token.type == GLMS_TOKEN_TYPE_SEMI) {
     glms_parser_eat(parser, GLMS_TOKEN_TYPE_SEMI);
 
-    if (parser->token.type == GLMS_TOKEN_TYPE_RBRACE) break;
+    if (parser->token.type == GLMS_TOKEN_TYPE_RBRACE)
+      break;
 
-    GLMSAST* field = glms_parser_parse_expr(parser);
-    const char* key = glms_ast_get_string_value(field);
+    GLMSAST *field = glms_parser_parse_expr(parser);
+    const char *key = glms_ast_get_string_value(field);
     if (!key) {
       GLMS_WARNING(stderr, "key == null.\n");
       continue;
     }
     glms_ast_object_set_property(ast, key, field);
-
   }
 
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
@@ -322,11 +311,9 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
 GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
   GLMSAST *left = glms_parser_parse_factor(parser);
 
-  while (
-    parser->token.type == GLMS_TOKEN_TYPE_ADD_ADD ||
-    parser->token.type == GLMS_TOKEN_TYPE_SUB_SUB
-  ) {
-    GLMSAST* unop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_UNOP);
+  while (parser->token.type == GLMS_TOKEN_TYPE_ADD_ADD ||
+         parser->token.type == GLMS_TOKEN_TYPE_SUB_SUB) {
+    GLMSAST *unop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_UNOP);
     unop->as.unop.left = left;
     unop->as.unop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
@@ -335,8 +322,7 @@ GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
 
   while (parser->token.type == GLMS_TOKEN_TYPE_MUL ||
          parser->token.type == GLMS_TOKEN_TYPE_DIV) {
-    GLMSAST *binop =
-        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
+    GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
@@ -350,22 +336,18 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
   GLMSAST *left = glms_parser_parse_term(parser);
 
   while (parser->token.type == GLMS_TOKEN_TYPE_LBRACKET) {
-    GLMSAST *access =
-        glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS);
+    GLMSAST *access = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS);
     access->as.access.left = left;
 
     access->as.access.right = glms_parser_parse_expr(parser);
     left = access;
   }
 
-  while (
-    parser->token.type == GLMS_TOKEN_TYPE_ADD ||
-    parser->token.type == GLMS_TOKEN_TYPE_SUB ||
-    parser->token.type == GLMS_TOKEN_TYPE_ADD_EQUALS ||
-    parser->token.type == GLMS_TOKEN_TYPE_SUB_EQUALS
-  ) {
-    GLMSAST *binop =
-        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
+  while (parser->token.type == GLMS_TOKEN_TYPE_ADD ||
+         parser->token.type == GLMS_TOKEN_TYPE_SUB ||
+         parser->token.type == GLMS_TOKEN_TYPE_ADD_EQUALS ||
+         parser->token.type == GLMS_TOKEN_TYPE_SUB_EQUALS) {
+    GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
@@ -373,14 +355,12 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
     left = binop;
   }
 
-
   while (parser->token.type == GLMS_TOKEN_TYPE_GT ||
          parser->token.type == GLMS_TOKEN_TYPE_LT ||
          parser->token.type == GLMS_TOKEN_TYPE_GTE ||
          parser->token.type == GLMS_TOKEN_TYPE_LTE ||
          parser->token.type == GLMS_TOKEN_TYPE_EQUALS_EQUALS) {
-    GLMSAST *binop =
-        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
+    GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
@@ -389,8 +369,7 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
   }
 
   while (left && parser->token.type == GLMS_TOKEN_TYPE_DOT) {
-    GLMSAST *access =
-        glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS);
+    GLMSAST *access = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS);
     access->as.access.left = left;
 
     if (parser->token.type == GLMS_TOKEN_TYPE_DOT) {
@@ -402,8 +381,7 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
   }
 
   while (parser->token.type == GLMS_TOKEN_TYPE_EQUALS) {
-    GLMSAST *binop =
-        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
+    GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
@@ -559,17 +537,16 @@ GLMSAST *glms_parser_parse_for(GLMSParser *parser) {
 
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
 
-
   return ast;
 }
 
-GLMSAST* glms_parser_parse_typedef(GLMSParser* parser) {
-  GLMSAST* ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_TYPEDEF);
+GLMSAST *glms_parser_parse_typedef(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_TYPEDEF);
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF);
   ast->as.tdef.factor = glms_parser_parse_factor(parser);
   ast->as.tdef.id = glms_parser_parse_id(parser, true);
 
-  const char* name = glms_ast_get_name(ast->as.tdef.id);
+  const char *name = glms_ast_get_name(ast->as.tdef.id);
 
   if (name != 0) {
     hashy_map_set(&parser->symbols, name, ast);
@@ -578,13 +555,11 @@ GLMSAST* glms_parser_parse_typedef(GLMSParser* parser) {
   return ast;
 }
 
-GLMSAST *glms_parser_parse_compound(GLMSParser *parser,
-                                          bool skip_brace) {
+GLMSAST *glms_parser_parse_compound(GLMSParser *parser, bool skip_brace) {
 
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_COMPOUND);
 
-  while (parser->token.type != GLMS_TOKEN_TYPE_EOF &&
-         parser->error == false) {
+  while (parser->token.type != GLMS_TOKEN_TYPE_EOF && parser->error == false) {
 
     while (parser->token.type != GLMS_TOKEN_TYPE_SEMI) {
       GLMSAST *child = glms_parser_parse_expr(parser);
@@ -636,8 +611,9 @@ bool glms_parser_peek_check_arrow_function(GLMSParser *parser) {
   return false;
 }
 
-GLMSAST* glms_parser_lookup(GLMSParser* parser, const char* key) {
-  if (!key || !parser) return 0;
+GLMSAST *glms_parser_lookup(GLMSParser *parser, const char *key) {
+  if (!key || !parser)
+    return 0;
 
-  return (GLMSAST*)hashy_map_get(&parser->symbols, key);
+  return (GLMSAST *)hashy_map_get(&parser->symbols, key);
 }

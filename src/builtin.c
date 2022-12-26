@@ -1,8 +1,8 @@
 #include <glms/builtin.h>
 #include <math.h>
 
-GLMSAST *glms_fptr_print(GLMSEval *eval, GLMSAST *ast,
-                               GLMSASTList *args, GLMSStack *stack) {
+GLMSAST *glms_fptr_print(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                         GLMSStack *stack) {
   if (!args)
     return ast;
 
@@ -32,25 +32,24 @@ GLMSAST *glms_fptr_print(GLMSEval *eval, GLMSAST *ast,
   return ast;
 }
 
-GLMSAST *glms_fptr_dot(GLMSEval *eval, GLMSAST *ast,
-                             GLMSASTList *args, GLMSStack *stack) {
+GLMSAST *glms_fptr_dot(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                       GLMSStack *stack) {
 
-  if (!args) return ast;
-  if (args->length < 2) return ast;
+  if (!args)
+    return ast;
+  if (args->length < 2)
+    return ast;
 
-  GLMSAST* a = glms_eval(eval, args->items[0], stack);
-  GLMSAST* b = glms_eval(eval, args->items[1], stack);
-
+  GLMSAST *a = glms_eval(eval, args->items[0], stack);
+  GLMSAST *b = glms_eval(eval, args->items[1], stack);
 
   float ax = glms_ast_get_number_by_key(a, "x");
   float ay = glms_ast_get_number_by_key(a, "y");
   float az = glms_ast_get_number_by_key(a, "z");
 
-
   float bx = glms_ast_get_number_by_key(b, "x");
   float by = glms_ast_get_number_by_key(b, "y");
   float bz = glms_ast_get_number_by_key(b, "z");
-
 
   float dot_x = ax * bx;
   float dot_y = ay * by;
@@ -60,12 +59,14 @@ GLMSAST *glms_fptr_dot(GLMSEval *eval, GLMSAST *ast,
   return glms_env_new_ast_number(eval->env, r);
 }
 
-GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast,
-                                GLMSASTList *args, GLMSStack *stack) {
-  if (!args) return ast;
-  if (args->length <= 0) return ast;
+GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                          GLMSStack *stack) {
+  if (!args)
+    return ast;
+  if (args->length <= 0)
+    return ast;
 
-  GLMSAST* value = glms_eval(eval, args->items[0], stack);
+  GLMSAST *value = glms_eval(eval, args->items[0], stack);
 
   float x = glms_ast_get_number_by_key(value, "x");
   float y = glms_ast_get_number_by_key(value, "y");
@@ -76,7 +77,7 @@ GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast,
   return glms_env_new_ast_number(eval->env, r);
 }
 
-void glms_builtin_init(GLMSEnv* env) {
+void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dot", glms_fptr_dot);
   glms_env_register_function(env, "length", glms_fptr_length);

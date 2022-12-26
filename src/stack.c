@@ -1,13 +1,14 @@
-#include <glms/stack.h>
 #include <glms/macros.h>
+#include <glms/stack.h>
 
-
-
-int glms_stack_init(GLMSStack* stack) {
-  if (!stack) return 0;
-  if (stack->initialized) return 1;
+int glms_stack_init(GLMSStack *stack) {
+  if (!stack)
+    return 0;
+  if (stack->initialized)
+    return 1;
   stack->initialized = true;
-  hashy_map_init_v2(&stack->locals, (HashyMapConfig){ .remember_keys = true, .capacity = 256 });
+  hashy_map_init_v2(&stack->locals,
+                    (HashyMapConfig){.remember_keys = true, .capacity = 256});
   glms_GLMSAST_list_init(&stack->list);
   stack->names_length = 0;
   stack->return_flag = false;
@@ -16,9 +17,11 @@ int glms_stack_init(GLMSStack* stack) {
   return 1;
 }
 
-GLMSAST* glms_stack_push(GLMSStack* stack, const char* name, GLMSAST* ast) {
-  if (!stack || !name || !ast) return 0;
-  if (!stack->initialized) GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
+GLMSAST *glms_stack_push(GLMSStack *stack, const char *name, GLMSAST *ast) {
+  if (!stack || !name || !ast)
+    return 0;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
   if (stack->names_length >= GLMS_STACK_CAPACITY) {
     GLMS_WARNING(stderr, "Stack Stackoverflow: %d\n", stack->names_length);
@@ -32,19 +35,24 @@ GLMSAST* glms_stack_push(GLMSStack* stack, const char* name, GLMSAST* ast) {
 
   return ast;
 }
-GLMSAST* glms_stack_get(GLMSStack* stack, const char* name) {
-  if (!stack || !name) return 0;
-  if (!stack->initialized) GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
+GLMSAST *glms_stack_get(GLMSStack *stack, const char *name) {
+  if (!stack || !name)
+    return 0;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
   return hashy_map_get(&stack->locals, name);
 }
-GLMSAST* glms_stack_pop(GLMSStack* stack, const char* name) {
-  if (!stack || !name) return 0;
-  if (!stack->initialized) GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
+GLMSAST *glms_stack_pop(GLMSStack *stack, const char *name) {
+  if (!stack || !name)
+    return 0;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
-  GLMSAST* ast = glms_stack_get(stack, name);
+  GLMSAST *ast = glms_stack_get(stack, name);
 
-  if (!ast) return 0;
+  if (!ast)
+    return 0;
 
   hashy_map_unset(&stack->locals, name);
 
@@ -55,27 +63,30 @@ GLMSAST* glms_stack_pop(GLMSStack* stack, const char* name) {
   return ast;
 }
 
-void glms_stack_dump(GLMSStack* stack) {
-  if (!stack) return;
-  if (!stack->initialized) GLMS_WARNING_RETURN(,stderr, "stack not initialized.\n");
-
+void glms_stack_dump(GLMSStack *stack) {
+  if (!stack)
+    return;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(, stderr, "stack not initialized.\n");
 
   for (int i = 0; i < stack->names_length; i++) {
-    GLMSAST* ast = glms_stack_get(stack, stack->names[i]);
+    GLMSAST *ast = glms_stack_get(stack, stack->names[i]);
 
-    printf("%d (%s) => %s\n", i, stack->names[i], ast ? glms_ast_to_string(ast) : stack->names[i]);
-
+    printf("%d (%s) => %s\n", i, stack->names[i],
+           ast ? glms_ast_to_string(ast) : stack->names[i]);
   }
 }
 
-int glms_stack_copy(GLMSStack src, GLMSStack* dest) {
-  if (!dest) return 0;
-  if (!dest->initialized) glms_stack_init(dest);
-
+int glms_stack_copy(GLMSStack src, GLMSStack *dest) {
+  if (!dest)
+    return 0;
+  if (!dest->initialized)
+    glms_stack_init(dest);
 
   for (int i = 0; i < src.names_length; i++) {
-    GLMSAST* ast = glms_stack_get(&src, src.names[i]);
-    if (!ast) continue;
+    GLMSAST *ast = glms_stack_get(&src, src.names[i]);
+    if (!ast)
+      continue;
 
     glms_stack_push(dest, src.names[i], ast);
   }
@@ -86,10 +97,11 @@ int glms_stack_copy(GLMSStack src, GLMSStack* dest) {
   return 1;
 }
 
-int glms_stack_clear(GLMSStack* stack) {
-  if (!stack) return 0;
-  if (!stack->initialized) GLMS_WARNING_RETURN(0,stderr, "stack not initialized.\n");
-
+int glms_stack_clear(GLMSStack *stack) {
+  if (!stack)
+    return 0;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
   hashy_map_clear(&stack->locals, false);
   glms_GLMSAST_list_clear(&stack->list);

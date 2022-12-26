@@ -1,8 +1,8 @@
+#include <glms/io.h>
+#include <glms/macros.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <glms/macros.h>
-#include <glms/io.h>
 
 bool glms_file_exists(const char *path) { return access(path, F_OK) == 0; }
 
