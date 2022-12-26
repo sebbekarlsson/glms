@@ -13,6 +13,12 @@ GLMSAST *glms_fptr_dot(GLMSEval *eval, GLMSAST *ast,
                              GLMSASTList *args, GLMSStack *stack);
 
 GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast,
+                          GLMSASTList *args, GLMSStack *stack);
+
+GLMSAST *glms_fptr_cos(GLMSEval *eval, GLMSAST *ast,
+                       GLMSASTList *args, GLMSStack *stack);
+
+GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast,
                                GLMSASTList *args, GLMSStack *stack);
 
 #endif

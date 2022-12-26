@@ -2,6 +2,7 @@
 #include <glms/glms.h>
 #include <glms/io.h>
 #include <glms/macros.h>
+#include <math.h>
 
 #define GLMS_ASSERT(expr)                                                      \
   {                                                                            \
@@ -203,6 +204,27 @@ static void test_sample_vec() {
   GLMS_TEST_END();
 }
 
+static void test_sample_cos_sin() {
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST *ast = glms_exec_file(&env, "test/samples/cos_sin.gs");
+  GLMS_ASSERT(ast != 0);
+
+  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMS_ASSERT(x != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
+  printf("%12.6f\n", x->as.number.value);
+  GLMS_ASSERT(fabsf(GLMSAST_VALUE(x) - (-0.029200f)) <= 0.00001f);
+
+  GLMSAST *y = glms_eval_lookup(&env.eval, "y", &env.stack);
+  GLMS_ASSERT(y != 0);
+  GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
+  printf("%12.6f\n", y->as.number.value);
+  GLMS_ASSERT(fabsf(GLMSAST_VALUE(y) - (0.999574f)) <= 0.00001f);
+
+  GLMS_TEST_END();
+}
+
 int main(int argc, char *argv[]) {
   test_sample_var();
   test_sample_func();
@@ -216,5 +238,6 @@ int main(int argc, char *argv[]) {
   test_sample_while();
   test_sample_for();
   test_sample_vec();
+  test_sample_cos_sin();
   return 0;
 }

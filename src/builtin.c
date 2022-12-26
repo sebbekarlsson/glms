@@ -77,6 +77,29 @@ GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   return glms_env_new_ast_number(eval->env, r);
 }
 
+GLMSAST *glms_fptr_cos(GLMSEval *eval, GLMSAST *ast,
+                       GLMSASTList *args, GLMSStack *stack) {
+
+  if (args->length <= 0)
+    return ast;
+
+  GLMSAST *value = glms_eval(eval, args->items[0], stack);
+  float v = GLMSAST_VALUE(value);
+
+  return glms_env_new_ast_number(eval->env, cosf(v));
+}
+
+GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast,
+                       GLMSASTList *args, GLMSStack *stack) {
+  if (args->length <= 0)
+    return ast;
+
+  GLMSAST *value = glms_eval(eval, args->items[0], stack);
+  float v = GLMSAST_VALUE(value);
+
+  return glms_env_new_ast_number(eval->env, sinf(v));
+}
+
 
 void glms_struct_vec2(GLMSEnv *env) {
   glms_env_register_struct(env, "vec2", (GLMSAST*[]){
@@ -106,6 +129,8 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dot", glms_fptr_dot);
   glms_env_register_function(env, "length", glms_fptr_length);
+  glms_env_register_function(env, "cos", glms_fptr_cos);
+  glms_env_register_function(env, "sin", glms_fptr_sin);
   glms_struct_vec2(env);
   glms_struct_vec3(env);
   glms_struct_vec4(env);
