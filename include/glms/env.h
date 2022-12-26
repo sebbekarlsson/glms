@@ -40,13 +40,20 @@ int glms_env_init(
 
 GLMSAST* glms_env_new_ast(GLMSEnv* env, GLMSASTType type);
 
+GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast);
+
 GLMSAST* glms_env_new_ast_number(GLMSEnv* env, float v);
 
 GLMSAST* glms_env_new_ast_string(GLMSEnv* env, const char* value);
 
+GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name);
+
 GLMSAST* glms_env_exec(GLMSEnv* env);
 
 GLMSAST* glms_env_register_function(GLMSEnv* env, const char* name, GLMSFPTR fptr);
+
+GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
+                                  GLMSAST** fields, int fields_length);
 
 GLMSAST* glms_env_lookup_function(GLMSEnv* env, const char* name);
 

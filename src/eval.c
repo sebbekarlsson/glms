@@ -154,8 +154,49 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     func = ast->as.call.func;
   }
 
-  if (func->type != GLMS_AST_TYPE_FUNC)
+
+
+
+
+  // constructor
+  if (func->type == GLMS_AST_TYPE_STRUCT) {
+    GLMSAST *copied = glms_ast_copy(*func, eval->env);
+
+    GLMSStack tmp_stack = {0};
+    glms_stack_init(&tmp_stack);
+    glms_stack_copy(*stack, &tmp_stack);
+
+    if (ast->children != 0 && func->props.initialized) {
+        HashyIterator it = {0};
+
+        int64_t i = 0;
+        while (hashy_map_iterate(&func->props, &it)) {
+          if (!it.bucket->key)
+              continue;
+            if (!it.bucket->value)
+              continue;
+
+            const char *key = it.bucket->key;
+            GLMSAST *value = glms_eval(eval, (GLMSAST *)it.bucket->value, &tmp_stack);
+
+          GLMSAST *arg_value = glms_eval(eval, ast->children->items[i], &tmp_stack);
+          glms_ast_object_set_property(copied, key, arg_value);
+          i++;
+
+          if (i >= ast->children->length) break;
+        }
+    }
+
+
+    GLMSAST* result = glms_eval(eval, copied, stack);
+    glms_stack_clear(&tmp_stack);
+    return result;
+  }
+
+  if (func->type != GLMS_AST_TYPE_FUNC) {
+    GLMS_WARNING_RETURN(ast, stderr, "`%s` is not callable.\n", GLMS_AST_TYPE_STR[func->type]);
     func = 0;
+  }
 
   if (!func)
     GLMS_WARNING_RETURN(ast, stderr, "No such function `%s`\n", fname);

@@ -2,6 +2,7 @@
 #define GLMS_TOKEN_H
 #include <glms/string_view.h>
 #include <glms/macros.h>
+#include <stdbool.h>
 
 #define GLMS_FOREACH_TOKEN_TYPE(TOK)         \
   TOK(GLMS_TOKEN_TYPE_NONE)                  \
@@ -64,4 +65,5 @@ typedef struct {
   char c;
 } GLMSToken;
 
+bool glms_token_type_is_flag(GLMSTokenType type);
 #endif

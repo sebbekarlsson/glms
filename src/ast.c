@@ -54,8 +54,15 @@ const char *glms_ast_get_name(GLMSAST *ast) {
   case GLMS_AST_TYPE_BINOP: {
     return glms_ast_get_name(ast->as.binop.left);
   }; break;
-  case GLMS_AST_TYPE_ID: {
+    case GLMS_AST_TYPE_ID: {
+
+    if (ast->as.id.heap != 0) {
+      return ast->as.id.heap;
+    }
+
     const char *value = glms_string_view_get_value(&ast->as.id.value);
+
+
 
     if (!value) {
       value = GLMS_TOKEN_TYPE_STR[ast->as.id.op];

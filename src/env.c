@@ -19,10 +19,12 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
 
   env->undefined = glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED);
 
+  glms_eval_init(&env->eval, env);
+  glms_stack_init(&env->stack);
+  glms_builtin_init(env);
   glms_lexer_init(&env->lexer, env->source);
   glms_parser_init(&env->parser, env);
-  glms_eval_init(&env->eval, env);
-  glms_builtin_init(env);
+
 
   return 1;
 }
@@ -47,6 +49,21 @@ GLMSAST *glms_env_new_ast_number(GLMSEnv *env, float v) {
   return ast;
 }
 
+GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast) {
+  GLMSAST *new_ast = glms_env_new_ast(env, ast.type);
+  *new_ast = ast;
+  return new_ast;
+}
+
+GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name) {
+  GLMSAST *ast = glms_env_new_ast(env, GLMS_AST_TYPE_ID);
+  ast->as.id.heap = strdup(name);
+  GLMSAST* flag = glms_env_new_ast(env, GLMS_AST_TYPE_ID);
+  flag->as.id.op = data_type;
+  glms_ast_push_flag(ast, flag);
+  return ast;
+}
+
 GLMSAST *glms_env_new_ast_string(GLMSEnv *env, const char *value) {
   GLMSAST *ast = glms_env_new_ast(env, GLMS_AST_TYPE_STRING);
 
@@ -64,7 +81,6 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
   GLMSAST *root = glms_parser_parse(&env->parser);
-  glms_stack_init(&env->stack);
   root = glms_eval(&env->eval, root, &env->stack);
   return root;
 }
@@ -81,6 +97,36 @@ GLMSAST *glms_env_register_function(GLMSEnv *env, const char *name,
   hashy_map_set(&env->globals, name, func);
 
   return func;
+}
+
+GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
+                                  GLMSAST** fields, int fields_length) {
+  if (!env || !name || !fields)
+    return 0;
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+  GLMSAST *tdef = glms_env_new_ast(env, GLMS_AST_TYPE_TYPEDEF);
+  GLMSAST *stru = glms_env_new_ast(env, GLMS_AST_TYPE_STRUCT);
+  tdef->as.tdef.factor = stru;
+  tdef->as.tdef.id = glms_env_new_ast(env, GLMS_AST_TYPE_ID);
+  tdef->as.tdef.id->as.id.heap = strdup(name);
+
+  for (int i = 0; i < fields_length; i++) {
+    GLMSAST* field = fields[i];
+    const char* field_name = glms_ast_get_name(field);
+    if (!field) {
+      GLMS_WARNING(stderr, "Expected a name to exist.\n");
+      continue;
+    }
+
+    glms_ast_object_set_property(stru, field_name, field);
+  }
+
+
+  hashy_map_set(&env->globals, name, stru);
+
+  return tdef;
 }
 
 GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name) {

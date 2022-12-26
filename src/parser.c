@@ -13,6 +13,15 @@ int glms_parser_init(GLMSParser *parser, GLMSEnv *env) {
   glms_lexer_next(&parser->env->lexer, &parser->token);
   hashy_map_init(&parser->symbols, 256);
 
+  const char *tokname = glms_string_view_get_value(&parser->token.value);
+  GLMSAST *known = glms_parser_lookup(parser, tokname);
+
+  if (known && (known->type == GLMS_AST_TYPE_TYPEDEF ||
+                known->type == GLMS_AST_TYPE_STRUCT)) {
+
+    parser->token.type = GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE;
+  }
+
   return 1;
 }
 
@@ -30,10 +39,12 @@ int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
   if (!glms_lexer_next(&parser->env->lexer, &parser->token))
     return 0;
 
-  GLMSAST *known = glms_parser_lookup(
-      parser, glms_string_view_get_value(&parser->token.value));
+  const char *tokname = glms_string_view_get_value(&parser->token.value);
+  GLMSAST *known = glms_parser_lookup(parser, tokname);
 
-  if (known && known->type == GLMS_AST_TYPE_TYPEDEF) {
+  if (known && (known->type == GLMS_AST_TYPE_TYPEDEF ||
+                known->type == GLMS_AST_TYPE_STRUCT)) {
+
     parser->token.type = GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE;
   }
 
@@ -61,11 +72,11 @@ static GLMSAST *glms_parser_parse_eof(GLMSParser *parser) {
 GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
   GLMSASTList *flags = 0;
 
-  if (parser->token.type != GLMS_TOKEN_TYPE_ID) {
+  if (glms_token_type_is_flag(parser->token.type)) {
     flags = NEW(GLMSASTList);
     glms_GLMSAST_list_init(flags);
 
-    while (parser->token.type != GLMS_TOKEN_TYPE_ID) {
+    while (glms_token_type_is_flag(parser->token.type)) {
       GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
       ast->as.id.op = parser->token.type;
       ast->as.id.value = parser->token.value;
@@ -74,10 +85,21 @@ GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
     }
   }
 
-  GLMSAST *id_ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
-  id_ast->as.id.value = parser->token.value;
-  id_ast->flags = flags;
-  glms_parser_eat(parser, parser->token.type);
+  GLMSAST *id_ast = 0;
+
+  if (parser->token.type == GLMS_TOKEN_TYPE_ID) {
+    id_ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
+    id_ast->as.id.value = parser->token.value;
+    id_ast->flags = flags;
+    glms_parser_eat(parser, parser->token.type);
+  } else if (flags && flags->length == 1) {
+    id_ast = flags->items[0];
+    glms_GLMSAST_list_clear(flags);
+    free(flags);
+    flags = 0;
+  } else {
+    return glms_parser_error(parser);
+  }
 
   if (skip_next)
     return id_ast;
@@ -614,6 +636,11 @@ bool glms_parser_peek_check_arrow_function(GLMSParser *parser) {
 GLMSAST *glms_parser_lookup(GLMSParser *parser, const char *key) {
   if (!key || !parser)
     return 0;
+
+  GLMSAST *g = (GLMSAST *)hashy_map_get(&parser->env->globals, key);
+
+  if (g)
+    return g;
 
   return (GLMSAST *)hashy_map_get(&parser->symbols, key);
 }

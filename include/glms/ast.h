@@ -58,6 +58,7 @@ typedef struct GLMS_AST_STRUCT {
     struct {
       GLMSStringView value;
       GLMSTokenType op;
+      char* heap;
     } id;
 
     struct {

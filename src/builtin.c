@@ -77,8 +77,36 @@ GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   return glms_env_new_ast_number(eval->env, r);
 }
 
+
+void glms_struct_vec2(GLMSEnv *env) {
+  glms_env_register_struct(env, "vec2", (GLMSAST*[]){
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x"),
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y")
+  }, 2);
+}
+
+void glms_struct_vec3(GLMSEnv *env) {
+  glms_env_register_struct(env, "vec3", (GLMSAST*[]){
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x"),
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y"),
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "z")
+  }, 3);
+}
+
+void glms_struct_vec4(GLMSEnv *env) {
+  glms_env_register_struct(env, "vec4", (GLMSAST*[]){
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x"),
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y"),
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "z"),
+    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "w")
+  }, 4);
+}
+
 void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dot", glms_fptr_dot);
   glms_env_register_function(env, "length", glms_fptr_length);
+  glms_struct_vec2(env);
+  glms_struct_vec3(env);
+  glms_struct_vec4(env);
 }
