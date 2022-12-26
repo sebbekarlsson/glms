@@ -1,21 +1,21 @@
-#include <jscript/builtin.h>
+#include <glms/builtin.h>
 #include <math.h>
 
-JSCRIPTAST *jscript_fptr_print(JSCRIPTEval *eval, JSCRIPTAST *ast,
-                               JSCRIPTASTList *args, JSCRIPTStack *stack) {
+GLMSAST *glms_fptr_print(GLMSEval *eval, GLMSAST *ast,
+                               GLMSASTList *args, GLMSStack *stack) {
   if (!args)
     return ast;
 
   for (int64_t i = 0; i < args->length; i++) {
-    JSCRIPTAST *arg = jscript_eval(eval, args->items[i], stack);
+    GLMSAST *arg = glms_eval(eval, args->items[i], stack);
     if (!arg)
       continue;
     switch (arg->type) {
-    case JSCRIPT_AST_TYPE_NUMBER: {
+    case GLMS_AST_TYPE_NUMBER: {
       printf("%1.6f\n", arg->as.number.value);
     }; break;
-    case JSCRIPT_AST_TYPE_STRING: {
-      const char *value = jscript_ast_get_string_value(arg);
+    case GLMS_AST_TYPE_STRING: {
+      const char *value = glms_ast_get_string_value(arg);
 
       if (value) {
         printf("%s\n", value);
@@ -24,7 +24,7 @@ JSCRIPTAST *jscript_fptr_print(JSCRIPTEval *eval, JSCRIPTAST *ast,
       }
     }; break;
     default: {
-      printf("%p => %s\n", arg, jscript_ast_to_string(arg));
+      printf("%p => %s\n", arg, glms_ast_to_string(arg));
     }; break;
     }
   }
@@ -32,24 +32,24 @@ JSCRIPTAST *jscript_fptr_print(JSCRIPTEval *eval, JSCRIPTAST *ast,
   return ast;
 }
 
-JSCRIPTAST *jscript_fptr_dot(JSCRIPTEval *eval, JSCRIPTAST *ast,
-                             JSCRIPTASTList *args, JSCRIPTStack *stack) {
+GLMSAST *glms_fptr_dot(GLMSEval *eval, GLMSAST *ast,
+                             GLMSASTList *args, GLMSStack *stack) {
 
   if (!args) return ast;
   if (args->length < 2) return ast;
 
-  JSCRIPTAST* a = jscript_eval(eval, args->items[0], stack);
-  JSCRIPTAST* b = jscript_eval(eval, args->items[1], stack);
+  GLMSAST* a = glms_eval(eval, args->items[0], stack);
+  GLMSAST* b = glms_eval(eval, args->items[1], stack);
 
 
-  float ax = jscript_ast_get_number_by_key(a, "x");
-  float ay = jscript_ast_get_number_by_key(a, "y");
-  float az = jscript_ast_get_number_by_key(a, "z");
+  float ax = glms_ast_get_number_by_key(a, "x");
+  float ay = glms_ast_get_number_by_key(a, "y");
+  float az = glms_ast_get_number_by_key(a, "z");
 
 
-  float bx = jscript_ast_get_number_by_key(b, "x");
-  float by = jscript_ast_get_number_by_key(b, "y");
-  float bz = jscript_ast_get_number_by_key(b, "z");
+  float bx = glms_ast_get_number_by_key(b, "x");
+  float by = glms_ast_get_number_by_key(b, "y");
+  float bz = glms_ast_get_number_by_key(b, "z");
 
 
   float dot_x = ax * bx;
@@ -57,27 +57,27 @@ JSCRIPTAST *jscript_fptr_dot(JSCRIPTEval *eval, JSCRIPTAST *ast,
   float dot_z = az * bz;
   float r = dot_x + dot_y + dot_z;
 
-  return jscript_env_new_ast_number(eval->env, r);
+  return glms_env_new_ast_number(eval->env, r);
 }
 
-JSCRIPTAST *jscript_fptr_length(JSCRIPTEval *eval, JSCRIPTAST *ast,
-                                JSCRIPTASTList *args, JSCRIPTStack *stack) {
+GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast,
+                                GLMSASTList *args, GLMSStack *stack) {
   if (!args) return ast;
   if (args->length <= 0) return ast;
 
-  JSCRIPTAST* value = jscript_eval(eval, args->items[0], stack);
+  GLMSAST* value = glms_eval(eval, args->items[0], stack);
 
-  float x = jscript_ast_get_number_by_key(value, "x");
-  float y = jscript_ast_get_number_by_key(value, "y");
-  float z = jscript_ast_get_number_by_key(value, "z");
+  float x = glms_ast_get_number_by_key(value, "x");
+  float y = glms_ast_get_number_by_key(value, "y");
+  float z = glms_ast_get_number_by_key(value, "z");
 
   float r = sqrtf(powf(x, 2.0f) + powf(y, 2.0f) + powf(z, 2.0f));
 
-  return jscript_env_new_ast_number(eval->env, r);
+  return glms_env_new_ast_number(eval->env, r);
 }
 
-void jscript_builtin_init(JSCRIPTEnv* env) {
-  jscript_env_register_function(env, "print", jscript_fptr_print);
-  jscript_env_register_function(env, "dot", jscript_fptr_dot);
-  jscript_env_register_function(env, "length", jscript_fptr_length);
+void glms_builtin_init(GLMSEnv* env) {
+  glms_env_register_function(env, "print", glms_fptr_print);
+  glms_env_register_function(env, "dot", glms_fptr_dot);
+  glms_env_register_function(env, "length", glms_fptr_length);
 }

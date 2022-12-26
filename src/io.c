@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <jscript/macros.h>
-#include <jscript/io.h>
+#include <glms/macros.h>
+#include <glms/io.h>
 
-bool jscript_file_exists(const char *path) { return access(path, F_OK) == 0; }
+bool glms_file_exists(const char *path) { return access(path, F_OK) == 0; }
 
-char *jscript_get_file_contents(const char *filepath) {
-  if (!jscript_file_exists(filepath)) {
+char *glms_get_file_contents(const char *filepath) {
+  if (!glms_file_exists(filepath)) {
     fprintf(stderr, "Error: No such file %s\n", filepath);
     return 0;
   }

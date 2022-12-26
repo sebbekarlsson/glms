@@ -8,4 +8,7 @@ const x = {
   }
 };
 
+
+x.hello = 33;
+const y = x.hello;
 print(x.nested.other.name);

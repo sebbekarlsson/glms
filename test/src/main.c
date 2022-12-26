@@ -1,158 +1,161 @@
-#include <jscript/jscript.h>
-#include <jscript/io.h>
+#include <glms/glms.h>
+#include <glms/io.h>
 #include <assert.h>
-#include <jscript/macros.h>
+#include <glms/macros.h>
 
-#define JSCRIPT_ASSERT(expr) {\
-  if (!(expr)) { JSCRIPT_WARNING(stderr, "%s failed.\n", #expr);  } \
+#define GLMS_ASSERT(expr) {\
+  if (!(expr)) { GLMS_WARNING(stderr, "%s failed.\n", #expr);  } \
   assert(expr);\
-  printf(JSCRIPT_CLI_GREEN "%s: OK.\n" JSCRIPT_CLI_RESET, #expr);\
+  printf(GLMS_CLI_GREEN "%s: OK.\n" GLMS_CLI_RESET, #expr);\
 }
 
-#define JSCRIPT_TEST_BEGIN() printf("*============= %s =============*\n", __func__)
+#define GLMS_TEST_BEGIN() printf("*============= %s =============*\n", __func__)
 
-static JSCRIPTAST* jscript_exec_file(JSCRIPTEnv* env, const char* path) {
-  char* source = jscript_get_file_contents(path);
+static GLMSAST* glms_exec_file(GLMSEnv* env, const char* path) {
+  char* source = glms_get_file_contents(path);
   if (!source) return 0;
-  jscript_env_init(env, source, (JSCRIPTConfig){});
-  return jscript_env_exec(env);
+  glms_env_init(env, source, (GLMSConfig){});
+  return glms_env_exec(env);
 }
 
 static void test_sample_var() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/var.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/var.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* x = glms_eval_lookup(&env.eval, "x", &env.stack);
 
-  JSCRIPT_ASSERT(x != 0);
+  GLMS_ASSERT(x != 0);
 }
 
 static void test_sample_func() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/func.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/func.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack);
-  JSCRIPT_ASSERT(x == 0);
-  JSCRIPTAST* f = jscript_eval_lookup(&env.eval, "hello", &env.stack);
-  JSCRIPT_ASSERT(f != 0);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMS_ASSERT(x == 0);
+  GLMSAST* f = glms_eval_lookup(&env.eval, "hello", &env.stack);
+  GLMS_ASSERT(f != 0);
 }
 
 
 static void test_sample_arrow_func() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/arrow_func.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/arrow_func.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* f = jscript_eval_lookup(&env.eval, "hello", &env.stack);
-  JSCRIPT_ASSERT(f != 0);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* f = glms_eval_lookup(&env.eval, "hello", &env.stack);
+  GLMS_ASSERT(f != 0);
 }
 
 static void test_sample_array() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/array.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/array.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
-  JSCRIPTAST* arr = jscript_eval_lookup(&env.eval, "arr", &env.stack); JSCRIPT_ASSERT(arr != 0);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* x = glms_eval_lookup(&env.eval, "x", &env.stack); GLMS_ASSERT(x != 0);
+  GLMSAST* arr = glms_eval_lookup(&env.eval, "arr", &env.stack); GLMS_ASSERT(arr != 0);
 
-  JSCRIPT_ASSERT(arr->type == JSCRIPT_AST_TYPE_ARRAY);
+  GLMS_ASSERT(arr->type == GLMS_AST_TYPE_ARRAY);
 }
 
 static void test_sample_if() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/if.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/if.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
-  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_NUMBER);
-  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(x) == 1);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* x = glms_eval_lookup(&env.eval, "x", &env.stack); GLMS_ASSERT(x != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(GLMSAST_VALUE(x) == 1);
 }
 
 static void test_sample_object() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/object.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/object.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
-  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_OBJECT);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* x = glms_eval_lookup(&env.eval, "x", &env.stack); GLMS_ASSERT(x != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_OBJECT);
 
+  GLMSAST* y = glms_eval_lookup(&env.eval, "y", &env.stack); GLMS_ASSERT(y != 0);
+   GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(y->as.number.value == 33);
 
-  JSCRIPTAST* nested = jscript_ast_access_by_key(x, "nested", &env);
+  GLMSAST* nested = glms_ast_access_by_key(x, "nested", &env);
 
-  JSCRIPT_ASSERT(nested != 0);
-  JSCRIPT_ASSERT(nested->type == JSCRIPT_AST_TYPE_OBJECT);
+  GLMS_ASSERT(nested != 0);
+  GLMS_ASSERT(nested->type == GLMS_AST_TYPE_OBJECT);
 
-  JSCRIPTAST* other = jscript_ast_access_by_key(nested, "other", &env);
-  JSCRIPT_ASSERT(other != 0);
-  JSCRIPT_ASSERT(other->type == JSCRIPT_AST_TYPE_OBJECT);
+  GLMSAST* other = glms_ast_access_by_key(nested, "other", &env);
+  GLMS_ASSERT(other != 0);
+  GLMS_ASSERT(other->type == GLMS_AST_TYPE_OBJECT);
 
-  JSCRIPTAST* name = jscript_ast_access_by_key(other, "name", &env);
-  JSCRIPT_ASSERT(name != 0);
-  JSCRIPT_ASSERT(name->type == JSCRIPT_AST_TYPE_STRING);
+  GLMSAST* name = glms_ast_access_by_key(other, "name", &env);
+  GLMS_ASSERT(name != 0);
+  GLMS_ASSERT(name->type == GLMS_AST_TYPE_STRING);
 }
 
 
 static void test_sample_varfunc() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/varfunc.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/varfunc.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* w = jscript_eval_lookup(&env.eval, "w", &env.stack); JSCRIPT_ASSERT(w != 0);
-  JSCRIPT_ASSERT(w->type == JSCRIPT_AST_TYPE_NUMBER);
-  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(w) == 44);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* w = glms_eval_lookup(&env.eval, "w", &env.stack); GLMS_ASSERT(w != 0);
+  GLMS_ASSERT(w->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(GLMSAST_VALUE(w) == 44);
 }
 
 static void test_sample_add_add() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/add_add.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/add_add.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
-  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_NUMBER);
-  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(x) == 1);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* x = glms_eval_lookup(&env.eval, "x", &env.stack); GLMS_ASSERT(x != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(GLMSAST_VALUE(x) == 1);
 }
 
 static void test_sample_sub_sub() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/sub_sub.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/sub_sub.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* x = jscript_eval_lookup(&env.eval, "x", &env.stack); JSCRIPT_ASSERT(x != 0);
-  JSCRIPT_ASSERT(x->type == JSCRIPT_AST_TYPE_NUMBER);
-  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(x) == 2);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* x = glms_eval_lookup(&env.eval, "x", &env.stack); GLMS_ASSERT(x != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(GLMSAST_VALUE(x) == 2);
 }
 
 static void test_sample_while() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/while.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/while.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* y = jscript_eval_lookup(&env.eval, "y", &env.stack); JSCRIPT_ASSERT(y != 0);
-  JSCRIPT_ASSERT(y->type == JSCRIPT_AST_TYPE_NUMBER);
-  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(y) == 500);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* y = glms_eval_lookup(&env.eval, "y", &env.stack); GLMS_ASSERT(y != 0);
+  GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(GLMSAST_VALUE(y) == 500);
 }
 
 static void test_sample_for() {
-  JSCRIPT_TEST_BEGIN();
-  JSCRIPTEnv env = {0};
-  JSCRIPTAST* ast = jscript_exec_file(&env, "test/samples/for.js");
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST* ast = glms_exec_file(&env, "test/samples/for.gs");
 
-  JSCRIPT_ASSERT(ast != 0);
-  JSCRIPTAST* y = jscript_eval_lookup(&env.eval, "y", &env.stack); JSCRIPT_ASSERT(y != 0);
-  JSCRIPT_ASSERT(y->type == JSCRIPT_AST_TYPE_NUMBER);
-  JSCRIPT_ASSERT(JSCRIPTAST_VALUE(y) == 16);
+  GLMS_ASSERT(ast != 0);
+  GLMSAST* y = glms_eval_lookup(&env.eval, "y", &env.stack); GLMS_ASSERT(y != 0);
+  GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(GLMSAST_VALUE(y) == 16);
 }
 
 int main(int argc, char* argv[]) {

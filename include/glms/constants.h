@@ -1,0 +1,6 @@
+#ifndef GLMS_CONSTANTS_H
+#define GLMS_CONSTANTS_H
+
+#define GLMS_MEMO_AST_PAGE_CAPACITY 256
+
+#endif

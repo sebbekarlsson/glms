@@ -1,5 +1,5 @@
-#ifndef JSCRIPT_MACROS_H
-#define JSCRIPT_MACROS_H
+#ifndef GLMS_MACROS_H
+#define GLMS_MACROS_H
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -24,30 +24,30 @@
 #endif
 
 
-#define JSCRIPT_CLI_RED "\x1B[31m"
-#define JSCRIPT_CLI_GREEN "\x1B[32m"
-#define JSCRIPT_CLI_YELLLOW "\x1B[33m"
-#define JSCRIPT_CLI_BLUE "\x1B[34m"
-#define JSCRIPT_CLI_MAGENTA "\x1B[35m"
-#define JSCRIPT_CLI_CYAN "\x1B[36m"
-#define JSCRIPT_CLI_WHITE "\x1B[37m"
-#define JSCRIPT_CLI_RESET "\x1B[0m"
+#define GLMS_CLI_RED "\x1B[31m"
+#define GLMS_CLI_GREEN "\x1B[32m"
+#define GLMS_CLI_YELLLOW "\x1B[33m"
+#define GLMS_CLI_BLUE "\x1B[34m"
+#define GLMS_CLI_MAGENTA "\x1B[35m"
+#define GLMS_CLI_CYAN "\x1B[36m"
+#define GLMS_CLI_WHITE "\x1B[37m"
+#define GLMS_CLI_RESET "\x1B[0m"
 
-#define JSCRIPT_WARNING(...)                                                      \
+#define GLMS_WARNING(...)                                                      \
   {                                                                            \
-    printf(JSCRIPT_CLI_RED "(JSCRIPT)(Warning)(%s): \n" JSCRIPT_CLI_RESET, __func__);   \
+    printf(GLMS_CLI_RED "(GLMS)(Warning)(%s): \n" GLMS_CLI_RESET, __func__);   \
     fprintf(__VA_ARGS__);                                                      \
   }
-#define JSCRIPT_WARNING_RETURN(ret, ...)                                          \
+#define GLMS_WARNING_RETURN(ret, ...)                                          \
   {                                                                            \
     printf("\n****\n");                                                        \
-    printf(JSCRIPT_CLI_RED "(JSCRIPT)(Warning)(%s): \n" JSCRIPT_CLI_RESET, __func__);   \
+    printf(GLMS_CLI_RED "(GLMS)(Warning)(%s): \n" GLMS_CLI_RESET, __func__);   \
     fprintf(__VA_ARGS__);                                                      \
     printf("\n****\n");                                                        \
     return ret;                                                                \
   }
 
-#define JSCRIPT_GENERATE_ENUM(ENUM) ENUM,
-#define JSCRIPT_GENERATE_STRING(STRING) #STRING,
+#define GLMS_GENERATE_ENUM(ENUM) ENUM,
+#define GLMS_GENERATE_STRING(STRING) #STRING,
 
 #endif

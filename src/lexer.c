@@ -1,12 +1,39 @@
-#include <jscript/lexer.h>
-#include <jscript/macros.h>
+#include <glms/lexer.h>
+#include <glms/macros.h>
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
 
 
-int jscript_lexer_init(
-  JSCRIPTLexer* lexer,
+typedef struct {
+  const char* pattern;
+  GLMSTokenType type;
+} GLMSTokenMap;
+
+#define GLMSTOKM(p, t) (GLMSTokenMap){ .pattern = p, .type = t }
+
+#define GLMS_LEXER_TOKEN_MAP_LEN 14
+
+const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
+  GLMSTOKM("function", GLMS_TOKEN_TYPE_SPECIAL_FUNCTION),
+  GLMSTOKM("return", GLMS_TOKEN_TYPE_SPECIAL_RETURN),
+  GLMSTOKM("if", GLMS_TOKEN_TYPE_SPECIAL_IF),
+  GLMSTOKM("else", GLMS_TOKEN_TYPE_SPECIAL_ELSE),
+  GLMSTOKM("false", GLMS_TOKEN_TYPE_SPECIAL_FALSE),
+  GLMSTOKM("true", GLMS_TOKEN_TYPE_SPECIAL_TRUE),
+  GLMSTOKM("for", GLMS_TOKEN_TYPE_SPECIAL_FOR),
+  GLMSTOKM("while", GLMS_TOKEN_TYPE_SPECIAL_WHILE),
+  GLMSTOKM("string", GLMS_TOKEN_TYPE_SPECIAL_STRING),
+  GLMSTOKM("number", GLMS_TOKEN_TYPE_SPECIAL_NUMBER),
+  GLMSTOKM("struct", GLMS_TOKEN_TYPE_SPECIAL_STRUCT),
+  GLMSTOKM("let", GLMS_TOKEN_TYPE_SPECIAL_LET),
+  GLMSTOKM("const", GLMS_TOKEN_TYPE_SPECIAL_CONST),
+  GLMSTOKM("typedef", GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF)
+};
+
+
+int glms_lexer_init(
+  GLMSLexer* lexer,
   const char* source
 ) {
   if (!lexer || !source) return 0;
@@ -22,15 +49,15 @@ int jscript_lexer_init(
 }
 
 
-static char jscript_lexer_peek(JSCRIPTLexer* lexer, int i ) {
+static char glms_lexer_peek(GLMSLexer* lexer, int i ) {
   if ((lexer->i+i) >= lexer->length) return 0;
 
   return lexer->source[lexer->i+i];
 }
 
-#define JSCRIPT_LEXER_HAS_WHITESPACE (lexer->c == ' ' || lexer->c == '\t' || lexer->c == '\n' || lexer->c == 10 || lexer->c == 13)
+#define GLMS_LEXER_HAS_WHITESPACE (lexer->c == ' ' || lexer->c == '\t' || lexer->c == '\n' || lexer->c == 10 || lexer->c == 13)
 
-static int jscript_lexer_advance(JSCRIPTLexer* lexer) {
+static int glms_lexer_advance(GLMSLexer* lexer) {
   if (lexer->i >= lexer->length) return 0;
   if (lexer->c == 0) return 0;
   lexer->i += 1;
@@ -38,219 +65,212 @@ static int jscript_lexer_advance(JSCRIPTLexer* lexer) {
   return lexer->c != 0;
 }
 
-static int jscript_lexer_skip_whitespace(JSCRIPTLexer* lexer) {
-  while (lexer->c != 0 && JSCRIPT_LEXER_HAS_WHITESPACE) {
-    if (!jscript_lexer_advance(lexer)) return 0;
+static int glms_lexer_skip_whitespace(GLMSLexer* lexer) {
+  while (lexer->c != 0 && GLMS_LEXER_HAS_WHITESPACE) {
+    if (!glms_lexer_advance(lexer)) return 0;
   }
 
   return lexer->c != 0 && lexer->i < lexer->length;
 }
 
-static void jscript_lexer_parse_special_id(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
-  const char* value = jscript_string_view_get_value(&out->value);
+static void glms_lexer_parse_special_id(GLMSLexer* lexer, GLMSToken* out) {
+  const char* value = glms_string_view_get_value(&out->value);
 
-  JSCRIPTTokenType type = out->type;
+  GLMSTokenType type = out->type;
 
-  if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_FUNCTION) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_FUNCTION;
-  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_RETURN) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_RETURN;
-  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_IF) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_IF;
-  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_ELSE) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_ELSE;
-  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_FALSE) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE;
-  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_TRUE) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_TRUE;
-  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_FOR) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_FOR;
-  } else if (strcmp(value, JSCRIPT_LEXER_SPECIAL_SYMBOL_WHILE) == 0) {
-    type = JSCRIPT_TOKEN_TYPE_SPECIAL_WHILE;
+
+  for (int i = 0; i < GLMS_LEXER_TOKEN_MAP_LEN; i++) {
+    GLMSTokenMap m = GLMS_LEXER_TOKEN_MAP[i];
+
+    if (strcmp(value, m.pattern) == 0) {
+      type = m.type;
+      break;
+    }
   }
+
 
   out->type = type;
 }
 
-static int jscript_lexer_parse_id(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
+static int glms_lexer_parse_id(GLMSLexer* lexer, GLMSToken* out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
 
 
   while (isalnum(lexer->c) && lexer->c != 0) {
-    jscript_lexer_advance(lexer);
+    glms_lexer_advance(lexer);
     out->value.length++;
   }
 
-  out->type = JSCRIPT_TOKEN_TYPE_ID;
+  out->type = GLMS_TOKEN_TYPE_ID;
 
-  jscript_lexer_parse_special_id(lexer, out);
+  glms_lexer_parse_special_id(lexer, out);
 
   return 1;
 }
 
-static int jscript_lexer_parse_string(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
+static int glms_lexer_parse_string(GLMSLexer* lexer, GLMSToken* out) {
   out->value.length = 0;
-  jscript_lexer_advance(lexer);
+  glms_lexer_advance(lexer);
   out->value.ptr = &lexer->source[lexer->i];
 
 
   while (lexer->c != '"' && lexer->c != 0) {
-    jscript_lexer_advance(lexer);
+    glms_lexer_advance(lexer);
     out->value.length++;
   }
 
-  jscript_lexer_advance(lexer);
-  out->type = JSCRIPT_TOKEN_TYPE_STRING;
+  glms_lexer_advance(lexer);
+  out->type = GLMS_TOKEN_TYPE_STRING;
 
 
   return 1;
 }
 
-static int jscript_lexer_parse_number(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
+static int glms_lexer_parse_number(GLMSLexer* lexer, GLMSToken* out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
 
 
   while (isdigit(lexer->c) && lexer->c != 0) {
-    jscript_lexer_advance(lexer);
+    glms_lexer_advance(lexer);
     out->value.length++;
   }
 
   if (lexer->c == '.') {
     out->value.length++;
-    jscript_lexer_advance(lexer);
+    glms_lexer_advance(lexer);
 
     while (isdigit(lexer->c) && lexer->c != 0) {
-      jscript_lexer_advance(lexer);
+      glms_lexer_advance(lexer);
       out->value.length++;
     }
   }
 
-  out->type = JSCRIPT_TOKEN_TYPE_NUMBER;
+  out->type = GLMS_TOKEN_TYPE_NUMBER;
 
   return 1;
 }
 
-int jscript_lexer_next(JSCRIPTLexer* lexer, JSCRIPTToken* out) {
+int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
   if (!lexer || !out) return 0;
-  if (!lexer->initialized) JSCRIPT_WARNING_RETURN(0, stderr, "Lexer not initialized.\n");
+  if (!lexer->initialized) GLMS_WARNING_RETURN(0, stderr, "Lexer not initialized.\n");
   if (lexer->i >= lexer->length) return 0;
   if (lexer->c == 0) return 0;
 
   out->c = 0;
   out->value.ptr = 0;
   out->value.length = 0;
-  out->type=  JSCRIPT_TOKEN_TYPE_EOF;
+  out->type=  GLMS_TOKEN_TYPE_EOF;
 
-  while (JSCRIPT_LEXER_HAS_WHITESPACE) {
-    if (!jscript_lexer_skip_whitespace(lexer)) return 0;
+  while (GLMS_LEXER_HAS_WHITESPACE) {
+    if (!glms_lexer_skip_whitespace(lexer)) return 0;
   }
 
 
   switch (lexer->c) {
     case '{': {
-      out->type = JSCRIPT_TOKEN_TYPE_LBRACE;
+      out->type = GLMS_TOKEN_TYPE_LBRACE;
     } break;
     case '}': {
-      out->type = JSCRIPT_TOKEN_TYPE_RBRACE;
+      out->type = GLMS_TOKEN_TYPE_RBRACE;
     } break;
     case '[': {
-      out->type = JSCRIPT_TOKEN_TYPE_LBRACKET;
+      out->type = GLMS_TOKEN_TYPE_LBRACKET;
     } break;
     case ']': {
-      out->type = JSCRIPT_TOKEN_TYPE_RBRACKET;
+      out->type = GLMS_TOKEN_TYPE_RBRACKET;
     } break;
     case '(': {
-      out->type = JSCRIPT_TOKEN_TYPE_LPAREN;
+      out->type = GLMS_TOKEN_TYPE_LPAREN;
     } break;
     case ')': {
-      out->type = JSCRIPT_TOKEN_TYPE_RPAREN;
+      out->type = GLMS_TOKEN_TYPE_RPAREN;
     } break;
     case ';': {
-      out->type = JSCRIPT_TOKEN_TYPE_SEMI;
+      out->type = GLMS_TOKEN_TYPE_SEMI;
     } break;
     case ',': {
-      out->type = JSCRIPT_TOKEN_TYPE_COMMA;
+      out->type = GLMS_TOKEN_TYPE_COMMA;
     } break;
     case '.': {
-      out->type = JSCRIPT_TOKEN_TYPE_DOT;
+      out->type = GLMS_TOKEN_TYPE_DOT;
     } break;
     case ':': {
-      out->type = JSCRIPT_TOKEN_TYPE_COLON;
+      out->type = GLMS_TOKEN_TYPE_COLON;
     } break;
     case '+': {
-      out->type = JSCRIPT_TOKEN_TYPE_ADD;
+      out->type = GLMS_TOKEN_TYPE_ADD;
 
-      if (jscript_lexer_peek(lexer, 1) == '=') {
-        out->type = JSCRIPT_TOKEN_TYPE_ADD_EQUALS;
-        jscript_lexer_advance(lexer);
-      } else if (jscript_lexer_peek(lexer, 1) == '+') {
-        out->type = JSCRIPT_TOKEN_TYPE_ADD_ADD;
-        jscript_lexer_advance(lexer);
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_ADD_EQUALS;
+        glms_lexer_advance(lexer);
+      } else if (glms_lexer_peek(lexer, 1) == '+') {
+        out->type = GLMS_TOKEN_TYPE_ADD_ADD;
+        glms_lexer_advance(lexer);
       }
     } break;
     case '*': {
-      out->type = JSCRIPT_TOKEN_TYPE_MUL;
+      out->type = GLMS_TOKEN_TYPE_MUL;
     } break;
     case '-': {
-      out->type = JSCRIPT_TOKEN_TYPE_SUB;
+      out->type = GLMS_TOKEN_TYPE_SUB;
 
-      if (jscript_lexer_peek(lexer, 1) == '=') {
-        out->type = JSCRIPT_TOKEN_TYPE_SUB_EQUALS;
-        jscript_lexer_advance(lexer);
-      } else if (jscript_lexer_peek(lexer, 1) == '-') {
-        out->type = JSCRIPT_TOKEN_TYPE_SUB_SUB;
-        jscript_lexer_advance(lexer);
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_SUB_EQUALS;
+        glms_lexer_advance(lexer);
+      } else if (glms_lexer_peek(lexer, 1) == '-') {
+        out->type = GLMS_TOKEN_TYPE_SUB_SUB;
+        glms_lexer_advance(lexer);
       }
     } break;
     case '/': {
-      out->type = JSCRIPT_TOKEN_TYPE_DIV;
+      out->type = GLMS_TOKEN_TYPE_DIV;
     } break;
     case '%': {
-      out->type = JSCRIPT_TOKEN_TYPE_PERCENT;
+      out->type = GLMS_TOKEN_TYPE_PERCENT;
     } break;
     case '=': {
-      out->type = JSCRIPT_TOKEN_TYPE_EQUALS;
+      out->type = GLMS_TOKEN_TYPE_EQUALS;
 
-      if (jscript_lexer_peek(lexer, 1) == '=') {
-        out->type = JSCRIPT_TOKEN_TYPE_EQUALS_EQUALS;
-        jscript_lexer_advance(lexer);
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_EQUALS_EQUALS;
+        glms_lexer_advance(lexer);
       }
     } break;
     case '>': {
-      out->type = JSCRIPT_TOKEN_TYPE_GT;
+      out->type = GLMS_TOKEN_TYPE_GT;
 
-      if (jscript_lexer_peek(lexer, 1) == '=') {
-        out->type = JSCRIPT_TOKEN_TYPE_GTE;
-        jscript_lexer_advance(lexer);
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_GTE;
+        glms_lexer_advance(lexer);
       }
     } break;
     case '<': {
-      out->type = JSCRIPT_TOKEN_TYPE_LT;
+      out->type = GLMS_TOKEN_TYPE_LT;
 
-      if (jscript_lexer_peek(lexer, 1) == '=') {
-        out->type = JSCRIPT_TOKEN_TYPE_LTE;
-        jscript_lexer_advance(lexer);
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_LTE;
+        glms_lexer_advance(lexer);
       }
     } break;
     default: {
       if (lexer->c == '"') {
-        return jscript_lexer_parse_string(lexer, out);
+        return glms_lexer_parse_string(lexer, out);
       }
       if (isdigit(lexer->c)) {
-        return jscript_lexer_parse_number(lexer, out);
+        return glms_lexer_parse_number(lexer, out);
       }
       if (isalpha(lexer->c)) {
-        return jscript_lexer_parse_id(lexer, out);
+        return glms_lexer_parse_id(lexer, out);
       }
-      JSCRIPT_WARNING_RETURN(0, stderr, "Unexpected token `%c`.\n", lexer->c);
+      GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%c`.\n", lexer->c);
     }; break;
   }
 
   out->c = lexer->c;
 
-  jscript_lexer_advance(lexer);
+  glms_lexer_advance(lexer);
 
   return 1;
 }

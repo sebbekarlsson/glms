@@ -1,8 +1,8 @@
-#include <jscript/env.h>
-#include <jscript/macros.h>
-#include <jscript/parser.h>
+#include <glms/env.h>
+#include <glms/macros.h>
+#include <glms/parser.h>
 
-int jscript_parser_init(JSCRIPTParser *parser, JSCRIPTEnv *env) {
+int glms_parser_init(GLMSParser *parser, GLMSEnv *env) {
   if (!parser || !env)
     return 0;
   if (parser->initialized)
@@ -10,124 +10,147 @@ int jscript_parser_init(JSCRIPTParser *parser, JSCRIPTEnv *env) {
 
   parser->initialized = true;
   parser->env = env;
-  jscript_lexer_next(&parser->env->lexer, &parser->token);
+  glms_lexer_next(&parser->env->lexer, &parser->token);
+  hashy_map_init(&parser->symbols, 256);
 
   return 1;
 }
 
-int jscript_parser_eat(JSCRIPTParser *parser, JSCRIPTTokenType token_type) {
+int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
   if (!parser)
     return 0;
   if (!parser->initialized)
-    JSCRIPT_WARNING_RETURN(0, stderr, "parser not initialized.\n");
+    GLMS_WARNING_RETURN(0, stderr, "parser not initialized.\n");
 
   if (parser->token.type != token_type) {
-    JSCRIPT_WARNING_RETURN(0, stderr, "Unexpected token `%s`\n",
-                           JSCRIPT_TOKEN_TYPE_STR[parser->token.type]);
+    GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%s`\n",
+                           GLMS_TOKEN_TYPE_STR[parser->token.type]);
   }
 
-  if (!jscript_lexer_next(&parser->env->lexer, &parser->token))
+  if (!glms_lexer_next(&parser->env->lexer, &parser->token))
     return 0;
+
+
+  GLMSAST* known = glms_parser_lookup(parser, glms_string_view_get_value(&parser->token.value));
+
+  if (known && known->type == GLMS_AST_TYPE_TYPEDEF) {
+    parser->token.type = GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE;
+  }
 
   return 1;
 }
 
-static JSCRIPTAST *jscript_parser_error(JSCRIPTParser *parser) {
-  JSCRIPT_WARNING(stderr, "Unexpected token `%s`\n",
-                  JSCRIPT_TOKEN_TYPE_STR[parser->token.type]);
+static GLMSAST *glms_parser_error(GLMSParser *parser) {
+  GLMS_WARNING(stderr, "Unexpected token `%s`\n",
+                  GLMS_TOKEN_TYPE_STR[parser->token.type]);
   parser->error = true;
 
-  return jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_EOF);
+  return glms_env_new_ast(parser->env, GLMS_AST_TYPE_EOF);
 }
 
-static JSCRIPTAST *jscript_parser_parse_noop(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_NOOP);
+static GLMSAST *glms_parser_parse_noop(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NOOP);
   return ast;
 }
 
-static JSCRIPTAST *jscript_parser_parse_eof(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_EOF);
+static GLMSAST *glms_parser_parse_eof(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_EOF);
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_id(JSCRIPTParser *parser, bool skip_next) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ID);
-  ast->as.id.value = parser->token.value;
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_ID);
+GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
+  GLMSASTList* flags = 0;
+
+  if (
+    parser->token.type != GLMS_TOKEN_TYPE_ID
+  ) {
+    flags = NEW(GLMSASTList);
+    glms_GLMSAST_list_init(flags);
+
+    while (
+      parser->token.type != GLMS_TOKEN_TYPE_ID
+    ) {
+      GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
+      ast->as.id.op = parser->token.type;
+      ast->as.id.value = parser->token.value;
+      glms_parser_eat(parser, parser->token.type);
+      glms_GLMSAST_list_push(flags, ast);
+    }
+
+
+  }
+
+  GLMSAST *id_ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID);
+  id_ast->as.id.value = parser->token.value;
+  id_ast->flags = flags;
+  glms_parser_eat(parser, parser->token.type);
 
   if (skip_next)
-    return ast;
+    return id_ast;
 
-  JSCRIPTTokenType next_type = parser->token.type;
+
+  GLMSTokenType next_type = parser->token.type;
 
   switch (next_type) {
-  case JSCRIPT_TOKEN_TYPE_LPAREN: {
-    return jscript_parser_parse_call(parser, ast);
-  }; break;
-  case JSCRIPT_TOKEN_TYPE_ID: {
-    JSCRIPTAST *next_ast =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ID);
-    next_ast->as.id.flag = ast;
-    next_ast->as.id.value = parser->token.value;
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_ID);
-
-    ast = next_ast;
+  case GLMS_TOKEN_TYPE_LPAREN: {
+    return glms_parser_parse_call(parser, id_ast);
   }; break;
   default: {
   }; break;
   }
 
-  return ast;
+  return id_ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_number(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_NUMBER);
+
+GLMSAST *glms_parser_parse_number(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER);
   ast->as.number.value =
-      atof(jscript_string_view_get_value(&parser->token.value));
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_NUMBER);
+      atof(glms_string_view_get_value(&parser->token.value));
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_NUMBER);
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_bool(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_NUMBER);
+GLMSAST *glms_parser_parse_bool(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER);
   ast->as.number.value =
-      parser->token.type == JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE ? 0 : 1;
-  jscript_parser_eat(parser, parser->token.type);
+      parser->token.type == GLMS_TOKEN_TYPE_SPECIAL_FALSE ? 0 : 1;
+  glms_parser_eat(parser, parser->token.type);
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_string(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_STRING);
+GLMSAST *glms_parser_parse_string(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_STRING);
   ast->as.string.value = parser->token.value;
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_STRING);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_STRING);
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_array(JSCRIPTParser *parser) {
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACKET);
+GLMSAST *glms_parser_parse_array(GLMSParser *parser) {
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACKET);
 
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ARRAY);
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ARRAY);
 
-  JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-  jscript_ast_push(ast, arg);
+  GLMSAST *arg = glms_parser_parse_expr(parser);
+  glms_ast_push(ast, arg);
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_COMMA) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COMMA);
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_COMMA);
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACKET);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACKET);
 
   return ast;
 }
 
-static JSCRIPTAST *jscript_parser_parse_kv(JSCRIPTParser *parser,
+static GLMSAST *glms_parser_parse_kv(GLMSParser *parser,
                                            const char **key) {
-  JSCRIPTAST *ast_key = jscript_parser_parse_factor(parser);
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COLON);
-  JSCRIPTAST *ast_value = jscript_parser_parse_expr(parser);
-  const char *k = jscript_ast_get_string_value(ast_key);
+  GLMSAST *ast_key = glms_parser_parse_factor(parser);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_COLON);
+  GLMSAST *ast_value = glms_parser_parse_expr(parser);
+  const char *k = glms_ast_get_string_value(ast_key);
 
   if (!k)
     return 0;
@@ -137,405 +160,466 @@ static JSCRIPTAST *jscript_parser_parse_kv(JSCRIPTParser *parser,
   return ast_value;
 }
 
-JSCRIPTAST *jscript_parser_parse_object(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_OBJECT);
+GLMSAST *glms_parser_parse_object(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_OBJECT);
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACE);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RBRACE) {
+  if (parser->token.type != GLMS_TOKEN_TYPE_RBRACE) {
     const char *key = 0;
-    JSCRIPTAST *child = jscript_parser_parse_kv(parser, &key);
+    GLMSAST *child = glms_parser_parse_kv(parser, &key);
 
     if (child && key != 0) {
-      jscript_ast_object_set_property(ast, key, child);
+      glms_ast_object_set_property(ast, key, child);
     }
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_COMMA) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COMMA);
+  while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_COMMA);
 
     const char *key = 0;
-    JSCRIPTAST *child = jscript_parser_parse_kv(parser, &key);
+    GLMSAST *child = glms_parser_parse_kv(parser, &key);
 
     if (child && key != 0) {
-      jscript_ast_object_set_property(ast, key, child);
+      glms_ast_object_set_property(ast, key, child);
     }
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
 
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_binop(JSCRIPTParser *parser,
-                                       JSCRIPTAST *left) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
+GLMSAST *glms_parser_parse_binop(GLMSParser *parser,
+                                       GLMSAST *left) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
   ast->as.binop.left = left;
   ast->as.binop.op = parser->token.type;
-  jscript_parser_eat(parser, parser->token.type);
-  ast->as.binop.right = jscript_parser_parse_term(parser);
+  glms_parser_eat(parser, parser->token.type);
+  ast->as.binop.right = glms_parser_parse_term(parser);
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_unop(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_UNOP);
-  ast->as.unop.op = parser->token.type;
-  jscript_parser_eat(parser, parser->token.type);
-  ast->as.unop.right = jscript_parser_parse_term(parser);
-  return ast;
-}
+GLMSAST* glms_parser_parse_struct(GLMSParser* parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_STRUCT);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_STRUCT);
 
-JSCRIPTAST *jscript_parser_parse_factor(JSCRIPTParser *parser) {
-  if (parser->token.type == JSCRIPT_TOKEN_TYPE_SUB ||
-      parser->token.type == JSCRIPT_TOKEN_TYPE_ADD) {
-    return jscript_parser_parse_unop(parser);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACE);
+
+  if (parser->token.type != GLMS_TOKEN_TYPE_RBRACE) {
+    GLMSAST* field = glms_parser_parse_expr(parser);
+    const char* key = glms_ast_get_string_value(field);
+    if (!key) {
+      GLMS_WARNING(stderr, "key == null.\n");
+    }
+    glms_ast_object_set_property(ast, key, field);
   }
 
-  if (parser->token.type == JSCRIPT_TOKEN_TYPE_LPAREN) {
+  while (parser->token.type == GLMS_TOKEN_TYPE_SEMI) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_SEMI);
 
-    if (jscript_parser_peek_check_arrow_function(parser)) {
-      return jscript_parser_parse_arrow_function(parser);
+    if (parser->token.type == GLMS_TOKEN_TYPE_RBRACE) break;
+
+    GLMSAST* field = glms_parser_parse_expr(parser);
+    const char* key = glms_ast_get_string_value(field);
+    if (!key) {
+      GLMS_WARNING(stderr, "key == null.\n");
+      continue;
     }
-    JSCRIPTAST *next = 0;
-    jscript_parser_eat(parser, parser->token.type);
+    glms_ast_object_set_property(ast, key, field);
 
-    if (parser->token.type != JSCRIPT_TOKEN_TYPE_RPAREN) {
-      next = jscript_parser_parse_expr(parser);
+  }
+
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
+
+  return ast;
+}
+
+GLMSAST *glms_parser_parse_unop(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_UNOP);
+  ast->as.unop.op = parser->token.type;
+  glms_parser_eat(parser, parser->token.type);
+  ast->as.unop.right = glms_parser_parse_term(parser);
+  return ast;
+}
+
+GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
+  if (parser->token.type == GLMS_TOKEN_TYPE_SUB ||
+      parser->token.type == GLMS_TOKEN_TYPE_ADD) {
+    return glms_parser_parse_unop(parser);
+  }
+
+  if (parser->token.type == GLMS_TOKEN_TYPE_LPAREN) {
+
+    if (glms_parser_peek_check_arrow_function(parser)) {
+      return glms_parser_parse_arrow_function(parser);
+    }
+    GLMSAST *next = 0;
+    glms_parser_eat(parser, parser->token.type);
+
+    if (parser->token.type != GLMS_TOKEN_TYPE_RPAREN) {
+      next = glms_parser_parse_expr(parser);
     }
 
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
 
-    return next ? next : jscript_parser_error(parser);
+    return next ? next : glms_parser_error(parser);
   }
   switch (parser->token.type) {
-  case JSCRIPT_TOKEN_TYPE_LBRACKET: {
-    return jscript_parser_parse_array(parser);
+  case GLMS_TOKEN_TYPE_LBRACKET: {
+    return glms_parser_parse_array(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_LBRACE: {
-    return jscript_parser_parse_object(parser);
+  case GLMS_TOKEN_TYPE_LBRACE: {
+    return glms_parser_parse_object(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_ID: {
-    return jscript_parser_parse_id(parser, false);
+  case GLMS_TOKEN_TYPE_SPECIAL_LET:
+  case GLMS_TOKEN_TYPE_SPECIAL_CONST:
+  case GLMS_TOKEN_TYPE_SPECIAL_STRING:
+  case GLMS_TOKEN_TYPE_SPECIAL_NUMBER:
+  case GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE:
+  case GLMS_TOKEN_TYPE_ID: {
+    return glms_parser_parse_id(parser, false);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_STRING: {
-    return jscript_parser_parse_string(parser);
+  case GLMS_TOKEN_TYPE_STRING: {
+    return glms_parser_parse_string(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_SPECIAL_FALSE:
-  case JSCRIPT_TOKEN_TYPE_SPECIAL_TRUE: {
-    return jscript_parser_parse_bool(parser);
+  case GLMS_TOKEN_TYPE_SPECIAL_FALSE:
+  case GLMS_TOKEN_TYPE_SPECIAL_TRUE: {
+    return glms_parser_parse_bool(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_NUMBER: {
-    return jscript_parser_parse_number(parser);
+  case GLMS_TOKEN_TYPE_NUMBER: {
+    return glms_parser_parse_number(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_SPECIAL_FUNCTION: {
-    return jscript_parser_parse_function(parser);
+  case GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF: {
+    return glms_parser_parse_typedef(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_SPECIAL_RETURN: {
-    return jscript_parser_parse_unop(parser);
+  case GLMS_TOKEN_TYPE_SPECIAL_STRUCT: {
+    return glms_parser_parse_struct(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_SPECIAL_WHILE:
-  case JSCRIPT_TOKEN_TYPE_SPECIAL_IF: {
-    return jscript_parser_parse_block(parser);
+  case GLMS_TOKEN_TYPE_SPECIAL_FUNCTION: {
+    return glms_parser_parse_function(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_SPECIAL_FOR: {
-    return jscript_parser_parse_for(parser);
+  case GLMS_TOKEN_TYPE_SPECIAL_RETURN: {
+    return glms_parser_parse_unop(parser);
   }; break;
-  case JSCRIPT_TOKEN_TYPE_EOF: {
-    return jscript_parser_parse_eof(parser);
+  case GLMS_TOKEN_TYPE_SPECIAL_WHILE:
+  case GLMS_TOKEN_TYPE_SPECIAL_IF: {
+    return glms_parser_parse_block(parser);
+  }; break;
+  case GLMS_TOKEN_TYPE_SPECIAL_FOR: {
+    return glms_parser_parse_for(parser);
+  }; break;
+  case GLMS_TOKEN_TYPE_EOF: {
+    return glms_parser_parse_eof(parser);
   }; break;
   default: {
-    return jscript_parser_error(parser);
+    return glms_parser_error(parser);
   }; break;
   }
-  return jscript_parser_error(parser);
+  return glms_parser_error(parser);
 }
 
-JSCRIPTAST *jscript_parser_parse_term(JSCRIPTParser *parser) {
-  JSCRIPTAST *left = jscript_parser_parse_factor(parser);
+GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
+  GLMSAST *left = glms_parser_parse_factor(parser);
 
   while (
-    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD_ADD ||
-    parser->token.type == JSCRIPT_TOKEN_TYPE_SUB_SUB
+    parser->token.type == GLMS_TOKEN_TYPE_ADD_ADD ||
+    parser->token.type == GLMS_TOKEN_TYPE_SUB_SUB
   ) {
-    JSCRIPTAST* unop = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_UNOP);
+    GLMSAST* unop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_UNOP);
     unop->as.unop.left = left;
     unop->as.unop.op = parser->token.type;
-    jscript_parser_eat(parser, parser->token.type);
+    glms_parser_eat(parser, parser->token.type);
     left = unop;
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_MUL ||
-         parser->token.type == JSCRIPT_TOKEN_TYPE_DIV) {
-    JSCRIPTAST *binop =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
+  while (parser->token.type == GLMS_TOKEN_TYPE_MUL ||
+         parser->token.type == GLMS_TOKEN_TYPE_DIV) {
+    GLMSAST *binop =
+        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
-    jscript_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = jscript_parser_parse_expr(parser);
+    glms_parser_eat(parser, parser->token.type);
+    binop->as.binop.right = glms_parser_parse_expr(parser);
     left = binop;
   }
   return left;
 }
 
-JSCRIPTAST *jscript_parser_parse_expr(JSCRIPTParser *parser) {
-  JSCRIPTAST *left = jscript_parser_parse_term(parser);
+GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
+  GLMSAST *left = glms_parser_parse_term(parser);
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_LBRACKET) {
-    JSCRIPTAST *access =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ACCESS);
+  while (parser->token.type == GLMS_TOKEN_TYPE_LBRACKET) {
+    GLMSAST *access =
+        glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS);
     access->as.access.left = left;
 
-    access->as.access.right = jscript_parser_parse_expr(parser);
+    access->as.access.right = glms_parser_parse_expr(parser);
     left = access;
   }
 
   while (
-    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD ||
-    parser->token.type == JSCRIPT_TOKEN_TYPE_SUB ||
-    parser->token.type == JSCRIPT_TOKEN_TYPE_ADD_EQUALS ||
-    parser->token.type == JSCRIPT_TOKEN_TYPE_SUB_EQUALS
+    parser->token.type == GLMS_TOKEN_TYPE_ADD ||
+    parser->token.type == GLMS_TOKEN_TYPE_SUB ||
+    parser->token.type == GLMS_TOKEN_TYPE_ADD_EQUALS ||
+    parser->token.type == GLMS_TOKEN_TYPE_SUB_EQUALS
   ) {
-    JSCRIPTAST *binop =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
+    GLMSAST *binop =
+        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
-    jscript_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = jscript_parser_parse_term(parser);
+    glms_parser_eat(parser, parser->token.type);
+    binop->as.binop.right = glms_parser_parse_term(parser);
     left = binop;
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_EQUALS) {
-    JSCRIPTAST *binop =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
+
+  while (parser->token.type == GLMS_TOKEN_TYPE_GT ||
+         parser->token.type == GLMS_TOKEN_TYPE_LT ||
+         parser->token.type == GLMS_TOKEN_TYPE_GTE ||
+         parser->token.type == GLMS_TOKEN_TYPE_LTE ||
+         parser->token.type == GLMS_TOKEN_TYPE_EQUALS_EQUALS) {
+    GLMSAST *binop =
+        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
-    jscript_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = jscript_parser_parse_expr(parser);
+    glms_parser_eat(parser, parser->token.type);
+    binop->as.binop.right = glms_parser_parse_expr(parser);
     left = binop;
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_GT ||
-         parser->token.type == JSCRIPT_TOKEN_TYPE_LT ||
-         parser->token.type == JSCRIPT_TOKEN_TYPE_GTE ||
-         parser->token.type == JSCRIPT_TOKEN_TYPE_LTE ||
-         parser->token.type == JSCRIPT_TOKEN_TYPE_EQUALS_EQUALS) {
-    JSCRIPTAST *binop =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BINOP);
-    binop->as.binop.left = left;
-    binop->as.binop.op = parser->token.type;
-    jscript_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = jscript_parser_parse_expr(parser);
-    left = binop;
-  }
-
-  while (left && parser->token.type == JSCRIPT_TOKEN_TYPE_DOT) {
-    JSCRIPTAST *access =
-        jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_ACCESS);
+  while (left && parser->token.type == GLMS_TOKEN_TYPE_DOT) {
+    GLMSAST *access =
+        glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS);
     access->as.access.left = left;
 
-    if (parser->token.type == JSCRIPT_TOKEN_TYPE_DOT) {
-      jscript_parser_eat(parser, parser->token.type);
+    if (parser->token.type == GLMS_TOKEN_TYPE_DOT) {
+      glms_parser_eat(parser, parser->token.type);
     }
 
-    access->as.access.right = jscript_parser_parse_term(parser);
+    access->as.access.right = glms_parser_parse_term(parser);
     left = access;
   }
 
+  while (parser->token.type == GLMS_TOKEN_TYPE_EQUALS) {
+    GLMSAST *binop =
+        glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP);
+    binop->as.binop.left = left;
+    binop->as.binop.op = parser->token.type;
+    glms_parser_eat(parser, parser->token.type);
+    binop->as.binop.right = glms_parser_parse_expr(parser);
+    left = binop;
+  }
 
   return left;
 }
 
-JSCRIPTAST *jscript_parser_parse_call(JSCRIPTParser *parser, JSCRIPTAST *left) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_CALL);
+GLMSAST *glms_parser_parse_call(GLMSParser *parser, GLMSAST *left) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_CALL);
   ast->as.call.left = left;
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LPAREN);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RPAREN) {
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RPAREN) {
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_COMMA) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COMMA);
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_COMMA);
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
 
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_arrow_function(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_FUNC);
+GLMSAST *glms_parser_parse_arrow_function(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_FUNC);
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LPAREN);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RPAREN) {
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RPAREN) {
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_COMMA) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COMMA);
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_COMMA);
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_EQUALS);
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_GT);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_EQUALS);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_GT);
 
-  if (parser->token.type == JSCRIPT_TOKEN_TYPE_LBRACE) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACE);
+  if (parser->token.type == GLMS_TOKEN_TYPE_LBRACE) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACE);
 
-    if (parser->token.type != JSCRIPT_TOKEN_TYPE_RBRACE) {
-      ast->as.func.body = jscript_parser_parse_compound(parser, true);
+    if (parser->token.type != GLMS_TOKEN_TYPE_RBRACE) {
+      ast->as.func.body = glms_parser_parse_compound(parser, true);
     }
 
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
   } else {
-    ast->as.func.body = jscript_parser_parse_expr(parser);
+    ast->as.func.body = glms_parser_parse_expr(parser);
   }
 
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_function(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_FUNC);
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_SPECIAL_FUNCTION);
+GLMSAST *glms_parser_parse_function(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_FUNC);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_FUNCTION);
 
-  if (parser->token.type == JSCRIPT_TOKEN_TYPE_ID) {
-    ast->as.func.id = jscript_parser_parse_id(parser, true);
+  if (parser->token.type == GLMS_TOKEN_TYPE_ID) {
+    ast->as.func.id = glms_parser_parse_id(parser, true);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LPAREN);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RPAREN) {
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RPAREN) {
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
   }
 
-  while (parser->token.type == JSCRIPT_TOKEN_TYPE_COMMA) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_COMMA);
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_COMMA);
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACE);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RBRACE) {
-    ast->as.func.body = jscript_parser_parse_compound(parser, true);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RBRACE) {
+    ast->as.func.body = glms_parser_parse_compound(parser, true);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
 
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_block(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_BLOCK);
+GLMSAST *glms_parser_parse_block(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BLOCK);
   ast->as.block.op = parser->token.type;
-  jscript_parser_eat(parser, parser->token.type);
+  glms_parser_eat(parser, parser->token.type);
 
-  if (parser->token.type == JSCRIPT_TOKEN_TYPE_LPAREN) {
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
-    ast->as.block.expr = jscript_parser_parse_expr(parser);
-    jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+  if (parser->token.type == GLMS_TOKEN_TYPE_LPAREN) {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_LPAREN);
+    ast->as.block.expr = glms_parser_parse_expr(parser);
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACE);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RBRACE) {
-    ast->as.block.body = jscript_parser_parse_compound(parser, true);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RBRACE) {
+    ast->as.block.body = glms_parser_parse_compound(parser, true);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
 
-  if (parser->token.type == JSCRIPT_TOKEN_TYPE_SPECIAL_ELSE) {
-    ast->as.block.next = jscript_parser_parse_block(parser);
+  if (parser->token.type == GLMS_TOKEN_TYPE_SPECIAL_ELSE) {
+    ast->as.block.next = glms_parser_parse_block(parser);
   }
 
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_for(JSCRIPTParser *parser) {
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_FOR);
-  jscript_parser_eat(parser, parser->token.type);
+GLMSAST *glms_parser_parse_for(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_FOR);
+  glms_parser_eat(parser, parser->token.type);
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LPAREN);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RPAREN) {
-    JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-    jscript_ast_push(ast, arg);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RPAREN) {
+    GLMSAST *arg = glms_parser_parse_expr(parser);
+    glms_ast_push(ast, arg);
 
-    while (parser->token.type == JSCRIPT_TOKEN_TYPE_SEMI) {
-      jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_SEMI);
-      JSCRIPTAST *arg = jscript_parser_parse_expr(parser);
-      jscript_ast_push(ast, arg);
+    while (parser->token.type == GLMS_TOKEN_TYPE_SEMI) {
+      glms_parser_eat(parser, GLMS_TOKEN_TYPE_SEMI);
+      GLMSAST *arg = glms_parser_parse_expr(parser);
+      glms_ast_push(ast, arg);
     }
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RPAREN);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_LBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LBRACE);
 
-  if (parser->token.type != JSCRIPT_TOKEN_TYPE_RBRACE) {
-    ast->as.forloop.body = jscript_parser_parse_compound(parser, true);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RBRACE) {
+    ast->as.forloop.body = glms_parser_parse_compound(parser, true);
   }
 
-  jscript_parser_eat(parser, JSCRIPT_TOKEN_TYPE_RBRACE);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACE);
 
 
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse_compound(JSCRIPTParser *parser,
+GLMSAST* glms_parser_parse_typedef(GLMSParser* parser) {
+  GLMSAST* ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_TYPEDEF);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF);
+  ast->as.tdef.factor = glms_parser_parse_factor(parser);
+  ast->as.tdef.id = glms_parser_parse_id(parser, true);
+
+  const char* name = glms_ast_get_name(ast->as.tdef.id);
+
+  if (name != 0) {
+    hashy_map_set(&parser->symbols, name, ast);
+  }
+
+  return ast;
+}
+
+GLMSAST *glms_parser_parse_compound(GLMSParser *parser,
                                           bool skip_brace) {
 
-  JSCRIPTAST *ast = jscript_env_new_ast(parser->env, JSCRIPT_AST_TYPE_COMPOUND);
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_COMPOUND);
 
-  while (parser->token.type != JSCRIPT_TOKEN_TYPE_EOF &&
+  while (parser->token.type != GLMS_TOKEN_TYPE_EOF &&
          parser->error == false) {
 
-    while (parser->token.type != JSCRIPT_TOKEN_TYPE_SEMI) {
-      JSCRIPTAST *child = jscript_parser_parse_expr(parser);
+    while (parser->token.type != GLMS_TOKEN_TYPE_SEMI) {
+      GLMSAST *child = glms_parser_parse_expr(parser);
 
       if (!child)
         break;
 
-      jscript_ast_push(ast, child);
+      glms_ast_push(ast, child);
 
-      if (child->type == JSCRIPT_AST_TYPE_EOF)
+      if (child->type == GLMS_AST_TYPE_EOF)
         break;
     }
 
-    while (parser->token.type == JSCRIPT_TOKEN_TYPE_SEMI) {
-      jscript_parser_eat(parser, parser->token.type);
+    while (parser->token.type == GLMS_TOKEN_TYPE_SEMI) {
+      glms_parser_eat(parser, parser->token.type);
     }
 
-    if (skip_brace && parser->token.type == JSCRIPT_TOKEN_TYPE_RBRACE)
+    if (skip_brace && parser->token.type == GLMS_TOKEN_TYPE_RBRACE)
       break;
   }
 
   return ast;
 }
 
-JSCRIPTAST *jscript_parser_parse(JSCRIPTParser *parser) {
+GLMSAST *glms_parser_parse(GLMSParser *parser) {
   if (!parser)
     return 0;
   if (!parser->initialized)
-    JSCRIPT_WARNING_RETURN(0, stderr, "parser not initialized.\n");
+    GLMS_WARNING_RETURN(0, stderr, "parser not initialized.\n");
 
-  return jscript_parser_parse_compound(parser, false);
+  return glms_parser_parse_compound(parser, false);
 }
 
-bool jscript_parser_peek_check_arrow_function(JSCRIPTParser *parser) {
-  JSCRIPTLexer *lexer = &parser->env->lexer;
+bool glms_parser_peek_check_arrow_function(GLMSParser *parser) {
+  GLMSLexer *lexer = &parser->env->lexer;
   int64_t start_i = lexer->i;
   char start_c = lexer->c;
 
@@ -550,4 +634,10 @@ bool jscript_parser_peek_check_arrow_function(JSCRIPTParser *parser) {
   }
 
   return false;
+}
+
+GLMSAST* glms_parser_lookup(GLMSParser* parser, const char* key) {
+  if (!key || !parser) return 0;
+
+  return (GLMSAST*)hashy_map_get(&parser->symbols, key);
 }
