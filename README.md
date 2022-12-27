@@ -5,6 +5,7 @@
 
 > This language comes with types, functions and structures commonly used when doing linear algebra,
 > such as: `vec2`, `vec3`, `vec4`, `dot`, `cross`, `sin`, `cos` ...etc
+
 > (There are more to come, and everything is not implemented yet).
 
 ### Caution
