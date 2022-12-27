@@ -100,6 +100,20 @@ GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast,
   return glms_env_new_ast_number(eval->env, sinf(v));
 }
 
+GLMSAST *glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast,
+                        GLMSASTList *args, GLMSStack *stack) {
+
+  if (args->length < 3)
+    return ast;
+
+  float from_ = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+  float to_ = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+  float scale_ = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
+
+  float v = from_ + (to_ - from_) * scale_;
+
+  return glms_env_new_ast_number(eval->env, v);
+}
 
 void glms_struct_vec2(GLMSEnv *env) {
   glms_env_register_struct(env, "vec2", (GLMSAST*[]){
@@ -131,6 +145,7 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "length", glms_fptr_length);
   glms_env_register_function(env, "cos", glms_fptr_cos);
   glms_env_register_function(env, "sin", glms_fptr_sin);
+  glms_env_register_function(env, "lerp", glms_fptr_lerp);
   glms_struct_vec2(env);
   glms_struct_vec3(env);
   glms_struct_vec4(env);

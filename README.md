@@ -4,7 +4,7 @@
 > and [Javascript](https://en.wikipedia.org/wiki/JavaScript).
 
 > This language comes with types, functions and structures commonly used when doing linear algebra,
-> such as: `vec2`, `vec3`, `vec4`, `dot`, `cross`, `sin`, `cos` ...etc
+> such as: `vec2`, `vec3`, `vec4`, `dot`, `cross`, `lerp`, `sin`, `cos` ...etc
 
 > (There are more to come, and everything is not implemented yet).
 
@@ -20,6 +20,16 @@ vec3 b = vec3(0, 0.2, 0.8);
 number d = dot(a, b);
 
 print(d); // 0.200000
+```
+
+### Lerp
+```
+number x = 25.012;
+number y = 98.241;
+
+number z = lerp(x, y, 0.1);
+
+print(z); // 32.334900
 ```
 
 ### cos, sin

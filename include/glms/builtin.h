@@ -21,4 +21,6 @@ GLMSAST *glms_fptr_cos(GLMSEval *eval, GLMSAST *ast,
 GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast,
                                GLMSASTList *args, GLMSStack *stack);
 
+GLMSAST *glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast,
+                               GLMSASTList *args, GLMSStack *stack);
 #endif
