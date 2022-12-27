@@ -179,7 +179,7 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
             const char *key = it.bucket->key;
             GLMSAST *value = glms_eval(eval, (GLMSAST *)it.bucket->value, &tmp_stack);
 
-          GLMSAST *arg_value = glms_eval(eval, ast->children->items[i], &tmp_stack);
+            GLMSAST *arg_value = glms_eval(eval, ast->children->items[MAX(0, (ast->children->length-1) - i)], &tmp_stack);
           glms_ast_object_set_property(copied, key, arg_value);
           i++;
 
