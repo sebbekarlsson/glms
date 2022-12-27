@@ -272,5 +272,5 @@ int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out) {
 
   glms_lexer_advance(lexer);
 
-  return 1;
+  return lexer->c != 0;
 }
