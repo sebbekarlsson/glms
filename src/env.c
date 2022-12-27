@@ -101,6 +101,7 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
   GLMSAST *root = glms_parser_parse(&env->parser);
+
   root = glms_eval(&env->eval, root, &env->stack);
   return root;
 }

@@ -36,8 +36,10 @@ int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
                         GLMS_TOKEN_TYPE_STR[parser->token.type]);
   }
 
-  if (!glms_lexer_next(&parser->env->lexer, &parser->token))
+  if (!glms_lexer_next(&parser->env->lexer, &parser->token)) {
+    parser->finished = true;
     return 0;
+  }
 
   const char *tokname = glms_string_view_get_value(&parser->token.value);
   GLMSAST *known = glms_parser_lookup(parser, tokname);
@@ -582,9 +584,9 @@ GLMSAST *glms_parser_parse_compound(GLMSParser *parser, bool skip_brace) {
 
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_COMPOUND);
 
-  while (parser->token.type != GLMS_TOKEN_TYPE_EOF && parser->error == false) {
+  while (parser->token.type != GLMS_TOKEN_TYPE_EOF && parser->error == false && parser->finished == false) {
 
-    while (parser->token.type != GLMS_TOKEN_TYPE_SEMI) {
+    while (parser->token.type != GLMS_TOKEN_TYPE_SEMI && parser->token.type != GLMS_TOKEN_TYPE_EOF && parser->error == false && parser->finished == false) {
       GLMSAST *child = glms_parser_parse_expr(parser);
 
       if (!child)
@@ -596,8 +598,8 @@ GLMSAST *glms_parser_parse_compound(GLMSParser *parser, bool skip_brace) {
         break;
     }
 
-    while (parser->token.type == GLMS_TOKEN_TYPE_SEMI) {
-      glms_parser_eat(parser, parser->token.type);
+    while (parser->token.type == GLMS_TOKEN_TYPE_SEMI && parser->finished == false) {
+      if (!glms_parser_eat(parser, parser->token.type)) break;
     }
 
     if (skip_brace && parser->token.type == GLMS_TOKEN_TYPE_RBRACE)

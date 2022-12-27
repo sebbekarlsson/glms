@@ -54,15 +54,13 @@ const char *glms_ast_get_name(GLMSAST *ast) {
   case GLMS_AST_TYPE_BINOP: {
     return glms_ast_get_name(ast->as.binop.left);
   }; break;
-    case GLMS_AST_TYPE_ID: {
+  case GLMS_AST_TYPE_ID: {
 
     if (ast->as.id.heap != 0) {
       return ast->as.id.heap;
     }
 
     const char *value = glms_string_view_get_value(&ast->as.id.value);
-
-
 
     if (!value) {
       value = GLMS_TOKEN_TYPE_STR[ast->as.id.op];
@@ -518,7 +516,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   return dest;
 }
 
-void glms_ast_destructor_binop(GLMSAST* ast) {
+void glms_ast_destructor_binop(GLMSAST *ast) {
   if (ast->as.binop.left != 0) {
     glms_ast_destructor(ast->as.binop.left);
     ast->as.binop.left = 0;
@@ -530,7 +528,7 @@ void glms_ast_destructor_binop(GLMSAST* ast) {
   }
 }
 
-void glms_ast_destructor_unop(GLMSAST* ast) {
+void glms_ast_destructor_unop(GLMSAST *ast) {
   if (ast->as.unop.left != 0) {
     glms_ast_destructor(ast->as.unop.left);
     ast->as.unop.left = 0;
@@ -542,7 +540,7 @@ void glms_ast_destructor_unop(GLMSAST* ast) {
   }
 }
 
-void glms_ast_destructor_access(GLMSAST* ast) {
+void glms_ast_destructor_access(GLMSAST *ast) {
   if (ast->as.access.left != 0) {
     glms_ast_destructor(ast->as.access.left);
     ast->as.access.left = 0;
@@ -553,7 +551,7 @@ void glms_ast_destructor_access(GLMSAST* ast) {
     ast->as.access.right = 0;
   }
 }
-void glms_ast_destructor_call(GLMSAST* ast) {
+void glms_ast_destructor_call(GLMSAST *ast) {
   if (ast->as.call.left != 0) {
     glms_ast_destructor(ast->as.call.left);
     ast->as.call.left = 0;
@@ -564,21 +562,21 @@ void glms_ast_destructor_call(GLMSAST* ast) {
     ast->as.call.right = 0;
   }
 }
-void glms_ast_destructor_string(GLMSAST* ast) {
+void glms_ast_destructor_string(GLMSAST *ast) {
   if (ast->as.string.heap != 0) {
     free(ast->as.string.heap);
     ast->as.string.heap = 0;
   }
 }
-void glms_ast_destructor_id(GLMSAST* ast) {
+void glms_ast_destructor_id(GLMSAST *ast) {
   if (ast->as.id.heap != 0) {
     // TODO: this is a double free somehow, for some reason. Fix it!
-    //free(ast->as.id.heap);
+    // free(ast->as.id.heap);
     ast->as.id.heap = 0;
   }
 }
 
-void glms_ast_destructor_func(GLMSAST* ast) {
+void glms_ast_destructor_func(GLMSAST *ast) {
   if (ast->as.func.body != 0) {
     glms_ast_destructor(ast->as.func.body);
     ast->as.func.body = 0;
@@ -590,8 +588,7 @@ void glms_ast_destructor_func(GLMSAST* ast) {
   }
 }
 
-
-void glms_ast_destructor_typedef(GLMSAST* ast) {
+void glms_ast_destructor_typedef(GLMSAST *ast) {
   if (ast->as.tdef.id != 0) {
     glms_ast_destructor(ast->as.tdef.id);
     ast->as.tdef.id = 0;
@@ -603,7 +600,7 @@ void glms_ast_destructor_typedef(GLMSAST* ast) {
   }
 }
 
-void glms_ast_destructor_block(GLMSAST* ast) {
+void glms_ast_destructor_block(GLMSAST *ast) {
   if (ast->as.block.body != 0) {
     glms_ast_destructor(ast->as.block.body);
     ast->as.block.body = 0;
@@ -620,20 +617,40 @@ void glms_ast_destructor_block(GLMSAST* ast) {
   }
 }
 
-void glms_ast_destructor(GLMSAST* ast) {
-  if (!ast) return;
+void glms_ast_destructor(GLMSAST *ast) {
+  if (!ast)
+    return;
 
   switch (ast->type) {
-    case GLMS_AST_TYPE_BINOP: { glms_ast_destructor_binop(ast); }; break;
-    case GLMS_AST_TYPE_UNOP: { glms_ast_destructor_unop(ast); }; break;
-    case GLMS_AST_TYPE_ACCESS: { glms_ast_destructor_access(ast); }; break;
-    case GLMS_AST_TYPE_STRING: { glms_ast_destructor_string(ast); }; break;
-    case GLMS_AST_TYPE_ID: { glms_ast_destructor_id(ast); }; break;
-    case GLMS_AST_TYPE_CALL: { glms_ast_destructor_call(ast); }; break;
-    case GLMS_AST_TYPE_FUNC: { glms_ast_destructor_func(ast); }; break;
-    case GLMS_AST_TYPE_TYPEDEF: { glms_ast_destructor_typedef(ast); }; break;
-    case GLMS_AST_TYPE_BLOCK: { glms_ast_destructor_block(ast); }; break;
-    default: {}; break;
+  case GLMS_AST_TYPE_BINOP: {
+    glms_ast_destructor_binop(ast);
+  }; break;
+  case GLMS_AST_TYPE_UNOP: {
+    glms_ast_destructor_unop(ast);
+  }; break;
+  case GLMS_AST_TYPE_ACCESS: {
+    glms_ast_destructor_access(ast);
+  }; break;
+  case GLMS_AST_TYPE_STRING: {
+    glms_ast_destructor_string(ast);
+  }; break;
+  case GLMS_AST_TYPE_ID: {
+    glms_ast_destructor_id(ast);
+  }; break;
+  case GLMS_AST_TYPE_CALL: {
+    glms_ast_destructor_call(ast);
+  }; break;
+  case GLMS_AST_TYPE_FUNC: {
+    glms_ast_destructor_func(ast);
+  }; break;
+  case GLMS_AST_TYPE_TYPEDEF: {
+    glms_ast_destructor_typedef(ast);
+  }; break;
+  case GLMS_AST_TYPE_BLOCK: {
+    glms_ast_destructor_block(ast);
+  }; break;
+  default: {
+  }; break;
   }
 
   if (ast->string_rep != 0) {

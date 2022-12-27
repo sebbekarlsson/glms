@@ -10,6 +10,7 @@ struct GLMS_ENV_STRUCT;
 typedef struct {
   struct GLMS_ENV_STRUCT* env;
   bool error;
+  bool finished;
   GLMSToken token;
   bool initialized;
 
