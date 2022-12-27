@@ -3,6 +3,9 @@
 > A scripting language focused on linear algebra, heavily inspired by [GLSL](https://en.wikipedia.org/wiki/OpenGL_Shading_Language)
 > and [Javascript](https://en.wikipedia.org/wiki/JavaScript).
 
+### Caution
+> This is a work in progress!
+
 ## Some examples
 
 ### Dot product
