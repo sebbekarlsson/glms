@@ -213,6 +213,39 @@ GLMSAST *glms_fptr_random(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   return glms_env_new_ast_number(eval->env, mif_random_float(min, max, seed));
 }
 
+GLMSAST *glms_fptr_min(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                       GLMSStack *stack) {
+  if (!args || args->length <= 0) return ast;
+
+
+  float min = INFINITY;
+
+  for (int64_t i = 0; i < args->length; i++) {
+    float v = GLMSAST_VALUE(glms_eval(eval, args->items[i], stack));
+
+    min = fminf(min, v);
+  }
+  
+  return glms_env_new_ast_number(eval->env, min);
+}
+
+GLMSAST *glms_fptr_max(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                       GLMSStack *stack) {
+
+    if (!args || args->length <= 0) return ast;
+
+
+  float max = -INFINITY;
+
+  for (int64_t i = 0; i < args->length; i++) {
+    float v = GLMSAST_VALUE(glms_eval(eval, args->items[i], stack));
+
+    max = fmaxf(max, v);
+  }
+  
+  return glms_env_new_ast_number(eval->env, max);
+}
+
 void glms_struct_vec2(GLMSEnv *env) {
   glms_env_register_struct(
       env, "vec2",
@@ -318,6 +351,8 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "sin", glms_fptr_sin);
   glms_env_register_function(env, "lerp", glms_fptr_lerp);
   glms_env_register_function(env, "clamp", glms_fptr_clamp);
+  glms_env_register_function(env, "min", glms_fptr_min);
+  glms_env_register_function(env, "max", glms_fptr_max);
   glms_env_register_function(env, "random", glms_fptr_random);
   // glms_struct_vec2(env);
   glms_struct_vec3(env);

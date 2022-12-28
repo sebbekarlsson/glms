@@ -239,6 +239,27 @@ static void test_sample_clamp() {
   GLMS_TEST_END();
 }
 
+static void test_sample_minmax() {
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST *ast = glms_exec_file(&env, "test/samples/minmax.gs");
+  GLMS_ASSERT(ast != 0);
+
+  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMS_ASSERT(x != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
+  printf("%12.6f\n", x->as.number.value);
+  GLMS_ASSERT(GLMSAST_VALUE(x) == 9.000000f);
+
+  GLMSAST *y = glms_eval_lookup(&env.eval, "y", &env.stack);
+  GLMS_ASSERT(y != 0);
+  GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
+  printf("%12.6f\n", y->as.number.value);
+  GLMS_ASSERT(GLMSAST_VALUE(y) == 212.199997f);
+
+  GLMS_TEST_END();
+}
+
 int main(int argc, char *argv[]) {
   test_sample_var();
   test_sample_func();
@@ -254,5 +275,6 @@ int main(int argc, char *argv[]) {
   test_sample_vec();
   test_sample_cos_sin();
   test_sample_clamp();
+  test_sample_minmax();
   return 0;
 }
