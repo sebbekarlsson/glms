@@ -11,3 +11,5 @@ print(atan(a, b));
 
 print(PI);
 print(TAU);
+
+print(fract(PI));

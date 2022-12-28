@@ -181,6 +181,17 @@ GLMSAST *glms_fptr_atan(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   return glms_env_new_ast_number(eval->env, atan2f(a, b));
 }
 
+GLMSAST *glms_fptr_fract(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                         GLMSStack *stack) {
+if (args->length <= 0)
+    return ast;
+
+  GLMSAST *value = glms_eval(eval, args->items[0], stack);
+  float v = GLMSAST_VALUE(value);
+
+  return glms_env_new_ast_number(eval->env, mif_fract(v));
+}
+
 GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                        GLMSStack *stack) {
   if (args->length <= 0)
@@ -381,6 +392,7 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "cos", glms_fptr_cos);
   glms_env_register_function(env, "sin", glms_fptr_sin);
   glms_env_register_function(env, "tan", glms_fptr_tan);
+  glms_env_register_function(env, "fract", glms_fptr_fract);
   glms_env_register_function(env, "atan", glms_fptr_atan);
   glms_env_register_function(env, "lerp", glms_fptr_lerp);
   glms_env_register_function(env, "clamp", glms_fptr_clamp);
