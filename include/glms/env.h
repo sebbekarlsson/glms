@@ -57,6 +57,10 @@ GLMSAST* glms_env_register_function(GLMSEnv* env, const char* name, GLMSFPTR fpt
 GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
                                   GLMSAST **fields, int fields_length);
 
+
+GLMSAST *glms_env_register_any(GLMSEnv *env, const char *name,
+                                  GLMSAST* ast);
+
 GLMSAST *glms_env_register_type(
 				GLMSEnv *env,
 				const char *name,

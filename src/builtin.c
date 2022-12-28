@@ -153,6 +153,34 @@ GLMSAST *glms_fptr_cos(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   return glms_env_new_ast_number(eval->env, cosf(v));
 }
 
+GLMSAST *glms_fptr_tan(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                       GLMSStack *stack) {
+
+  if (args->length <= 0)
+    return ast;
+
+  GLMSAST *value = glms_eval(eval, args->items[0], stack);
+  float v = GLMSAST_VALUE(value);
+
+  return glms_env_new_ast_number(eval->env, tanf(v));
+}
+
+GLMSAST *glms_fptr_atan(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                        GLMSStack *stack) {
+
+  if (args->length <= 0)
+    return ast;
+
+  if (args->length == 1) {
+    float a = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+    return glms_env_new_ast_number(eval->env, atanf(a));
+  }
+
+  float a = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+  float b = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+  return glms_env_new_ast_number(eval->env, atan2f(a, b));
+}
+
 GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                        GLMSStack *stack) {
   if (args->length <= 0)
@@ -215,8 +243,8 @@ GLMSAST *glms_fptr_random(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
 
 GLMSAST *glms_fptr_min(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                        GLMSStack *stack) {
-  if (!args || args->length <= 0) return ast;
-
+  if (!args || args->length <= 0)
+    return ast;
 
   float min = INFINITY;
 
@@ -225,15 +253,15 @@ GLMSAST *glms_fptr_min(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
 
     min = fminf(min, v);
   }
-  
+
   return glms_env_new_ast_number(eval->env, min);
 }
 
 GLMSAST *glms_fptr_max(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                        GLMSStack *stack) {
 
-    if (!args || args->length <= 0) return ast;
-
+  if (!args || args->length <= 0)
+    return ast;
 
   float max = -INFINITY;
 
@@ -242,7 +270,7 @@ GLMSAST *glms_fptr_max(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
 
     max = fmaxf(max, v);
   }
-  
+
   return glms_env_new_ast_number(eval->env, max);
 }
 
@@ -340,6 +368,9 @@ void glms_struct_vec4(GLMSEnv *env) {
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
 
+  glms_env_register_any(env, "PI", glms_env_new_ast_number(env, M_PI));
+  glms_env_register_any(env, "TAU", glms_env_new_ast_number(env, M_PI*2.0f));
+  
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dot", glms_fptr_dot);
   glms_env_register_function(env, "distance", glms_fptr_distance);
@@ -349,6 +380,8 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "length", glms_fptr_length);
   glms_env_register_function(env, "cos", glms_fptr_cos);
   glms_env_register_function(env, "sin", glms_fptr_sin);
+  glms_env_register_function(env, "tan", glms_fptr_tan);
+  glms_env_register_function(env, "atan", glms_fptr_atan);
   glms_env_register_function(env, "lerp", glms_fptr_lerp);
   glms_env_register_function(env, "clamp", glms_fptr_clamp);
   glms_env_register_function(env, "min", glms_fptr_min);

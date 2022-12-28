@@ -27,7 +27,13 @@ GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast,
 GLMSAST *glms_fptr_cos(GLMSEval *eval, GLMSAST *ast,
                        GLMSASTList *args, GLMSStack *stack);
 
-GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast,
+GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                       GLMSStack *stack);
+
+GLMSAST *glms_fptr_tan(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                       GLMSStack *stack);
+
+GLMSAST *glms_fptr_atan(GLMSEval *eval, GLMSAST *ast,
                                GLMSASTList *args, GLMSStack *stack);
 
 GLMSAST *glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,

@@ -165,6 +165,11 @@ GLMSAST *glms_env_register_type(
   hashy_map_set(&env->globals, name, ast);
   return ast;
 }
+GLMSAST *glms_env_register_any(GLMSEnv *env, const char *name, GLMSAST *ast) {
+  if (!name || !ast || !env) return 0;
+  hashy_map_set(&env->globals, name, ast);
+  return ast;
+}
 
 GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name) {
   if (!env || !name)
