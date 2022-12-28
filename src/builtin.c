@@ -395,6 +395,7 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "fract", glms_fptr_fract);
   glms_env_register_function(env, "atan", glms_fptr_atan);
   glms_env_register_function(env, "lerp", glms_fptr_lerp);
+  glms_env_register_function(env, "mix", glms_fptr_lerp);
   glms_env_register_function(env, "clamp", glms_fptr_clamp);
   glms_env_register_function(env, "min", glms_fptr_min);
   glms_env_register_function(env, "max", glms_fptr_max);
