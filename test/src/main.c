@@ -225,6 +225,20 @@ static void test_sample_cos_sin() {
   GLMS_TEST_END();
 }
 
+static void test_sample_clamp() {
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST *ast = glms_exec_file(&env, "test/samples/clamp.gs");
+  GLMS_ASSERT(ast != 0);
+
+  GLMSAST *value = glms_eval_lookup(&env.eval, "value", &env.stack);
+  GLMS_ASSERT(value != 0);
+  GLMS_ASSERT(value->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(value->as.number.value == 1.0f);
+
+  GLMS_TEST_END();
+}
+
 int main(int argc, char *argv[]) {
   test_sample_var();
   test_sample_func();
@@ -239,5 +253,6 @@ int main(int argc, char *argv[]) {
   test_sample_for();
   test_sample_vec();
   test_sample_cos_sin();
+  test_sample_clamp();
   return 0;
 }

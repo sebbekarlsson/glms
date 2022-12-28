@@ -46,6 +46,13 @@ number z = lerp(x, y, 0.1);
 print(z); // 32.334900
 ```
 
+### Clamp
+```
+number value = 2312.0;
+value = clamp(value, 0.0, 1.0);
+print(value); // 1.000000
+```
+
 ### cos, sin
 ```
 number a = cos(1.63124);

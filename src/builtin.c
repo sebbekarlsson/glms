@@ -179,6 +179,20 @@ GLMSAST *glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   return glms_env_new_ast_number(eval->env, v);
 }
 
+GLMSAST *glms_fptr_clamp(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                         GLMSStack *stack) {
+  if (args->length < 3)
+    return ast;
+
+  float value = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+  float min = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+  float max = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
+
+  float v = mif_clamp(value, min, max);
+
+  return glms_env_new_ast_number(eval->env, v);
+}
+
 GLMSAST *glms_fptr_random(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                           GLMSStack *stack) {
 
@@ -303,6 +317,7 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "cos", glms_fptr_cos);
   glms_env_register_function(env, "sin", glms_fptr_sin);
   glms_env_register_function(env, "lerp", glms_fptr_lerp);
+  glms_env_register_function(env, "clamp", glms_fptr_clamp);
   glms_env_register_function(env, "random", glms_fptr_random);
   // glms_struct_vec2(env);
   glms_struct_vec3(env);
