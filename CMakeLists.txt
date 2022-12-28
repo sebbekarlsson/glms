@@ -52,7 +52,20 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(hashy_static)
 
-set(GLMS_DEPS m memo_static hashy_static text_static)
+
+FetchContent_Declare(
+  mif_static
+  URL /home/ianertson/workspace/mif
+)
+FetchContent_MakeAvailable(mif_static)
+
+FetchContent_Declare(
+  vec3_static
+  URL /home/ianertson/workspace/vec3
+)
+FetchContent_MakeAvailable(vec3_static)
+
+set(GLMS_DEPS m memo_static hashy_static text_static mif_static vec3_static)
 
 target_link_libraries(glms ${GLMS_DEPS})
 target_link_libraries(glms_e ${GLMS_DEPS})

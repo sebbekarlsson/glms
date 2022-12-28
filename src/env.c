@@ -150,6 +150,22 @@ GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
   return tdef;
 }
 
+GLMSAST *glms_env_register_type(
+				GLMSEnv *env,
+				const char *name,
+				GLMSAST* ast,
+				GLMSASTContructor constructor,
+				GLMSASTSwizzle swizzle,
+				GLMSASTToString to_string
+				) {
+  if (!env || !name || !ast) return 0;
+  ast->constructor = constructor;
+  ast->swizzle = swizzle;
+  ast->to_string = to_string;
+  hashy_map_set(&env->globals, name, ast);
+  return ast;
+}
+
 GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name) {
   if (!env || !name)
     return 0;

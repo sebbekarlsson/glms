@@ -99,6 +99,38 @@ const char *glms_ast_get_string_value(GLMSAST *ast) {
   return glms_ast_get_name(ast);
 }
 
+const char *glms_ast_to_string_array(GLMSAST *ast) {
+
+  if (ast->string_rep != 0) {
+    free(ast->string_rep);
+    ast->string_rep = 0;
+  }
+
+  char* str = 0;
+
+  text_append(&str, "[");
+
+  if (ast->children != 0) {
+    for (int64_t i = 0; i < ast->children->length; i++) {
+      GLMSAST* child = ast->children->items[i];
+      const char* childstr = glms_ast_to_string(child);
+      if (!childstr) continue;
+
+      text_append(&str, childstr);
+
+      if (i < ast->children->length-1) {
+	text_append(&str, ", ");
+      }
+    }
+  }
+  
+  text_append(&str, "]");
+
+  ast->string_rep = str;
+
+  return ast->string_rep;
+}
+
 const char *glms_ast_to_string_object(GLMSAST *ast) {
   if (ast->string_rep != 0) {
     free(ast->string_rep);
@@ -178,6 +210,9 @@ const char *glms_ast_to_string_number(GLMSAST *ast) {
 }
 
 const char *glms_ast_to_string(GLMSAST *ast) {
+  if (ast->to_string != 0) {
+    return ast->to_string(ast);
+  }
   if (ast->type == GLMS_AST_TYPE_OBJECT || ast->type == GLMS_AST_TYPE_STRUCT) {
     return glms_ast_to_string_object(ast);
   } else if (ast->type == GLMS_AST_TYPE_ID) {
@@ -188,6 +223,8 @@ const char *glms_ast_to_string(GLMSAST *ast) {
     return glms_ast_to_string_number(ast);
   } else if (ast->type == GLMS_AST_TYPE_STRING) {
     return glms_ast_get_string_value(ast);
+  }  else if (ast->type == GLMS_AST_TYPE_ARRAY) {
+    return glms_ast_to_string_array(ast);
   }
   return GLMS_AST_TYPE_STR[ast->type];
 }
@@ -681,4 +718,15 @@ void glms_ast_destructor(GLMSAST *ast) {
 
   ast->fptr = 0;
   hashy_map_clear(&ast->props, false);
+}
+
+int64_t glms_ast_array_get_length(GLMSAST *ast) {
+  if (!ast)  return 0;
+  if (!ast->children) return 0;
+  return ast->children->length;
+}
+
+bool glms_ast_is_vector(GLMSAST *ast) {
+  if (!ast) return false;
+  return (ast->type == GLMS_AST_TYPE_VEC3 || ast->type == GLMS_AST_TYPE_VEC2 || ast->type == GLMS_AST_TYPE_VEC4);
 }

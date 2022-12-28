@@ -191,11 +191,11 @@ static void test_sample_vec() {
 
   GLMSAST *v1 = glms_eval_lookup(&env.eval, "v1", &env.stack);
   GLMS_ASSERT(v1 != 0);
-  GLMS_ASSERT(v1->type == GLMS_AST_TYPE_STRUCT);
+  GLMS_ASSERT(v1->type == GLMS_AST_TYPE_VEC3);
 
   GLMSAST *v2 = glms_eval_lookup(&env.eval, "v2", &env.stack);
   GLMS_ASSERT(v2 != 0);
-  GLMS_ASSERT(v2->type == GLMS_AST_TYPE_STRUCT);
+  GLMS_ASSERT(v2->type == GLMS_AST_TYPE_VEC3);
 
   GLMSAST *d = glms_eval_lookup(&env.eval, "d", &env.stack);
   GLMS_ASSERT(d != 0);

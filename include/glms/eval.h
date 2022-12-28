@@ -27,6 +27,8 @@ GLMSAST* glms_eval_unop(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
 GLMSAST* glms_eval_compound(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
+GLMSAST* glms_eval_array(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
+
 GLMSAST* glms_eval_function(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
 GLMSAST* glms_eval_typedef(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);

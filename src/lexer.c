@@ -12,7 +12,7 @@ typedef struct {
 #define GLMSTOKM(p, t)                                                         \
   (GLMSTokenMap) { .pattern = p, .type = t }
 
-#define GLMS_LEXER_TOKEN_MAP_LEN 14
+#define GLMS_LEXER_TOKEN_MAP_LEN 17
 
 const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("function", GLMS_TOKEN_TYPE_SPECIAL_FUNCTION),
@@ -28,7 +28,11 @@ const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("struct", GLMS_TOKEN_TYPE_SPECIAL_STRUCT),
     GLMSTOKM("let", GLMS_TOKEN_TYPE_SPECIAL_LET),
     GLMSTOKM("const", GLMS_TOKEN_TYPE_SPECIAL_CONST),
-    GLMSTOKM("typedef", GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF)};
+    GLMSTOKM("typedef", GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF),
+    GLMSTOKM("vec2", GLMS_TOKEN_TYPE_SPECIAL_VEC2),
+    GLMSTOKM("vec3", GLMS_TOKEN_TYPE_SPECIAL_VEC3),
+    GLMSTOKM("vec4", GLMS_TOKEN_TYPE_SPECIAL_VEC4)
+};
 
 int glms_lexer_init(GLMSLexer *lexer, const char *source) {
   if (!lexer || !source)
@@ -56,6 +60,8 @@ static char glms_lexer_peek(GLMSLexer *lexer, int i) {
   (lexer->c == ' ' || lexer->c == '\t' || lexer->c == '\n' ||                  \
    lexer->c == 10 || lexer->c == 13)
 
+#define GLMS_LEXER_HAS_COMMENT (lexer->c == '/' && glms_lexer_peek(lexer, 1) == '/')
+
 static int glms_lexer_advance(GLMSLexer *lexer) {
   if (lexer->i >= lexer->length)
     return 0;
@@ -68,6 +74,18 @@ static int glms_lexer_advance(GLMSLexer *lexer) {
 
 static int glms_lexer_skip_whitespace(GLMSLexer *lexer) {
   while (lexer->c != 0 && GLMS_LEXER_HAS_WHITESPACE) {
+    if (!glms_lexer_advance(lexer))
+      return 0;
+  }
+
+  return lexer->c != 0 && lexer->i < lexer->length;
+}
+
+static int glms_lexer_skip_line_comment(GLMSLexer *lexer) {
+  while (lexer->c == '/') {
+    glms_lexer_advance(lexer);
+  }
+  while (lexer->c != 0 && lexer->c != '\n' && lexer->c != '\r') {
     if (!glms_lexer_advance(lexer))
       return 0;
   }
@@ -163,10 +181,18 @@ int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out) {
   out->value.length = 0;
   out->type = GLMS_TOKEN_TYPE_EOF;
 
-  while (GLMS_LEXER_HAS_WHITESPACE) {
-    if (!glms_lexer_skip_whitespace(lexer))
-      return 0;
+
+  while (GLMS_LEXER_HAS_COMMENT || GLMS_LEXER_HAS_WHITESPACE) {
+    while (GLMS_LEXER_HAS_COMMENT) {
+	if (!glms_lexer_skip_line_comment(lexer)) return 0;
+    }
+
+    while (GLMS_LEXER_HAS_WHITESPACE) {
+	if (!glms_lexer_skip_whitespace(lexer))
+	return 0;
+    }
   }
+
 
   switch (lexer->c) {
   case '{': {

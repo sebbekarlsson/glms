@@ -7,8 +7,11 @@
 #include <glms/fptr.h>
 #include <glms/macros.h>
 #include <hashy/hashy.h>
+#include <vec3/vec3.h>
 
 struct GLMS_ENV_STRUCT;
+struct GLMS_EVAL_STRUCT;
+struct GLMS_STACK_STRUCT;
 
 #define GLMS_FOREACH_AST_TYPE(TOK)           \
   TOK(GLMS_AST_TYPE_EOF)                     \
@@ -20,6 +23,9 @@ struct GLMS_ENV_STRUCT;
   TOK(GLMS_AST_TYPE_NUMBER)\
   TOK(GLMS_AST_TYPE_BOOL)\
   TOK(GLMS_AST_TYPE_ARRAY)\
+  TOK(GLMS_AST_TYPE_VEC2)\
+  TOK(GLMS_AST_TYPE_VEC3)\
+  TOK(GLMS_AST_TYPE_VEC4)\
   TOK(GLMS_AST_TYPE_TYPEDEF)\
   TOK(GLMS_AST_TYPE_OBJECT)\
   TOK(GLMS_AST_TYPE_STRUCT)\
@@ -47,6 +53,20 @@ struct GLMS_GLMSAST_LIST_STRUCT;
 struct GLMS_AST_STRUCT;
 
 #define JAST struct GLMS_AST_STRUCT
+
+typedef struct GLMS_AST_STRUCT* (*GLMSASTContructor)(
+						     struct GLMS_EVAL_STRUCT* eval,
+						     struct GLMS_STACK_STRUCT* stack,
+						     struct GLMS_GLMSAST_LIST_STRUCT* args
+						     );
+
+typedef struct GLMS_AST_STRUCT *(*GLMSASTSwizzle)(
+    struct GLMS_EVAL_STRUCT *eval, struct GLMS_STACK_STRUCT *stack,
+    struct GLMS_AST_STRUCT *ast, struct GLMS_AST_STRUCT *accessor);
+
+typedef const char* (*GLMSASTToString)(
+						     struct GLMS_AST_STRUCT* ast
+						     );
 
 typedef struct GLMS_AST_STRUCT {
 
@@ -110,6 +130,10 @@ typedef struct GLMS_AST_STRUCT {
       JAST* next;
     } block;
 
+    Vector2 v2;
+    Vector3 v3;
+    Vector3 v4;
+
   } as;
 
   GLMSASTType type;
@@ -118,6 +142,9 @@ typedef struct GLMS_AST_STRUCT {
   struct GLMS_GLMSAST_LIST_STRUCT* flags;
   GLMSFPTR fptr;
   char* string_rep;
+  GLMSASTContructor constructor;
+  GLMSASTSwizzle swizzle;
+  GLMSASTToString to_string;
 } GLMSAST;
 
 GLMS_DEFINE_BUFFER(GLMSAST);
@@ -149,12 +176,15 @@ GLMSAST* glms_ast_object_set_property(GLMSAST* obj, const char* key, GLMSAST* va
 GLMSAST* glms_ast_access_by_index(GLMSAST* ast, int64_t index, struct GLMS_ENV_STRUCT* env);
 GLMSAST* glms_ast_access_by_key(GLMSAST* ast, const char* key, struct GLMS_ENV_STRUCT* env);
 
+int64_t glms_ast_array_get_length(GLMSAST* ast);
 
 GLMSAST* glms_ast_get_type(GLMSAST* ast);
 
 GLMSAST* glms_ast_copy(GLMSAST src, struct GLMS_ENV_STRUCT* env);
 
-void glms_ast_destructor(GLMSAST* ast);
+void glms_ast_destructor(GLMSAST *ast);
+
+bool glms_ast_is_vector(GLMSAST* ast);
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)
 

@@ -1,3 +1,4 @@
+#include "glms/ast.h"
 #include <glms/builtin.h>
 #include <glms/env.h>
 #include <glms/eval.h>
@@ -32,6 +33,9 @@ GLMSAST *glms_eval(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   switch (ast->type) {
   case GLMS_AST_TYPE_COMPOUND: {
     return glms_eval_compound(eval, ast, stack);
+  }; break;
+  case GLMS_AST_TYPE_ARRAY: {
+    return glms_eval_array(eval, ast, stack);
   }; break;
   case GLMS_AST_TYPE_BINOP: {
     return glms_eval_binop(eval, ast, stack);
@@ -154,9 +158,10 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     func = ast->as.call.func;
   }
 
-
-
-
+  if (func->constructor) {
+    return glms_eval(eval, func->constructor(eval, stack, ast->children),
+                     stack);
+  }
 
   // constructor
   if (func->type == GLMS_AST_TYPE_STRUCT) {
@@ -167,34 +172,38 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     glms_stack_copy(*stack, &tmp_stack);
 
     if (ast->children != 0 && func->props.initialized) {
-        HashyIterator it = {0};
+      HashyIterator it = {0};
 
-        int64_t i = 0;
-        while (hashy_map_iterate(&func->props, &it)) {
-          if (!it.bucket->key)
-              continue;
-            if (!it.bucket->value)
-              continue;
+      int64_t i = 0;
+      while (hashy_map_iterate(&func->props, &it)) {
+        if (!it.bucket->key)
+          continue;
+        if (!it.bucket->value)
+          continue;
 
-            const char *key = it.bucket->key;
-            GLMSAST *value = glms_eval(eval, (GLMSAST *)it.bucket->value, &tmp_stack);
+        const char *key = it.bucket->key;
+        GLMSAST *value =
+            glms_eval(eval, (GLMSAST *)it.bucket->value, &tmp_stack);
 
-            GLMSAST *arg_value = glms_eval(eval, ast->children->items[MAX(0, (ast->children->length-1) - i)], &tmp_stack);
-          glms_ast_object_set_property(copied, key, arg_value);
-          i++;
+        GLMSAST *arg_value = glms_eval(
+            eval, ast->children->items[MAX(0, (ast->children->length - 1) - i)],
+            &tmp_stack);
+        glms_ast_object_set_property(copied, key, arg_value);
+        i++;
 
-          if (i >= ast->children->length) break;
-        }
+        if (i >= ast->children->length)
+          break;
+      }
     }
 
-
-    GLMSAST* result = glms_eval(eval, copied, stack);
+    GLMSAST *result = glms_eval(eval, copied, stack);
     glms_stack_clear(&tmp_stack);
     return result;
   }
 
   if (func->type != GLMS_AST_TYPE_FUNC) {
-    GLMS_WARNING_RETURN(ast, stderr, "`%s` is not callable.\n", GLMS_AST_TYPE_STR[func->type]);
+    GLMS_WARNING_RETURN(ast, stderr, "`%s` is not callable.\n",
+                        GLMS_AST_TYPE_STR[func->type]);
     func = 0;
   }
 
@@ -239,6 +248,13 @@ GLMSAST *glms_eval_access(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     GLMS_WARNING_RETURN(ast, stderr, "cannot index undefined.\n");
   GLMSAST *left = glms_eval(eval, ast->as.access.left, stack);
   GLMSAST *right = ast->as.access.right;
+
+  if (left->swizzle != 0) {
+    GLMSAST *result = 0;
+    if ((result = left->swizzle(eval, stack, left, right))) {
+      return glms_eval(eval, result, stack);
+    }
+  }
 
   if (right->type != GLMS_AST_TYPE_ARRAY) {
     const char *key = glms_ast_get_string_value(right);
@@ -327,14 +343,58 @@ GLMSAST *glms_eval_unop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   return glms_eval_unop_right(eval, ast, stack);
 }
 
+GLMSAST *glms_eval_binop_mul_number_number(GLMSEval *eval, GLMSAST *left,
+                                           GLMSAST *right, GLMSStack *stack) {
+  return glms_env_new_ast_number(eval->env,
+                                 GLMSAST_VALUE(left) * GLMSAST_VALUE(right));
+}
+
+GLMSAST *glms_eval_binop_mul_array_array(GLMSEval *eval, GLMSAST *ast,
+                                         GLMSStack *stack) {
+  GLMSAST *left = ast->as.binop.left;
+  GLMSAST *right = ast->as.binop.right;
+
+  int64_t len_left = glms_ast_array_get_length(left);
+  int64_t len_right = glms_ast_array_get_length(right);
+  int64_t len_min = MIN(len_left, len_right);
+
+  if (len_min <= 0)
+    return ast;
+
+  GLMSAST *new_array = glms_env_new_ast(eval->env, GLMS_AST_TYPE_ARRAY);
+
+  for (int64_t i = 0; i < len_min; i++) {
+    GLMSAST *chleft = left->children->items[i];
+    GLMSAST *chright = right->children->items[i];
+
+    glms_ast_push(new_array, glms_eval_binop_mul_number_number(eval, chleft,
+                                                               chright, stack));
+  }
+
+  return new_array;
+}
+
+GLMSAST *glms_eval_binop_mul(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
+  GLMSAST *left = ast->as.binop.left =
+      glms_eval(eval, ast->as.binop.left, stack);
+  GLMSAST *right = ast->as.binop.right =
+      glms_eval(eval, ast->as.binop.right, stack);
+
+  if (left->type == GLMS_AST_TYPE_NUMBER &&
+      right->type == GLMS_AST_TYPE_NUMBER) {
+    return glms_eval_binop_mul_number_number(eval, left, right, stack);
+  } else if (left->type == GLMS_AST_TYPE_ARRAY &&
+             right->type == GLMS_AST_TYPE_ARRAY) {
+    return glms_eval_binop_mul_array_array(eval, ast, stack);
+  }
+
+  return ast;
+}
+
 GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   switch (ast->as.binop.op) {
   case GLMS_TOKEN_TYPE_MUL: {
-    ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
-    ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
-    return glms_env_new_ast_number(eval->env,
-                                   GLMSAST_VALUE(ast->as.binop.left) *
-                                       GLMSAST_VALUE(ast->as.binop.right));
+    return glms_eval_binop_mul(eval, ast, stack);
   }; break;
   case GLMS_TOKEN_TYPE_DIV: {
     ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
@@ -437,19 +497,19 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
       case GLMS_AST_TYPE_NUMBER: {
         left->as.number.value = right->as.number.value;
       }; break;
-        case GLMS_AST_TYPE_STRING: {
-          const char* strval = glms_ast_get_string_value(right);
-          if (strval != 0) {
-            if (left->as.string.heap != 0) {
-              free(left->as.string.heap);
-              left->as.string.heap = 0;
-            }
-
-            left->as.string.heap = strdup(strval);
+      case GLMS_AST_TYPE_STRING: {
+        const char *strval = glms_ast_get_string_value(right);
+        if (strval != 0) {
+          if (left->as.string.heap != 0) {
+            free(left->as.string.heap);
+            left->as.string.heap = 0;
           }
-          // left->as.string.value = right->as.string.value;
+
+          left->as.string.heap = strdup(strval);
+        }
+        // left->as.string.value = right->as.string.value;
       }; break;
-        default: {
+      default: {
         // TODO: This is most definitely a memory leak.
         //*left = *right;
       }; break;
@@ -565,6 +625,17 @@ GLMSAST *glms_eval_for(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
        glms_ast_is_truthy(glms_eval(eval, cond, stack));
        glms_eval(eval, step, stack)) {
     glms_eval(eval, ast->as.forloop.body, stack);
+  }
+
+  return ast;
+}
+
+GLMSAST *glms_eval_array(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
+  if (!ast->children || ast->children->length <= 0)
+    return ast;
+
+  for (int64_t i = 0; i < ast->children->length; i++) {
+    ast->children->items[i] = glms_eval(eval, ast->children->items[i], stack);
   }
 
   return ast;

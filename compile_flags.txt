@@ -8,3 +8,5 @@
 -I./build/_deps/memo_static-src/include
 -I./build/_deps/hashy_static-src/include
 -I./build/_deps/text_static-src/include
+-I./build/_deps/mif_static-src/include
+-I./build/_deps/vec3_static-src/include

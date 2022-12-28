@@ -55,7 +55,16 @@ GLMSAST* glms_env_exec(GLMSEnv* env);
 GLMSAST* glms_env_register_function(GLMSEnv* env, const char* name, GLMSFPTR fptr);
 
 GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
-                                  GLMSAST** fields, int fields_length);
+                                  GLMSAST **fields, int fields_length);
+
+GLMSAST *glms_env_register_type(
+				GLMSEnv *env,
+				const char *name,
+				GLMSAST* ast,
+				GLMSASTContructor constructor,
+				GLMSASTSwizzle swizzle,
+				GLMSASTToString to_string
+				);
 
 GLMSAST* glms_env_lookup_function(GLMSEnv* env, const char* name);
 

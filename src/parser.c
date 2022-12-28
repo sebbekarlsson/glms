@@ -16,9 +16,7 @@ int glms_parser_init(GLMSParser *parser, GLMSEnv *env) {
   const char *tokname = glms_string_view_get_value(&parser->token.value);
   GLMSAST *known = glms_parser_lookup(parser, tokname);
 
-  if (known && (known->type == GLMS_AST_TYPE_TYPEDEF ||
-                known->type == GLMS_AST_TYPE_STRUCT)) {
-
+  if (known) {
     parser->token.type = GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE;
   }
 
@@ -44,8 +42,7 @@ int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
   const char *tokname = glms_string_view_get_value(&parser->token.value);
   GLMSAST *known = glms_parser_lookup(parser, tokname);
 
-  if (known && (known->type == GLMS_AST_TYPE_TYPEDEF ||
-                known->type == GLMS_AST_TYPE_STRUCT)) {
+  if (known) {
 
     parser->token.type = GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE;
   }
