@@ -12,7 +12,7 @@ typedef struct {
 #define GLMSTOKM(p, t)                                                         \
   (GLMSTokenMap) { .pattern = p, .type = t }
 
-#define GLMS_LEXER_TOKEN_MAP_LEN 17
+#define GLMS_LEXER_TOKEN_MAP_LEN 22
 
 const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("function", GLMS_TOKEN_TYPE_SPECIAL_FUNCTION),
@@ -22,6 +22,9 @@ const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("false", GLMS_TOKEN_TYPE_SPECIAL_FALSE),
     GLMSTOKM("true", GLMS_TOKEN_TYPE_SPECIAL_TRUE),
     GLMSTOKM("for", GLMS_TOKEN_TYPE_SPECIAL_FOR),
+    GLMSTOKM("switch", GLMS_TOKEN_TYPE_SPECIAL_SWITCH),
+    GLMSTOKM("case", GLMS_TOKEN_TYPE_SPECIAL_CASE),
+    GLMSTOKM("break", GLMS_TOKEN_TYPE_SPECIAL_BREAK),
     GLMSTOKM("while", GLMS_TOKEN_TYPE_SPECIAL_WHILE),
     GLMSTOKM("string", GLMS_TOKEN_TYPE_SPECIAL_STRING),
     GLMSTOKM("number", GLMS_TOKEN_TYPE_SPECIAL_NUMBER),
@@ -31,7 +34,9 @@ const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("typedef", GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF),
     GLMSTOKM("vec2", GLMS_TOKEN_TYPE_SPECIAL_VEC2),
     GLMSTOKM("vec3", GLMS_TOKEN_TYPE_SPECIAL_VEC3),
-    GLMSTOKM("vec4", GLMS_TOKEN_TYPE_SPECIAL_VEC4)
+    GLMSTOKM("vec3", GLMS_TOKEN_TYPE_SPECIAL_VEC3),
+    GLMSTOKM("bool", GLMS_TOKEN_TYPE_SPECIAL_BOOL),
+    GLMSTOKM("enum", GLMS_TOKEN_TYPE_SPECIAL_ENUM)
 };
 
 int glms_lexer_init(GLMSLexer *lexer, const char *source) {
@@ -114,7 +119,7 @@ static int glms_lexer_parse_id(GLMSLexer *lexer, GLMSToken *out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
 
-  while (isalnum(lexer->c) && lexer->c != 0) {
+  while ((isalnum(lexer->c) || lexer->c == '_') && lexer->c != 0) {
     glms_lexer_advance(lexer);
     out->value.length++;
   }

@@ -34,5 +34,7 @@ void glms_stack_dump(GLMSStack* stack);
 
 int glms_stack_copy(GLMSStack src, GLMSStack* dest);
 
-int glms_stack_clear(GLMSStack* stack);
+int glms_stack_clear(GLMSStack *stack);
+
+int glms_stack_clear_trash(GLMSStack *stack);
 #endif

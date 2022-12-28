@@ -1,5 +1,6 @@
 #ifndef GLMS_AST_H
 #define GLMS_AST_H
+#include <arena/arena.h>
 #include <glms/string_view.h>
 #include <glms/token.h>
 #include <glms/buffer.h>
@@ -7,6 +8,7 @@
 #include <glms/fptr.h>
 #include <glms/macros.h>
 #include <hashy/hashy.h>
+#include <stdbool.h>
 #include <vec3/vec3.h>
 
 struct GLMS_ENV_STRUCT;
@@ -29,6 +31,7 @@ struct GLMS_STACK_STRUCT;
   TOK(GLMS_AST_TYPE_TYPEDEF)\
   TOK(GLMS_AST_TYPE_OBJECT)\
   TOK(GLMS_AST_TYPE_STRUCT)\
+  TOK(GLMS_AST_TYPE_ENUM)\
   TOK(GLMS_AST_TYPE_BINOP)\
   TOK(GLMS_AST_TYPE_UNOP)\
   TOK(GLMS_AST_TYPE_ACCESS)\
@@ -130,6 +133,8 @@ typedef struct GLMS_AST_STRUCT {
       JAST* next;
     } block;
 
+    bool boolean;
+
     Vector2 v2;
     Vector3 v3;
     Vector3 v4;
@@ -145,6 +150,8 @@ typedef struct GLMS_AST_STRUCT {
   GLMSASTContructor constructor;
   GLMSASTSwizzle swizzle;
   GLMSASTToString to_string;
+  ArenaRef ref;
+  bool keep;
 } GLMSAST;
 
 GLMS_DEFINE_BUFFER(GLMSAST);
@@ -184,7 +191,10 @@ GLMSAST* glms_ast_copy(GLMSAST src, struct GLMS_ENV_STRUCT* env);
 
 void glms_ast_destructor(GLMSAST *ast);
 
-bool glms_ast_is_vector(GLMSAST* ast);
+bool glms_ast_is_vector(GLMSAST *ast);
+
+void glms_ast_keep(GLMSAST* ast);
+
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)
 

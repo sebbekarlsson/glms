@@ -1,3 +1,5 @@
+#include "arena/arena.h"
+#include "hashy/hashy.h"
 #include <glms/macros.h>
 #include <glms/stack.h>
 
@@ -28,6 +30,10 @@ GLMSAST *glms_stack_push(GLMSStack *stack, const char *name, GLMSAST *ast) {
     glms_stack_dump(stack);
     return 0;
   }
+
+  GLMSAST* existing = glms_stack_get(stack, name);
+  if (existing != 0) return existing;
+  
   hashy_map_set(&stack->locals, name, ast);
 
   glms_GLMSAST_list_push(&stack->list, ast);
@@ -106,5 +112,35 @@ int glms_stack_clear(GLMSStack *stack) {
   hashy_map_clear(&stack->locals, false);
   glms_GLMSAST_list_clear(&stack->list);
   stack->names_length = 0;
+  return 1;
+}
+
+int glms_stack_clear_trash(GLMSStack *stack) {
+  if (!stack)
+    return 0;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
+
+
+HashyIterator it = {0};
+
+  while (hashy_map_iterate(&stack->locals, &it)) {
+    if (!it.bucket->key)
+      continue;
+    if (!it.bucket->value)
+      continue;
+
+    const char *key = it.bucket->key;
+    GLMSAST *value = (GLMSAST *)it.bucket->value;
+
+    if (value->keep) continue;
+    if (value->ref.arena == 0) continue;
+
+    hashy_map_unset(&stack->locals, key);
+    arena_free(value->ref);
+
+    printf("freed!\n");
+  }
+
   return 1;
 }

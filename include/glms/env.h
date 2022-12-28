@@ -1,6 +1,7 @@
 #ifndef GLMS_ENV_H
 #define GLMS_ENV_H
 #include <memo/memo.h>
+#include <arena/arena.h>
 #include <glms/ast.h>
 #include <glms/lexer.h>
 #include <glms/parser.h>
@@ -16,6 +17,7 @@ typedef struct {
 
 typedef struct GLMS_ENV_STRUCT {
   Memo memo_ast;
+  Arena arena_ast;
   GLMSConfig config;
   bool initialized;
   const char* source;
@@ -40,15 +42,15 @@ int glms_env_init(
 
 int glms_env_clear(GLMSEnv* env);
 
-GLMSAST* glms_env_new_ast(GLMSEnv* env, GLMSASTType type);
+GLMSAST* glms_env_new_ast(GLMSEnv* env, GLMSASTType type, bool arena);
 
-GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast);
+GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast, bool arena);
 
-GLMSAST* glms_env_new_ast_number(GLMSEnv* env, float v);
+GLMSAST* glms_env_new_ast_number(GLMSEnv* env, float v, bool arena);
 
-GLMSAST* glms_env_new_ast_string(GLMSEnv* env, const char* value);
+GLMSAST* glms_env_new_ast_string(GLMSEnv* env, const char* value, bool arena);
 
-GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name);
+GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name, bool arena);
 
 GLMSAST* glms_env_exec(GLMSEnv* env);
 

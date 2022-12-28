@@ -209,6 +209,19 @@ const char *glms_ast_to_string_number(GLMSAST *ast) {
   return ast->string_rep;
 }
 
+const char *glms_ast_to_string_bool(GLMSAST *ast) {
+  char tmp[256];
+  sprintf(tmp, "%s", ast->as.boolean ? "true" : "false");
+
+  if (ast->string_rep) {
+    free(ast->string_rep);
+    ast->string_rep = 0;
+  }
+
+  ast->string_rep = strdup(tmp);
+  return ast->string_rep;
+}
+
 const char *glms_ast_to_string(GLMSAST *ast) {
   if (ast->to_string != 0) {
     return ast->to_string(ast);
@@ -223,8 +236,10 @@ const char *glms_ast_to_string(GLMSAST *ast) {
     return glms_ast_to_string_number(ast);
   } else if (ast->type == GLMS_AST_TYPE_STRING) {
     return glms_ast_get_string_value(ast);
-  }  else if (ast->type == GLMS_AST_TYPE_ARRAY) {
+  } else if (ast->type == GLMS_AST_TYPE_ARRAY) {
     return glms_ast_to_string_array(ast);
+  } else if (ast->type == GLMS_AST_TYPE_BOOL) {
+    return glms_ast_to_string_bool(ast);
   }
   return GLMS_AST_TYPE_STR[ast->type];
 }
@@ -234,6 +249,9 @@ bool glms_ast_is_truthy(GLMSAST *ast) {
     return false;
 
   switch (ast->type) {
+  case GLMS_AST_TYPE_BOOL: {
+    return ast->as.boolean;
+  }; break;
   case GLMS_AST_TYPE_NUMBER: {
     return ast->as.number.value > 0;
   }; break;
@@ -286,7 +304,7 @@ GLMSAST *glms_ast_access_by_index(GLMSAST *ast, int64_t index, GLMSEnv *env) {
       GLMS_WARNING_RETURN(ast, stderr, "index out of bounds.\n");
     char tmp[3];
     sprintf(tmp, "%c", string_value[index]);
-    return glms_env_new_ast_string(env, tmp);
+    return glms_env_new_ast_string(env, tmp, true);
   }; break;
   default: {
     GLMS_WARNING_RETURN(ast, stderr, "value cannot be indexed.\n");
@@ -305,10 +323,9 @@ GLMSAST *glms_ast_access_by_key(GLMSAST *ast, const char *key, GLMSEnv *env) {
   if (ast->type == GLMS_AST_TYPE_NUMBER)
     GLMS_WARNING_RETURN(ast, stderr, "cannot index number.\n");
   if (!ast->props.initialized)
-    return glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED);
+    return env->undefined; 
   GLMSAST *value = (GLMSAST *)hashy_map_get(&ast->props, key);
-  if (!value)
-    glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED);
+  if (!value) return env->undefined;
 
   return value;
 }
@@ -504,7 +521,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   if (!env)
     return 0;
 
-  GLMSAST *dest = glms_env_new_ast(env, src.type);
+  GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
   dest->props = (HashyMap){0};
   dest->children = 0;
@@ -729,4 +746,9 @@ int64_t glms_ast_array_get_length(GLMSAST *ast) {
 bool glms_ast_is_vector(GLMSAST *ast) {
   if (!ast) return false;
   return (ast->type == GLMS_AST_TYPE_VEC3 || ast->type == GLMS_AST_TYPE_VEC2 || ast->type == GLMS_AST_TYPE_VEC4);
+}
+
+void glms_ast_keep(GLMSAST *ast) {
+  if (!ast) return;
+  ast->keep = true;
 }

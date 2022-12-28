@@ -41,6 +41,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(memo_static)
 
 FetchContent_Declare(
+  arena_static
+  URL /home/ianertson/workspace/arena
+)
+FetchContent_MakeAvailable(arena_static)
+
+FetchContent_Declare(
   text_static
   URL /home/ianertson/workspace/text
 )
@@ -65,7 +71,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(vec3_static)
 
-set(GLMS_DEPS m memo_static hashy_static text_static mif_static vec3_static)
+set(GLMS_DEPS m memo_static arena_static hashy_static text_static mif_static vec3_static)
 
 target_link_libraries(glms ${GLMS_DEPS})
 target_link_libraries(glms_e ${GLMS_DEPS})

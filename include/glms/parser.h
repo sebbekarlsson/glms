@@ -51,6 +51,7 @@ GLMSAST* glms_parser_parse_for(GLMSParser* parser);
 
 GLMSAST* glms_parser_parse_binop(GLMSParser* parser, GLMSAST* left);
 GLMSAST* glms_parser_parse_struct(GLMSParser* parser);
+GLMSAST* glms_parser_parse_enum(GLMSParser* parser);
 GLMSAST* glms_parser_parse_unop(GLMSParser* parser);
 GLMSAST* glms_parser_parse_typedef(GLMSParser* parser);
 
