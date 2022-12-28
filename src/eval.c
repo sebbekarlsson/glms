@@ -1,4 +1,5 @@
 #include "glms/ast.h"
+#include "hashy/keylist.h"
 #include <glms/builtin.h>
 #include <glms/env.h>
 #include <glms/eval.h>
@@ -191,8 +192,10 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
         glms_ast_object_set_property(copied, key, arg_value);
         i++;
 
-        if (i >= ast->children->length)
+        if (i >= ast->children->length) {
+	  hashy_key_list_clear(&it.keys);
           break;
+	}
       }
     }
 
