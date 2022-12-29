@@ -423,6 +423,10 @@ GLMSAST *glms_eval_binop_mul(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   } else if (left->type == GLMS_AST_TYPE_ARRAY &&
              right->type == GLMS_AST_TYPE_ARRAY) {
     return glms_eval_binop_mul_array_array(eval, ast, stack);
+  } else if (left->type == GLMS_AST_TYPE_BOOL && right->type == GLMS_AST_TYPE_NUMBER) {
+    return glms_env_new_ast_number(eval->env, ((float)left->as.boolean) * GLMSAST_VALUE(right), eval->arena);
+  } else if (left->type == GLMS_AST_TYPE_NUMBER && right->type == GLMS_AST_TYPE_BOOL) {
+    return glms_env_new_ast_number(eval->env, GLMSAST_VALUE(left) * (float)right->as.boolean, eval->arena);
   }
 
   return ast;
