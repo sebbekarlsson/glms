@@ -40,7 +40,7 @@ vec3 f = vec3(random());
 
 print(f);
 
-dp = dot(d, f);
+number dp = dot(d, f);
 
 print(dp);
 ```
