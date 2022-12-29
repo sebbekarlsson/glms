@@ -827,15 +827,6 @@ int glms_eval_ast_list(GLMSEval *eval, GLMSASTList *list, GLMSStack *stack) {
 }
 
 GLMSAST *glms_eval_stack_ptr(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
-  int idx = ast->as.stackptr.idx;
-
-  if (idx < 0 || idx >= stack->tiny_stack_length) return ast;
-
-
-  GLMSAST ptr = stack->tiny_stack[idx];
-
-  *ast = ptr;
-
   return ast;
 }
 
