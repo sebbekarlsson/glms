@@ -1,5 +1,5 @@
 function hello() {
-  const x = 2;
+  number x = 2;
   return x;
 }
 

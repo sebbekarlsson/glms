@@ -1,10 +1,10 @@
-const x = {
+const number x = {
   y: () => {
     return 44;
   }
 };
 
 
-const w = x.y();
+number w = x.y();
 
 print(w);

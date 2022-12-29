@@ -60,16 +60,18 @@ struct GLMS_AST_STRUCT;
 typedef struct GLMS_AST_STRUCT* (*GLMSASTContructor)(
 						     struct GLMS_EVAL_STRUCT* eval,
 						     struct GLMS_STACK_STRUCT* stack,
-						     struct GLMS_GLMSAST_LIST_STRUCT* args
+						     struct GLMS_GLMSAST_LIST_STRUCT* args,
+						     struct GLMS_AST_STRUCT* self
 						     );
 
 typedef struct GLMS_AST_STRUCT *(*GLMSASTSwizzle)(
     struct GLMS_EVAL_STRUCT *eval, struct GLMS_STACK_STRUCT *stack,
     struct GLMS_AST_STRUCT *ast, struct GLMS_AST_STRUCT *accessor);
 
-typedef const char* (*GLMSASTToString)(
-						     struct GLMS_AST_STRUCT* ast
-						     );
+typedef const char *(*GLMSASTToString)(struct GLMS_AST_STRUCT *ast);
+
+typedef void (*GLMSASTDestructor)(struct GLMS_AST_STRUCT *ast);
+
 
 typedef struct GLMS_AST_STRUCT {
 
@@ -137,7 +139,7 @@ typedef struct GLMS_AST_STRUCT {
 
     Vector2 v2;
     Vector3 v3;
-    Vector3 v4;
+    Vector4 v4;
 
   } as;
 
@@ -146,10 +148,14 @@ typedef struct GLMS_AST_STRUCT {
   struct GLMS_GLMSAST_LIST_STRUCT* children;
   struct GLMS_GLMSAST_LIST_STRUCT* flags;
   GLMSFPTR fptr;
+  void* ptr;
   char* string_rep;
   GLMSASTContructor constructor;
   GLMSASTSwizzle swizzle;
   GLMSASTToString to_string;
+  GLMSASTDestructor destructor;
+  char* typename;
+  JAST* value_type;
   ArenaRef ref;
   bool keep;
 } GLMSAST;
@@ -193,7 +199,9 @@ void glms_ast_destructor(GLMSAST *ast);
 
 bool glms_ast_is_vector(GLMSAST *ast);
 
-void glms_ast_keep(GLMSAST* ast);
+void glms_ast_keep(GLMSAST *ast);
+
+GLMSAST* glms_ast_get_property(GLMSAST* ast, const char* key);
 
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)

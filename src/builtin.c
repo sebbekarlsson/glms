@@ -1,11 +1,15 @@
-#include "glms/ast.h"
-#include "glms/env.h"
-#include "glms/macros.h"
-#include "vec3/vec3.h"
+#include "glms/eval.h"
+#include "glms/stack.h"
+#include "text/text.h"
+#include <glms/ast.h>
+#include <glms/env.h>
+#include <glms/macros.h>
+#include <vec3/vec3.h>
 #include <glms/builtin.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
+#include <gimg/gimg.h>
 
 GLMSAST *glms_fptr_print(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                          GLMSStack *stack) {
@@ -300,6 +304,15 @@ GLMSAST *glms_fptr_keep(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   return a;
 }
 
+GLMSAST *glms_fptr_trace(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                        GLMSStack *stack) {
+
+
+  glms_stack_dump(stack);
+
+  return ast;
+}
+
 void glms_struct_vec2(GLMSEnv *env) {
   glms_env_register_struct(
       env, "vec2",
@@ -307,6 +320,53 @@ void glms_struct_vec2(GLMSEnv *env) {
 	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x", true),
 	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y", true)},
       2);
+}
+
+GLMSAST *glms_struct_vec4_swizzle(GLMSEval *eval, GLMSStack *stack,
+                                  GLMSAST *ast, GLMSAST *accessor) {
+  const char *id = glms_ast_get_string_value(accessor);
+  if (!id)
+    return 0;
+
+  if (strlen(id) > 1) {
+    GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
+  }
+
+  int idx = ((int)id[0]) - 120;
+
+  if (idx < 0 || idx >= 3) {
+    GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
+  }
+
+  float v = vector3_get_component(ast->as.v3, idx);
+
+  return glms_env_new_ast_number(eval->env, v, true);
+}
+
+GLMSAST *glms_struct_vec4_constructor(GLMSEval *eval, GLMSStack *stack,
+                                      GLMSASTList *args, GLMSAST* self) {
+  GLMSAST *ast = self ? self : glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC4, true);
+
+  ast->swizzle = glms_struct_vec4_swizzle;
+  ast->constructor = glms_struct_vec4_constructor;
+  ast->to_string = glms_struct_vec4_to_string;
+
+  if (!args)
+    return ast;
+
+  if (args->length >= 4) {
+    float x = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+    float y = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+    float z = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
+    float w = GLMSAST_VALUE(glms_eval(eval, args->items[3], stack));
+
+    ast->as.v4 = VEC4(x, y, z, w);
+  } else if (args->length == 1) {
+    float x = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+    ast->as.v4 = VEC41(x);
+  }
+
+  return ast;
 }
 
 GLMSAST *glms_struct_vec3_swizzle(GLMSEval *eval, GLMSStack *stack,
@@ -331,8 +391,8 @@ GLMSAST *glms_struct_vec3_swizzle(GLMSEval *eval, GLMSStack *stack,
 }
 
 GLMSAST *glms_struct_vec3_constructor(GLMSEval *eval, GLMSStack *stack,
-                                      GLMSASTList *args) {
-  GLMSAST *ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC3, true);
+                                      GLMSASTList *args, GLMSAST* self) {
+  GLMSAST *ast = self ? self : glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC3, true);
 
   ast->swizzle = glms_struct_vec3_swizzle;
   ast->constructor = glms_struct_vec3_constructor;
@@ -369,10 +429,24 @@ const char *glms_struct_vec3_to_string(GLMSAST *ast) {
   return ast->string_rep;
 }
 
+const char *glms_struct_vec4_to_string(GLMSAST *ast) {
+  Vector3 v = ast->as.v3;
+
+  char tmp[256];
+  if (ast->string_rep != 0) {
+    free(ast->string_rep);
+    ast->string_rep = 0;
+  }
+  sprintf(tmp, "VEC4(%1.6f, %1.6f, %1.6f, %1.6f)", v.x, v.y, v.z, v.w);
+  ast->string_rep = strdup(tmp);
+
+  return ast->string_rep;
+}
+
 void glms_struct_vec3(GLMSEnv *env) {
-  glms_env_register_type(env, "vec3", glms_env_new_ast(env, GLMS_AST_TYPE_VEC3, true),
+  glms_env_register_type(env, "vec3", glms_env_new_ast(env, GLMS_AST_TYPE_VEC3, false),
                          glms_struct_vec3_constructor, glms_struct_vec3_swizzle,
-                         glms_struct_vec3_to_string);
+                         glms_struct_vec3_to_string, 0);
   //  glms_env_register_struct(env, "vec3", (GLMSAST*[]){
   //    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x"),
   //    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y"),
@@ -381,14 +455,202 @@ void glms_struct_vec3(GLMSEnv *env) {
 }
 
 void glms_struct_vec4(GLMSEnv *env) {
-  glms_env_register_struct(
-      env, "vec4",
-      (GLMSAST *[]){
-	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x", true),
-	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y", true),
-	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "z", true),
-	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "w", true)},
-      4);
+  glms_env_register_type(env, "vec4", glms_env_new_ast(env, GLMS_AST_TYPE_VEC4, false),
+                         glms_struct_vec4_constructor, glms_struct_vec4_swizzle,
+                         glms_struct_vec4_to_string, 0);
+}
+
+GLMSAST *glms_struct_image_fptr_get_pixel(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+					  GLMSStack *stack) {
+  if (!args || args->length < 2) return ast;
+
+  if (!ast->ptr) return ast;
+
+  GIMG* gimg = (GIMG*)ast->ptr;
+
+  int x = (int)GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+  int y = (int)GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+
+  Vector4 pixel = gimg_get_pixel_vec4(gimg, x, y);
+
+  GLMSAST* v4 = glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC4, true);
+  v4->as.v4 = pixel;
+
+  return v4;
+}
+
+GLMSAST *glms_struct_image_fptr_set_pixel(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+					  GLMSStack *stack) {
+  if (!args || args->length < 3) return ast;
+
+  if (!ast->ptr) return ast;
+
+  GIMG* gimg = (GIMG*)ast->ptr;
+
+  int x = (int)GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+  int y = (int)GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+
+  Vector4 pixel = glms_eval(eval, args->items[2], stack)->as.v4;
+
+
+  gimg_set_pixel_vec4(gimg, x, y, pixel);
+
+  return ast;
+}
+
+GLMSAST *glms_struct_image_fptr_make(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+					  GLMSStack *stack) {
+  if (!args || args->length < 2) return ast;
+  //  if (ast->ptr) return ast; // already made
+
+  GIMG* gimg = ast->ptr ? ast->ptr : NEW(GIMG);
+
+  int w = (int)GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
+  int h = (int)GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+
+  GLMSAST* imgast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STRUCT, true);
+  if (!gimg_make(gimg, w, h)) {
+    GLMS_WARNING_RETURN(ast, stderr, "Failed to create image.\n");
+  }
+
+  imgast->ptr = gimg;
+
+
+  return imgast;
+}
+
+GLMSAST *glms_struct_image_fptr_save(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+					  GLMSStack *stack) {
+  if (!args || args->length <= 0) return ast;
+  if (!ast->ptr) GLMS_WARNING_RETURN(ast, stderr, "Image not initialized (ptr = null).\n");
+
+  GIMG* gimg = (GIMG*)ast->ptr;
+
+  GLMSAST* arg0 = glms_eval(eval, args->items[0], stack);
+
+  int ok = 0;
+  
+  if (arg0->type == GLMS_AST_TYPE_STRING) {
+    const char* strval = glms_ast_get_string_value(arg0);
+
+    if (strval) {
+	ok = gimg_save(*gimg, strval);
+    }
+  }
+
+  GLMSAST* boolast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_BOOL, true);
+  boolast->as.boolean = ok ? true : false;
+  return boolast;
+}
+
+const char *glms_struct_image_to_string(GLMSAST *ast) {
+  if (!ast) return 0;
+
+  if (ast->string_rep != 0) {
+    free(ast->string_rep);
+    ast->string_rep = 0;
+  }
+
+  char* str = 0;
+
+  text_append(&str, "image {\n");
+
+  if (ast->ptr != 0) {
+    GIMG* gimg = (GIMG*)ast->ptr;
+    
+    {
+	char tmp[256];
+	sprintf(tmp, "path: %s\n", gimg->uri ? gimg->uri : "?");
+	text_append(&str, tmp);
+    }
+
+    {
+	char tmp[256];
+	sprintf(tmp, "width: %d\n", gimg->width);
+	text_append(&str, tmp);
+    }
+
+    {
+	char tmp[256];
+	sprintf(tmp, "height: %d\n", gimg->height);
+	text_append(&str, tmp);
+    }
+  }
+
+  text_append(&str, "}\n");
+
+  ast->string_rep = str;
+
+  return ast->string_rep;
+}
+
+GLMSAST *glms_struct_image_constructor(GLMSEval *eval, GLMSStack *stack,
+                                       GLMSASTList *args, GLMSAST* self) {
+  GLMSAST* ast = self ? self : glms_env_new_ast(eval->env, GLMS_AST_TYPE_STRUCT, true);
+  ast->value_type = ast;
+  ast->constructor = glms_struct_image_constructor;
+  ast->to_string = glms_struct_image_to_string;
+
+
+  ast->ptr = ast->ptr ? ast->ptr : NEW(GIMG);
+  GIMG* gimg = (GIMG*)ast->ptr;
+
+  if (args != 0 && args->length > 0 ) {
+    GLMSAST* arg0 = glms_eval(eval, args->items[0], stack);
+
+    if (arg0->type == GLMS_AST_TYPE_STRING) {
+	gimg_read_from_path(gimg, glms_ast_get_string_value(arg0));
+    }
+  }
+
+  if (!glms_ast_get_property(ast, "getPixel")) {
+    GLMSAST* fptr_get_pixel = glms_env_new_ast(eval->env, GLMS_AST_TYPE_FUNC, false);
+    fptr_get_pixel->fptr = glms_struct_image_fptr_get_pixel;
+    glms_ast_object_set_property(ast, "getPixel", fptr_get_pixel);
+  }
+
+  if (!glms_ast_get_property(ast, "setPixel")) {
+    GLMSAST* fptr_set_pixel = glms_env_new_ast(eval->env, GLMS_AST_TYPE_FUNC, false);
+    fptr_set_pixel->fptr = glms_struct_image_fptr_set_pixel;
+    glms_ast_object_set_property(ast, "setPixel", fptr_set_pixel);
+  }
+
+  if (!glms_ast_get_property(ast, "make")) {
+    GLMSAST* fptr_make = glms_env_new_ast(eval->env, GLMS_AST_TYPE_FUNC, false);
+    fptr_make->fptr = glms_struct_image_fptr_make;
+    glms_ast_object_set_property(ast, "make", fptr_make);
+  }
+
+  if (!glms_ast_get_property(ast, "save")) {
+    GLMSAST* fptr_save = glms_env_new_ast(eval->env, GLMS_AST_TYPE_FUNC, false);
+    fptr_save->fptr = glms_struct_image_fptr_save;
+    glms_ast_object_set_property(ast, "save", fptr_save);
+  }
+
+  return ast;
+}
+
+void glms_struct_image_destructor(GLMSAST *ast) {
+  if (!ast) return;
+
+  if (!ast->ptr) return;
+
+  GIMG* gimg = (GIMG*)ast->ptr;
+
+  gimg_free(gimg, true);
+
+  printf("image freed.\n");
+
+  ast->ptr = 0;
+}
+
+void glms_struct_image(GLMSEnv *env) {
+  GLMSAST* ast = glms_env_new_ast(env, GLMS_AST_TYPE_STRUCT, false);
+  ast->constructor = glms_struct_image_constructor;
+  ast->to_string = glms_struct_image_to_string;
+  //  ast->ptr = NEW(GIMG);
+
+  glms_env_register_type(env, "image", ast, glms_struct_image_constructor, 0, glms_struct_image_to_string, glms_struct_image_destructor);
 }
 
 void glms_builtin_init(GLMSEnv *env) {
@@ -415,8 +677,11 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "min", glms_fptr_min);
   glms_env_register_function(env, "max", glms_fptr_max);
   glms_env_register_function(env, "keep", glms_fptr_keep);
+  glms_env_register_function(env, "trace", glms_fptr_trace);
   glms_env_register_function(env, "random", glms_fptr_random);
+
+  glms_struct_image(env);
   // glms_struct_vec2(env);
   glms_struct_vec3(env);
-  //  glms_struct_vec4(env);
+  glms_struct_vec4(env);
 }

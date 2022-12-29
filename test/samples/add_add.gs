@@ -1,4 +1,4 @@
-let x = 0;
+number x = 0;
 
 x++;
 

@@ -48,13 +48,17 @@ GLMSAST *glms_fptr_clamp(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
 GLMSAST *glms_fptr_keep(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                         GLMSStack *stack);
 
+GLMSAST *glms_fptr_trace(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                        GLMSStack *stack);
+
 GLMSAST *glms_fptr_random(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                           GLMSStack *stack);
 
 GLMSAST *glms_struct_vec3_constructor(GLMSEval *eval, GLMSStack *stack,
-                                      GLMSASTList *args);
+                                      GLMSASTList *args, GLMSAST* self);
 
 
 const char *glms_struct_vec3_to_string(GLMSAST *ast);
+const char *glms_struct_vec4_to_string(GLMSAST *ast);
 
 #endif

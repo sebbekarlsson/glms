@@ -6,6 +6,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 file(GLOB sourcefiles ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
+#file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(glms_e ${sourcefiles})
 list(FILTER sourcefiles EXCLUDE REGEX "main.c")
 add_library(glms SHARED ${sourcefiles})
@@ -71,7 +73,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(vec3_static)
 
-set(GLMS_DEPS m memo_static arena_static hashy_static text_static mif_static vec3_static)
+FetchContent_Declare(
+  gimg_static
+  URL /home/ianertson/workspace/gimg
+)
+FetchContent_MakeAvailable(gimg_static)
+target_compile_options(gimg_static PUBLIC -fPIC)
+
+set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static)
 
 target_link_libraries(glms ${GLMS_DEPS})
 target_link_libraries(glms_e ${GLMS_DEPS})

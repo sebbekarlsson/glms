@@ -1,4 +1,4 @@
-const x = {
+object x = {
   "hello": 123,
   "nested": {
     "yo": 42,
@@ -10,5 +10,5 @@ const x = {
 
 
 x.hello = 33;
-const y = x.hello;
+number y = x.hello;
 print(x.nested.other.name);

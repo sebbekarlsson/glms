@@ -17,13 +17,22 @@ int glms_eval_init(GLMSEval *eval, struct GLMS_ENV_STRUCT *env) {
 }
 
 GLMSAST *glms_eval_lookup(GLMSEval *eval, const char *name, GLMSStack *stack) {
+  GLMSAST *stack_ast = glms_stack_get(stack, name);
+
+  if (stack_ast)
+    return stack_ast;
+
+  GLMSAST *t = glms_env_lookup_type(eval->env, name);
+
+  if (t)
+    return t;
 
   GLMSAST *ast = glms_env_lookup_function(eval->env, name);
 
   if (ast)
     return ast;
 
-  return glms_stack_get(stack, name);
+  return 0;
 }
 
 GLMSAST *glms_eval(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
@@ -99,7 +108,8 @@ GLMSAST *glms_eval_struct(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   return ast;
 }
 
-GLMSAST *glms_eval_id(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
+static GLMSAST *glms_eval_id_private(GLMSEval *eval, GLMSAST *ast,
+                                     GLMSStack *stack) {
 
   const char *name = glms_ast_get_name(ast);
   GLMSAST *value = glms_eval_lookup(eval, name, stack);
@@ -146,6 +156,13 @@ GLMSAST *glms_eval_id(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   return value;
 }
 
+GLMSAST *glms_eval_id(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
+  GLMSAST *id = glms_eval_id_private(eval, ast, stack);
+  glms_env_apply_type(eval->env, eval, stack, id);
+
+  return id;
+}
+
 GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   const char *fname =
       glms_string_view_get_value(&ast->as.call.left->as.id.value);
@@ -161,7 +178,7 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   }
 
   if (func->constructor) {
-    return glms_eval(eval, func->constructor(eval, stack, ast->children),
+    return glms_eval(eval, func->constructor(eval, stack, ast->children, 0),
                      stack);
   }
 
@@ -194,9 +211,9 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
         i++;
 
         if (i >= ast->children->length) {
-	  hashy_key_list_clear(&it.keys);
+          hashy_key_list_clear(&it.keys);
           break;
-	}
+        }
       }
     }
 
@@ -216,7 +233,9 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     GLMS_WARNING_RETURN(ast, stderr, "No such function `%s`\n", fname);
 
   if (func->fptr != 0) {
-    GLMSAST* result = func->fptr(eval, ast, ast->children, stack);
+    GLMSAST *self = glms_stack_get(stack, "self");
+    GLMSAST *result = func->fptr(eval, self ? self : ast, ast->children, stack);
+    glms_env_apply_type(eval->env, eval, stack, result);
     glms_ast_keep(result);
     return result;
   } else if (func->as.func.body != 0) {
@@ -276,6 +295,7 @@ GLMSAST *glms_eval_access(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     if (value->type == GLMS_AST_TYPE_FUNC &&
         right->type == GLMS_AST_TYPE_CALL) {
       right->as.call.func = value;
+      glms_stack_push(stack, "self", left);
       return glms_eval(eval, right, stack);
     }
     return glms_eval(eval, value, stack);
@@ -296,17 +316,18 @@ GLMSAST *glms_eval_unop_left(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   switch (ast->as.unop.op) {
   case GLMS_TOKEN_TYPE_SUB: {
     ast->as.binop.left = glms_eval(eval, ast->as.unop.left, stack);
-    return glms_env_new_ast_number(eval->env,
-                                   -GLMSAST_VALUE(ast->as.unop.left),  true);
+    return glms_env_new_ast_number(eval->env, -GLMSAST_VALUE(ast->as.unop.left),
+                                   true);
   }; break;
   case GLMS_TOKEN_TYPE_ADD: {
     ast->as.binop.left = glms_eval(eval, ast->as.unop.left, stack);
-    return glms_env_new_ast_number(eval->env,
-                                   +GLMSAST_VALUE(ast->as.unop.left), true);
+    return glms_env_new_ast_number(eval->env, +GLMSAST_VALUE(ast->as.unop.left),
+                                   true);
   }; break;
   case GLMS_TOKEN_TYPE_ADD_ADD: {
-    ast->as.binop.left = glms_eval(eval, ast->as.unop.left, stack);
-    ast->as.binop.left->as.number.value++;
+    GLMSAST *left = glms_eval(eval, ast->as.unop.left, stack);
+    left->as.number.value++;
+    return left;
   }; break;
   case GLMS_TOKEN_TYPE_SUB_SUB: {
     ast->as.binop.left = glms_eval(eval, ast->as.unop.left, stack);
@@ -352,8 +373,8 @@ GLMSAST *glms_eval_unop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
 
 GLMSAST *glms_eval_binop_mul_number_number(GLMSEval *eval, GLMSAST *left,
                                            GLMSAST *right, GLMSStack *stack) {
-  return glms_env_new_ast_number(eval->env,
-                                 GLMSAST_VALUE(left) * GLMSAST_VALUE(right), true);
+  return glms_env_new_ast_number(
+      eval->env, GLMSAST_VALUE(left) * GLMSAST_VALUE(right), true);
 }
 
 GLMSAST *glms_eval_binop_mul_array_array(GLMSEval *eval, GLMSAST *ast,
@@ -408,7 +429,8 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(eval->env,
                                    GLMSAST_VALUE(ast->as.binop.left) /
-				   GLMSAST_VALUE(ast->as.binop.right), true);
+                                       GLMSAST_VALUE(ast->as.binop.right),
+                                   true);
   }; break;
   case GLMS_TOKEN_TYPE_ADD_EQUALS: {
     ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
@@ -427,56 +449,60 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(eval->env,
                                    GLMSAST_VALUE(ast->as.binop.left) +
-				   GLMSAST_VALUE(ast->as.binop.right), true);
+                                       GLMSAST_VALUE(ast->as.binop.right),
+                                   true);
   }; break;
   case GLMS_TOKEN_TYPE_SUB: {
     ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
     ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(eval->env,
                                    GLMSAST_VALUE(ast->as.binop.left) -
-				   GLMSAST_VALUE(ast->as.binop.right), true);
+                                       GLMSAST_VALUE(ast->as.binop.right),
+                                   true);
   }; break;
   case GLMS_TOKEN_TYPE_PERCENT: {
     ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
     ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(eval->env,
                                    (int)GLMSAST_VALUE(ast->as.binop.left) %
-				   (int)GLMSAST_VALUE(ast->as.binop.right), true);
+                                       (int)GLMSAST_VALUE(ast->as.binop.right),
+                                   true);
   }; break;
   case GLMS_TOKEN_TYPE_EQUALS_EQUALS: {
     ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
     ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
-    return glms_env_new_ast_number(
-        eval->env, (float)glms_ast_compare_equals_equals(ast->as.binop.left,
-                                                         ast->as.binop.right), true);
+    return glms_env_new_ast_number(eval->env,
+                                   (float)glms_ast_compare_equals_equals(
+                                       ast->as.binop.left, ast->as.binop.right),
+                                   true);
   }; break;
   case GLMS_TOKEN_TYPE_GT: {
     ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
     ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(
         eval->env,
-        (float)glms_ast_compare_gt(ast->as.binop.left, ast->as.binop.right), true);
+        (float)glms_ast_compare_gt(ast->as.binop.left, ast->as.binop.right),
+        true);
   }; break;
   case GLMS_TOKEN_TYPE_GTE: {
-    ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
-    ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
+    GLMSAST *left = glms_eval(eval, ast->as.binop.left, stack);
+    GLMSAST *right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(
-        eval->env,
-        (float)glms_ast_compare_gte(ast->as.binop.left, ast->as.binop.right), true);
+        eval->env, (float)glms_ast_compare_gte(left, right), true);
   }; break;
   case GLMS_TOKEN_TYPE_LT: {
-    ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
-    ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
+    GLMSAST *left = glms_eval(eval, ast->as.binop.left, stack);
+    GLMSAST *right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(
-        eval->env,
-        (float)glms_ast_compare_lt(ast->as.binop.left, ast->as.binop.right), true);
+        eval->env, (float)glms_ast_compare_lt(left, right), true);
   }; break;
   case GLMS_TOKEN_TYPE_LTE: {
     ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
     ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(
         eval->env,
-        (float)glms_ast_compare_lte(ast->as.binop.left, ast->as.binop.right), true);
+        (float)glms_ast_compare_lte(ast->as.binop.left, ast->as.binop.right),
+        true);
   }; break;
   case GLMS_TOKEN_TYPE_EQUALS: {
 
@@ -487,16 +513,45 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
       }
     }
 
+    GLMSAST *typeflag = glms_ast_get_type(ast->as.binop.left);
+
     const char *name = glms_ast_get_name(ast);
     GLMSAST *left = ast->as.binop.left;
-    GLMSAST *right = ast->as.binop.right =
-        glms_eval(eval, ast->as.binop.right, stack);
+    GLMSAST *right = ast->as.binop.right;
 
-    if (name != 0) {
-      glms_stack_push(stack, name, ast->as.binop.right);
+    if (!typeflag) {
+      left = glms_eval(eval, left, stack);
+    }
+    right = glms_eval(eval, right, stack);
+
+    if (typeflag || (ast->as.binop.left->type == GLMS_AST_TYPE_ID && !glms_eval_lookup(eval, name, stack))) {
+      GLMSAST *copy = glms_ast_copy(*right, eval->env);
+      glms_stack_push(stack, name, copy);
+      left = copy;
     }
 
-    left = glms_eval(eval, left, stack);
+    glms_stack_push(stack, name, left);
+    //   GLMSAST* existing = 0;
+
+    // if (name) {
+    // existing = glms_eval_lookup(eval, name, stack);
+    // }
+
+    GLMSAST *type = 0;
+
+    if (typeflag != 0) {
+      type = glms_env_lookup_type(eval->env, glms_ast_get_name(typeflag));
+    }
+
+    //  if (name != 0 && existing == 0) {
+
+    //  if (typeflag) {
+    //    glms_stack_push(stack, name, right);
+    // }
+    // }
+
+    // left = glms_eval(eval, left, stack);
+
     bool same_type = (left->type == right->type);
 
     if (same_type) {
@@ -523,13 +578,17 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
       }
     }
 
+    left->value_type = left->value_type ? left->value_type : type;
+
     if (stack->return_flag) {
       GLMSAST *retval = glms_eval_lookup(eval, "return", stack);
       if (retval)
         return retval;
     }
 
-    return right;
+    //      glms_stack_push(stack, name, left);
+
+    return left;
   }; break;
   default: {
     return ast;
@@ -541,6 +600,9 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
 
 GLMSAST *glms_eval_function(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   // ast->as.func.id = glms_eval(eval, ast->as.func.id, stack);
+
+  if (ast->fptr)
+    return ast;
 
   const char *fname = glms_ast_get_name(ast);
 
@@ -599,29 +661,32 @@ GLMSAST *glms_eval_block_while(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   return ast;
 }
 
-GLMSAST *glms_eval_block_switch(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
+GLMSAST *glms_eval_block_switch(GLMSEval *eval, GLMSAST *ast,
+                                GLMSStack *stack) {
   if (!ast->as.block.body || !ast->as.block.expr)
     return ast;
 
-  GLMSAST* body = ast->as.block.body;
+  GLMSAST *body = ast->as.block.body;
 
-  if (!body->children || body->children->length <= 0) return ast;
+  if (!body->children || body->children->length <= 0)
+    return ast;
 
-  GLMSAST* expr = glms_eval(eval, ast->as.block.expr, stack);
-
+  GLMSAST *expr = glms_eval(eval, ast->as.block.expr, stack);
 
   for (int64_t i = 0; i < body->children->length; i++) {
-    GLMSAST* child = body->children->items[i];
-    if (child->type != GLMS_AST_TYPE_BLOCK) GLMS_WARNING_RETURN(ast, stderr, "Invalid switch body item.\n");
-    if (!child->as.block.expr || !child->as.block.body) continue;
+    GLMSAST *child = body->children->items[i];
+    if (child->type != GLMS_AST_TYPE_BLOCK)
+      GLMS_WARNING_RETURN(ast, stderr, "Invalid switch body item.\n");
+    if (!child->as.block.expr || !child->as.block.body)
+      continue;
 
-    GLMSAST* child_expr = glms_eval(eval, child->as.block.expr, stack);
+    GLMSAST *child_expr = glms_eval(eval, child->as.block.expr, stack);
 
     if (glms_ast_compare_equals_equals(expr, child_expr)) {
       return glms_eval(eval, child->as.block.body, stack);
     }
   }
-  
+
   return ast;
 }
 
@@ -648,10 +713,12 @@ GLMSAST *glms_eval_block(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
 }
 
 GLMSAST *glms_eval_for(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
-  if (!ast->as.forloop.body)
+  if (!ast->as.forloop.body) {
     return ast;
-  if (ast->children == 0 || ast->children->length <= 0)
+  }
+  if (ast->children == 0 || ast->children->length <= 0) {
     return ast;
+  }
 
   JAST *init = ast->children->items[0];
   JAST *cond = ast->children->items[1];
@@ -698,11 +765,6 @@ GLMSAST *glms_eval_compound(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
         glms_stack_clear(&local_stack);
         return retval;
       }
-    }
-
-    if (ast->children->length == 1) {
-      glms_stack_clear(&local_stack);
-      return child;
     }
   }
 

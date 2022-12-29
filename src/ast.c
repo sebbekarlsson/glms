@@ -1,3 +1,4 @@
+#include "hashy/hashy.h"
 #include <glms/ast.h>
 #include <glms/env.h>
 #include <glms/macros.h>
@@ -501,6 +502,18 @@ GLMSAST *glms_ast_get_type(GLMSAST *ast) {
   if (!ast->flags->length)
     return 0;
 
+  if (ast->value_type) return ast->value_type;
+
+  if (ast->type == GLMS_AST_TYPE_BINOP) {
+    GLMSAST* flag = glms_ast_get_type(ast->as.binop.left);
+
+    if (flag != 0) return flag;
+
+    flag = glms_ast_get_type(ast->as.binop.right);
+
+    if (flag != 0) return flag;
+  }
+
   for (int64_t i = 0; i < ast->flags->length; i++) {
     GLMSAST *flag = ast->flags->items[i];
     if (flag->type != GLMS_AST_TYPE_ID)
@@ -508,7 +521,7 @@ GLMSAST *glms_ast_get_type(GLMSAST *ast) {
 
     GLMSTokenType t = flag->as.id.op;
 
-    if (t != GLMS_TOKEN_TYPE_ID && (t != GLMS_TOKEN_TYPE_SPECIAL_LET &&
+    if ((t != GLMS_TOKEN_TYPE_SPECIAL_LET &&
                                     t != GLMS_TOKEN_TYPE_SPECIAL_CONST)) {
       return flag;
     }
@@ -527,6 +540,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   dest->children = 0;
   dest->flags = 0;
   dest->string_rep = 0;
+  dest->ptr =  src.ptr;
 
   if (src.children != 0) {
     for (int64_t i = 0; i < src.children->length; i++) {
@@ -675,6 +689,10 @@ void glms_ast_destructor(GLMSAST *ast) {
   if (!ast)
     return;
 
+  if (ast->destructor) {
+    ast->destructor(ast);
+  }
+  
   switch (ast->type) {
   case GLMS_AST_TYPE_BINOP: {
     glms_ast_destructor_binop(ast);
@@ -751,4 +769,12 @@ bool glms_ast_is_vector(GLMSAST *ast) {
 void glms_ast_keep(GLMSAST *ast) {
   if (!ast) return;
   ast->keep = true;
+}
+
+GLMSAST *glms_ast_get_property(GLMSAST *ast, const char *key) {
+  if (!ast || !key) return 0;
+  if (!ast->props.initialized) return 0;
+
+  return (GLMSAST*)hashy_map_get(&ast->props, key);
+  
 }

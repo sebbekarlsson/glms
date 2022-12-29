@@ -334,6 +334,8 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   case GLMS_TOKEN_TYPE_SPECIAL_CONST:
   case GLMS_TOKEN_TYPE_SPECIAL_STRING:
   case GLMS_TOKEN_TYPE_SPECIAL_NUMBER:
+  case GLMS_TOKEN_TYPE_SPECIAL_ARRAY:
+  case GLMS_TOKEN_TYPE_SPECIAL_OBJECT:
   case GLMS_TOKEN_TYPE_SPECIAL_BOOL:
   case GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE:
   case GLMS_TOKEN_TYPE_ID: {
@@ -679,6 +681,9 @@ GLMSAST *glms_parser_parse_compound(GLMSParser *parser, bool skip_brace) {
 
       if (child->type == GLMS_AST_TYPE_EOF)
         break;
+
+      if (skip_brace && parser->token.type == GLMS_TOKEN_TYPE_RBRACE)
+	break;
     }
 
     while (parser->token.type == GLMS_TOKEN_TYPE_SEMI && parser->finished == false) {

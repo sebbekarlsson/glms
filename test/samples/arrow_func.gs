@@ -1,3 +1,3 @@
-const hello = () => 123;
+number hello = () => 123;
 
 print(hello());

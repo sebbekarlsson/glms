@@ -1,4 +1,4 @@
-let x = 3;
+number x = 3;
 
 if (false) {
   x = 0;

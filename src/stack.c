@@ -32,12 +32,15 @@ GLMSAST *glms_stack_push(GLMSStack *stack, const char *name, GLMSAST *ast) {
   }
 
   GLMSAST* existing = glms_stack_get(stack, name);
-  if (existing != 0) return existing;
-  
-  hashy_map_set(&stack->locals, name, ast);
 
-  glms_GLMSAST_list_push(&stack->list, ast);
-  stack->names[stack->names_length++] = name;
+if (!existing) {
+    stack->names[stack->names_length++] = name;
+    glms_GLMSAST_list_push(&stack->list, ast);
+}
+
+ hashy_map_set(&stack->locals, name, ast);
+  
+
 
   return ast;
 }
@@ -97,8 +100,10 @@ int glms_stack_copy(GLMSStack src, GLMSStack *dest) {
     glms_stack_push(dest, src.names[i], ast);
   }
 
-  dest->names_length = src.names_length;
-  memcpy(&dest->names[0], &src.names[0], GLMS_STACK_CAPACITY * sizeof(char));
+  if (src.names_length > 0) {
+    dest->names_length = src.names_length;
+    memcpy(&dest->names[0], &src.names[0], GLMS_STACK_CAPACITY * sizeof(char));
+  }
 
   return 1;
 }
@@ -138,8 +143,6 @@ HashyIterator it = {0};
 
     hashy_map_unset(&stack->locals, key);
     arena_free(value->ref);
-
-    printf("freed!\n");
   }
 
   return 1;

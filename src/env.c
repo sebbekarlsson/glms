@@ -1,5 +1,8 @@
 #include "arena/arena.h"
 #include "arena/config.h"
+#include "glms/ast.h"
+#include "glms/eval.h"
+#include "hashy/hashy.h"
 #include <glms/builtin.h>
 #include <glms/constants.h>
 #include <glms/env.h>
@@ -15,12 +18,18 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   env->config = cfg;
   env->source = source;
   hashy_map_init(&env->globals, 256);
-  memo_init(&env->memo_ast,
-            (MemoConfig){.item_size = sizeof(GLMSAST),
-            .page_capacity = GLMS_MEMO_AST_PAGE_CAPACITY, .destructor = (MemoDestructorFunc)glms_ast_destructor});
+  hashy_map_init(&env->types, 256);
+  memo_init(
+      &env->memo_ast,
+      (MemoConfig){.item_size = sizeof(GLMSAST),
+		   .page_capacity = GLMS_MEMO_AST_PAGE_CAPACITY,
+		   .destructor = (MemoDestructorFunc)glms_ast_destructor});
 
-
-  arena_init(&env->arena_ast, (ArenaConfig){ .items_per_page = 256, .item_size = sizeof(GLMSAST), .free_function = (ArenaFreeFunction)glms_ast_destructor});
+  arena_init(
+      &env->arena_ast,
+      (ArenaConfig){.items_per_page = 256,
+		    .item_size = sizeof(GLMSAST),
+		    .free_function = (ArenaFreeFunction)glms_ast_destructor});
 
   env->undefined = glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED, false);
 
@@ -30,16 +39,14 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   glms_lexer_init(&env->lexer, env->source);
   glms_parser_init(&env->parser, env);
 
-
   return 1;
 }
 
-
-int glms_env_clear(GLMSEnv* env) {
-  if (!env) return 0;
+int glms_env_clear(GLMSEnv *env) {
+  if (!env)
+    return 0;
   if (!env->initialized)
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
-
 
   env->source = 0;
   hashy_map_clear(&env->parser.symbols, false);
@@ -61,11 +68,11 @@ GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type, bool arena) {
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
   ArenaRef ref = {0};
-  GLMSAST* ast = 0;
-  ast = (GLMSAST *)( arena ? arena_malloc(&env->arena_ast, &ref) : memo_malloc(&env->memo_ast));
+  GLMSAST *ast = 0;
+  ast = (GLMSAST *)(arena ? arena_malloc(&env->arena_ast, &ref)
+			  : memo_malloc(&env->memo_ast));
   if (!ast)
     GLMS_WARNING_RETURN(0, stderr, "Failed to allocate AST.\n");
-
 
   ast->type = type;
   ast->ref = ref;
@@ -78,16 +85,17 @@ GLMSAST *glms_env_new_ast_number(GLMSEnv *env, float v, bool arena) {
   return ast;
 }
 
-GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast, bool arena) {
+GLMSAST *glms_env_new_ast_make(GLMSEnv *env, GLMSAST ast, bool arena) {
   GLMSAST *new_ast = glms_env_new_ast(env, ast.type, arena);
   *new_ast = ast;
   return new_ast;
 }
 
-GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name, bool arena) {
+GLMSAST *glms_env_new_ast_field(GLMSEnv *env, GLMSTokenType data_type,
+				const char *name, bool arena) {
   GLMSAST *ast = glms_env_new_ast(env, GLMS_AST_TYPE_ID, arena);
   ast->as.id.heap = name ? strdup(name) : 0;
-  GLMSAST* flag = glms_env_new_ast(env, GLMS_AST_TYPE_ID, arena);
+  GLMSAST *flag = glms_env_new_ast(env, GLMS_AST_TYPE_ID, arena);
   flag->as.id.op = data_type;
   glms_ast_push_flag(ast, flag);
   return ast;
@@ -116,7 +124,7 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
 }
 
 GLMSAST *glms_env_register_function(GLMSEnv *env, const char *name,
-                                    GLMSFPTR fptr) {
+				    GLMSFPTR fptr) {
   if (!env || !name || !fptr)
     return 0;
   if (!env->initialized)
@@ -130,7 +138,7 @@ GLMSAST *glms_env_register_function(GLMSEnv *env, const char *name,
 }
 
 GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
-                                  GLMSAST** fields, int fields_length) {
+				  GLMSAST **fields, int fields_length) {
   if (!env || !name || !fields)
     return 0;
   if (!env->initialized)
@@ -143,8 +151,8 @@ GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
   tdef->as.tdef.id->as.id.heap = strdup(name);
 
   for (int i = 0; i < fields_length; i++) {
-    GLMSAST* field = fields[i];
-    const char* field_name = glms_ast_get_name(field);
+    GLMSAST *field = fields[i];
+    const char *field_name = glms_ast_get_name(field);
     if (!field) {
       GLMS_WARNING(stderr, "Expected a name to exist.\n");
       continue;
@@ -153,29 +161,36 @@ GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
     glms_ast_object_set_property(stru, field_name, field);
   }
 
-
   hashy_map_set(&env->globals, name, stru);
 
   return tdef;
 }
 
-GLMSAST *glms_env_register_type(
-				GLMSEnv *env,
-				const char *name,
-				GLMSAST* ast,
+GLMSAST *glms_env_register_type(GLMSEnv *env, const char *name, GLMSAST *ast,
 				GLMSASTContructor constructor,
 				GLMSASTSwizzle swizzle,
-				GLMSASTToString to_string
-				) {
-  if (!env || !name || !ast) return 0;
+				GLMSASTToString to_string, GLMSASTDestructor destructor) {
+  if (!env || !name || !ast)
+    return 0;
   ast->constructor = constructor;
   ast->swizzle = swizzle;
   ast->to_string = to_string;
+  ast->destructor = destructor;
+
+  if (!ast->typename) ast->typename = strdup(name);
+  
   hashy_map_set(&env->globals, name, ast);
+
+  const char *typename = GLMS_AST_TYPE_STR[ast->type];
+
+  hashy_map_set(&env->types, typename, ast);
+  hashy_map_set(&env->types, name, ast);
+
   return ast;
 }
 GLMSAST *glms_env_register_any(GLMSEnv *env, const char *name, GLMSAST *ast) {
-  if (!name || !ast || !env) return 0;
+  if (!name || !ast || !env)
+    return 0;
   hashy_map_set(&env->globals, name, ast);
   return ast;
 }
@@ -187,4 +202,61 @@ GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name) {
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
   return (GLMSAST *)hashy_map_get(&env->globals, name);
+}
+
+GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name) {
+  if (!env || !name)
+    return 0;
+
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+  return (GLMSAST *)hashy_map_get(&env->types, name);
+}
+
+GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLMSAST* ast) {
+  if (!env || !ast)
+    return 0;
+
+  GLMSAST *type = ast->value_type;
+
+
+  if (type == 0 && ast->typename) {
+    type = glms_env_lookup_type(env, ast->typename);
+  }
+  
+  type = type ? type : glms_env_lookup_type(env, glms_ast_get_name(ast));
+  type = type ? type : glms_env_lookup_type(env, GLMS_AST_TYPE_STR[ast->type]);
+
+  if (!type)
+    return 0;
+
+  ast->constructor = type->constructor;
+
+
+  if (type->constructor) {
+    ast = type->constructor(eval, stack, ast->children, ast);
+  }
+  //ast->to_string = type->to_string;
+  // ast->swizzle = type->swizzle;
+
+  if (type->props.initialized) {
+    HashyIterator it = {0};
+
+    while (hashy_map_iterate(&type->props, &it)) {
+      if (!it.bucket->key)
+	continue;
+      if (!it.bucket->value)
+	continue;
+
+      const char *key = it.bucket->key;
+      GLMSAST *value = (GLMSAST *)it.bucket->value;
+
+      glms_ast_object_set_property(ast, key, value);
+    }
+  }
+
+  ast->value_type = type;
+
+  return ast;
 }

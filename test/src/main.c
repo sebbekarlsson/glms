@@ -8,8 +8,9 @@
   {                                                                            \
     if (!(expr)) {                                                             \
       GLMS_WARNING(stderr, "%s failed.\n", #expr);                             \
+	exit(1);							\
     }                                                                          \
-    assert(expr);                                                              \
+    assert(expr);							\
     printf(GLMS_CLI_GREEN "%s: OK.\n" GLMS_CLI_RESET, #expr);                  \
   }
 

@@ -290,3 +290,4 @@ tags
 
 # End of https://www.toptal.com/developers/gitignore/api/vim,emacs,node,yarn,npm,gcc,C++,g++,c++,CPP,cpp,cmake
 build/
+/assets/

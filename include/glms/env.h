@@ -28,6 +28,7 @@ typedef struct GLMS_ENV_STRUCT {
   GLMSStack stack;
 
   HashyMap globals;
+  HashyMap types;
 
 
   GLMSAST* undefined;
@@ -69,9 +70,15 @@ GLMSAST *glms_env_register_type(
 				GLMSAST* ast,
 				GLMSASTContructor constructor,
 				GLMSASTSwizzle swizzle,
-				GLMSASTToString to_string
+				GLMSASTToString to_string,
+				GLMSASTDestructor destructor
 				);
 
-GLMSAST* glms_env_lookup_function(GLMSEnv* env, const char* name);
+GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name);
+
+
+GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name);
+
+GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLMSAST* ast);
 
 #endif
