@@ -107,6 +107,10 @@ typedef struct GLMS_AST_STRUCT {
       JAST* next;
     } block;
 
+    struct {
+      int idx;
+    } stackptr;
+
     bool boolean;
 
     Vector2 v2;
@@ -131,6 +135,7 @@ typedef struct GLMS_AST_STRUCT {
   JAST* value_type;
   ArenaRef ref;
   bool keep;
+  bool is_tmp;
 } GLMSAST;
 
 GLMS_DEFINE_BUFFER(GLMSAST);

@@ -421,7 +421,8 @@ GLMSAST *glms_struct_vec3_op_overload_mul(GLMSEval *eval, GLMSStack *stack,
     v = vector3_mul(left->as.v3, right->as.v3);
   }
 
-  return glms_env_new_ast_vec3(eval->env, v, true);
+
+  return glms_env_new_ast_vec3(eval->env, v, eval->arena);
 }
 
 GLMSAST *glms_struct_vec3_op_overload_div(GLMSEval *eval, GLMSStack *stack,

@@ -17,8 +17,8 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   env->initialized = true;
   env->config = cfg;
   env->source = source;
-  hashy_map_init(&env->globals, 256);
-  hashy_map_init(&env->types, 256);
+  hashy_map_init(&env->globals, GLMS_MEMO_AST_PAGE_CAPACITY);
+  hashy_map_init(&env->types, GLMS_MEMO_AST_PAGE_CAPACITY);
   memo_init(
       &env->memo_ast,
       (MemoConfig){.item_size = sizeof(GLMSAST),
@@ -27,11 +27,12 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
 
   arena_init(
       &env->arena_ast,
-      (ArenaConfig){.items_per_page = 256,
+      (ArenaConfig){.items_per_page = GLMS_ARENA_AST_CAPACITY,
 		    .item_size = sizeof(GLMSAST),
 		    .free_function = (ArenaFreeFunction)glms_ast_destructor});
 
   env->undefined = glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED, false);
+  env->stackptr = glms_env_new_ast(env, GLMS_AST_TYPE_STACK_PTR, false);
 
   glms_eval_init(&env->eval, env);
   glms_stack_init(&env->stack);
@@ -67,6 +68,8 @@ GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type, bool arena) {
   if (!env->initialized)
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
+  arena = env->eval.arena;
+
   ArenaRef ref = {0};
   GLMSAST *ast = 0;
   ast = (GLMSAST *)(arena ? arena_malloc(&env->arena_ast, &ref)
@@ -76,6 +79,8 @@ GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type, bool arena) {
 
   ast->type = type;
   ast->ref = ref;
+
+  glms_eval_disable_arena(&env->eval);
   return ast;
 }
 
@@ -224,6 +229,10 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
   if (!env || !ast)
     return 0;
 
+
+  if (ast->type == GLMS_AST_TYPE_BINOP) return ast;
+  if (ast->value_type != 0 && ast->constructor != 0) return ast;
+
   GLMSAST *type = ast->value_type;
 
 
@@ -246,6 +255,7 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
   //ast->to_string = type->to_string;
   // ast->swizzle = type->swizzle;
 
+  /*
   if (type->props.initialized) {
     HashyIterator it = {0};
 
@@ -260,7 +270,7 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
 
       glms_ast_object_set_property(ast, key, value);
     }
-  }
+   }*/
 
   ast->value_type = type;
 

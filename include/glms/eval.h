@@ -9,6 +9,7 @@ struct GLMS_ENV_STRUCT;
 typedef struct GLMS_EVAL_STRUCT {
   struct GLMS_ENV_STRUCT* env;
   bool initialized;
+  bool arena;
 } GLMSEval;
 
 GLMSAST* glms_eval_lookup(GLMSEval* eval, const char* name, GLMSStack* stack);
@@ -18,6 +19,8 @@ int glms_eval_init(GLMSEval* eval, struct GLMS_ENV_STRUCT* env);
 GLMSAST* glms_eval(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
 GLMSAST* glms_eval_id(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
+
+GLMSAST* glms_eval_stack_ptr(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
 GLMSAST* glms_eval_access(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
@@ -41,6 +44,8 @@ GLMSAST* glms_eval_struct(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
 GLMSAST *glms_eval_for(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack);
 
+void glms_eval_enable_arena(GLMSEval* eval);
+void glms_eval_disable_arena(GLMSEval* eval);
 
 int glms_eval_ast_list(GLMSEval* eval, GLMSASTList* list, GLMSStack* stack);
 

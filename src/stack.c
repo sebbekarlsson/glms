@@ -15,6 +15,7 @@ int glms_stack_init(GLMSStack *stack) {
   stack->names_length = 0;
   stack->return_flag = false;
   stack->depth = 0;
+  stack->tiny_stack_length = 0;
 
   return 1;
 }
@@ -125,6 +126,10 @@ int glms_stack_clear_trash(GLMSStack *stack) {
     GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
 
+  if (stack->locals.used < 16) {
+    return 1;
+  }
+
 HashyIterator it = {0};
 
   while (hashy_map_iterate(&stack->locals, &it)) {
@@ -142,6 +147,48 @@ HashyIterator it = {0};
     hashy_map_unset(&stack->locals, key);
     arena_free(value->ref);
   }
+
+  return 1;
+}
+
+int glms_stack_push_tiny(GLMSStack *stack, GLMSAST ast) {
+  if (!stack)
+    return 0;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
+
+
+  if (stack->tiny_stack_length >= GLMS_STACK_CAPACITY) {
+    GLMS_WARNING(stderr, "Stack Stackoverflow: %d\n", stack->tiny_stack_length);
+    return 0;
+  }
+
+  int idx = stack->tiny_stack_length;
+  stack->tiny_stack[stack->tiny_stack_length++] = ast;
+
+  return idx;
+}
+
+bool glms_stack_has_tiny(GLMSStack *stack) {
+  if (!stack) return false;
+
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(false, stderr, "stack not initialized.\n");
+
+  return stack->tiny_stack_length > 0;
+}
+
+int glms_stack_pop_tiny(GLMSStack *stack, GLMSAST *out) {
+  if (!stack || !out)
+    return 0;
+  if (!stack->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
+
+  if (stack->tiny_stack_length <= 0) return 0;
+
+  GLMSAST last = stack->tiny_stack[MAX(0, stack->tiny_stack_length-1)];
+  *out = last;
+  stack->tiny_stack_length--;
 
   return 1;
 }

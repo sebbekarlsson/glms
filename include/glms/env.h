@@ -32,6 +32,7 @@ typedef struct GLMS_ENV_STRUCT {
 
 
   GLMSAST* undefined;
+  GLMSAST* stackptr;
 } GLMSEnv;
 
 

@@ -18,6 +18,15 @@ list(FILTER sourcefiles EXCLUDE REGEX "main.c")
 add_library(glms SHARED ${sourcefiles})
 add_library(glms_static STATIC ${sourcefiles})
 
+
+# set (GLMS_DEBUG_FLAGS -g -Wall)
+set (GLMS_DEBUG_FLAGS )
+
+target_compile_options(glms_e PRIVATE ${GLMS_DEBUG_FLAGS})
+target_compile_options(glms PRIVATE ${GLMS_DEBUG_FLAGS})
+target_compile_options(glms_static PRIVATE ${GLMS_DEBUG_FLAGS})
+
+
 target_include_directories(
   glms
     PUBLIC

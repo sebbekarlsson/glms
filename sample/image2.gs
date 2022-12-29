@@ -1,5 +1,5 @@
-number w = 256;
-number h = 256;
+number w = 512;
+number h = 512;
 
 image img = image.make(w, h);
 
@@ -14,6 +14,7 @@ img.shade((vec3 uv, vec3 fragCoord, vec3 resolution) => {
   }
 
   g = g * 255;
+
 
   return vec4(g, g, g, 255.0);
 });

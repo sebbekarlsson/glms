@@ -245,8 +245,6 @@ void glms_struct_image_destructor(GLMSAST *ast) {
 
   gimg_free(gimg, true);
 
-  printf("image freed.\n");
-
   ast->ptr = 0;
 }
 
