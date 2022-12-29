@@ -11,6 +11,15 @@
 ### Caution
 > This is a work in progress!
 
+### Building & using it
+```bash
+mkdir build
+cd build
+cmake .. && make -j8
+
+./glms_e <input_file.gs>
+```
+
 ## Some examples
 
 ### Vectors
