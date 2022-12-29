@@ -13,4 +13,4 @@ for (number x = 0; x < w; x++) {
   }
 }
 
-img.save("test.png");
+img.save("test23.png");

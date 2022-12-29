@@ -387,6 +387,19 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
 GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
   GLMSAST *left = glms_parser_parse_factor(parser);
 
+
+  while (left && parser->token.type == GLMS_TOKEN_TYPE_DOT) {
+    GLMSAST *access = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS, false);
+    access->as.access.left = left;
+
+    if (parser->token.type == GLMS_TOKEN_TYPE_DOT) {
+      glms_parser_eat(parser, parser->token.type);
+    }
+
+    access->as.access.right = glms_parser_parse_factor(parser);
+    left = access;
+  }
+
   while (parser->token.type == GLMS_TOKEN_TYPE_ADD_ADD ||
          parser->token.type == GLMS_TOKEN_TYPE_SUB_SUB) {
     GLMSAST *unop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_UNOP, false);
@@ -402,7 +415,7 @@ GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = glms_parser_parse_expr(parser);
+    binop->as.binop.right = glms_parser_parse_factor(parser);
     left = binop;
   }
   return left;

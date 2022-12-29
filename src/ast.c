@@ -223,6 +223,27 @@ const char *glms_ast_to_string_bool(GLMSAST *ast) {
   return ast->string_rep;
 }
 
+const char *glms_ast_to_string_binop(GLMSAST *ast) {
+  if (ast->string_rep) {
+    free(ast->string_rep);
+    ast->string_rep = 0;
+  }
+
+  char* str = 0;
+
+  text_append(&str, "(");
+  text_append(&str, glms_ast_to_string(ast->as.binop.left));
+  text_append(&str, " ");
+  text_append(&str, GLMS_TOKEN_TYPE_STR[ast->as.binop.op]);
+  text_append(&str, " ");
+  text_append(&str, glms_ast_to_string(ast->as.binop.right));
+  text_append(&str, ")");
+
+  ast->string_rep = str;
+
+  return ast->string_rep;
+}
+
 const char *glms_ast_to_string(GLMSAST *ast) {
   if (ast->to_string != 0) {
     return ast->to_string(ast);
@@ -241,6 +262,8 @@ const char *glms_ast_to_string(GLMSAST *ast) {
     return glms_ast_to_string_array(ast);
   } else if (ast->type == GLMS_AST_TYPE_BOOL) {
     return glms_ast_to_string_bool(ast);
+  } else if (ast->type == GLMS_AST_TYPE_BINOP) {
+    return glms_ast_to_string_binop(ast);
   }
   return GLMS_AST_TYPE_STR[ast->type];
 }
@@ -530,6 +553,19 @@ GLMSAST *glms_ast_get_type(GLMSAST *ast) {
   return 0;
 }
 
+const char *glms_ast_get_type_name(GLMSAST *ast) {
+  if (!ast) return 0;
+  if (ast->typename) return ast->typename;
+
+
+  GLMSAST* t = glms_ast_get_type(ast);
+  if (t) return glms_ast_get_name(t);
+
+  if (ast->value_type) return glms_ast_get_name(ast->value_type);
+
+  return glms_ast_get_name(ast);
+}
+
 GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   if (!env)
     return 0;
@@ -777,4 +813,33 @@ GLMSAST *glms_ast_get_property(GLMSAST *ast, const char *key) {
 
   return (GLMSAST*)hashy_map_get(&ast->props, key);
   
+}
+
+GLMSAST *glms_ast_register_function(GLMSEnv* env, GLMSAST *ast, const char *name,
+                                    GLMSFPTR fptr) {
+
+  if (!ast || !fptr || !name) return ast;
+
+  if (!glms_ast_get_property(ast, name)) {
+    GLMSAST* fptr_ast = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC, false);
+    fptr_ast->fptr = fptr;
+    glms_ast_object_set_property(ast, name, fptr_ast);
+  }
+
+  return ast;
+}
+
+
+GLMSAST *glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env,
+                                             GLMSAST *ast, GLMSTokenType op,
+                                             GLMSASTOperatorOverload func) {
+  if (!env || !ast || !func) return 0;
+
+
+
+  int idx = op % GLMS_AST_OPERATOR_OVERLOAD_CAP;
+
+  ast->op_overloads[idx] = func;
+
+  return ast;
 }

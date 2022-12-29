@@ -4,7 +4,12 @@ project(glms)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-file(GLOB sourcefiles ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
+file(
+    GLOB
+    sourcefiles
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/*.c
+)
 
 #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 

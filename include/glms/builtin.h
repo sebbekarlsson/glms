@@ -1,6 +1,8 @@
 #ifndef GLMS_BUILTIN_H
 #define GLMS_BUILTIN_H
+#include "glms/ast.h"
 #include <glms/glms.h>
+#include <glms/type.h>
 
 
 void glms_builtin_init(GLMSEnv* env);
@@ -37,6 +39,9 @@ GLMSAST *glms_fptr_atan(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                         GLMSStack *stack);
 
 GLMSAST *glms_fptr_fract(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
+                         GLMSStack *stack);
+
+GLMSAST *glms_fptr_abs(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
                        GLMSStack *stack);
 
 GLMSAST *glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
@@ -60,5 +65,14 @@ GLMSAST *glms_struct_vec3_constructor(GLMSEval *eval, GLMSStack *stack,
 
 const char *glms_struct_vec3_to_string(GLMSAST *ast);
 const char *glms_struct_vec4_to_string(GLMSAST *ast);
+
+
+bool glms_fptr_expect_args(
+			   GLMSEval* eval,
+			   GLMSStack* stack,
+			   GLMSASTList* in_args,
+			   GLMSType* types,
+			   int nr_types
+			   );
 
 #endif

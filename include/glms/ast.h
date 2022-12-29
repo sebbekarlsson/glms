@@ -10,44 +10,13 @@
 #include <hashy/hashy.h>
 #include <stdbool.h>
 #include <vec3/vec3.h>
+#include <glms/ast_type.h>
+
+#define GLMS_AST_OPERATOR_OVERLOAD_CAP 24
 
 struct GLMS_ENV_STRUCT;
 struct GLMS_EVAL_STRUCT;
 struct GLMS_STACK_STRUCT;
-
-#define GLMS_FOREACH_AST_TYPE(TOK)           \
-  TOK(GLMS_AST_TYPE_EOF)                     \
-  TOK(GLMS_AST_TYPE_NOOP)\
-  TOK(GLMS_AST_TYPE_UNDEFINED)\
-  TOK(GLMS_AST_TYPE_COMPOUND)\
-  TOK(GLMS_AST_TYPE_ID)\
-  TOK(GLMS_AST_TYPE_STRING)\
-  TOK(GLMS_AST_TYPE_NUMBER)\
-  TOK(GLMS_AST_TYPE_BOOL)\
-  TOK(GLMS_AST_TYPE_ARRAY)\
-  TOK(GLMS_AST_TYPE_VEC2)\
-  TOK(GLMS_AST_TYPE_VEC3)\
-  TOK(GLMS_AST_TYPE_VEC4)\
-  TOK(GLMS_AST_TYPE_TYPEDEF)\
-  TOK(GLMS_AST_TYPE_OBJECT)\
-  TOK(GLMS_AST_TYPE_STRUCT)\
-  TOK(GLMS_AST_TYPE_ENUM)\
-  TOK(GLMS_AST_TYPE_BINOP)\
-  TOK(GLMS_AST_TYPE_UNOP)\
-  TOK(GLMS_AST_TYPE_ACCESS)\
-  TOK(GLMS_AST_TYPE_BLOCK)\
-  TOK(GLMS_AST_TYPE_FOR)\
-  TOK(GLMS_AST_TYPE_CALL)\
-  TOK(GLMS_AST_TYPE_FUNC)\
-  TOK(GLMS_AST_TYPE_RETURN)
-
-typedef enum {
-  GLMS_FOREACH_AST_TYPE(GLMS_GENERATE_ENUM)
-} GLMSASTType;
-
-static const char *GLMS_AST_TYPE_STR[] = {
-    GLMS_FOREACH_AST_TYPE(GLMS_GENERATE_STRING)
-};
 
 struct GLMS_BUFFER_GLMSAST;
 struct GLMS_GLMSAST_LIST_STRUCT;
@@ -72,6 +41,9 @@ typedef const char *(*GLMSASTToString)(struct GLMS_AST_STRUCT *ast);
 
 typedef void (*GLMSASTDestructor)(struct GLMS_AST_STRUCT *ast);
 
+typedef struct GLMS_AST_STRUCT *(*GLMSASTOperatorOverload)(
+    struct GLMS_EVAL_STRUCT *eval, struct GLMS_STACK_STRUCT *stack,
+    struct GLMS_AST_STRUCT *left, struct GLMS_AST_STRUCT *right);
 
 typedef struct GLMS_AST_STRUCT {
 
@@ -147,6 +119,7 @@ typedef struct GLMS_AST_STRUCT {
   HashyMap props;
   struct GLMS_GLMSAST_LIST_STRUCT* children;
   struct GLMS_GLMSAST_LIST_STRUCT* flags;
+  GLMSASTOperatorOverload op_overloads[GLMS_AST_OPERATOR_OVERLOAD_CAP];
   GLMSFPTR fptr;
   void* ptr;
   char* string_rep;
@@ -191,7 +164,9 @@ GLMSAST* glms_ast_access_by_key(GLMSAST* ast, const char* key, struct GLMS_ENV_S
 
 int64_t glms_ast_array_get_length(GLMSAST* ast);
 
-GLMSAST* glms_ast_get_type(GLMSAST* ast);
+GLMSAST *glms_ast_get_type(GLMSAST *ast);
+
+const char* glms_ast_get_type_name(GLMSAST* ast);
 
 GLMSAST* glms_ast_copy(GLMSAST src, struct GLMS_ENV_STRUCT* env);
 
@@ -201,7 +176,14 @@ bool glms_ast_is_vector(GLMSAST *ast);
 
 void glms_ast_keep(GLMSAST *ast);
 
-GLMSAST* glms_ast_get_property(GLMSAST* ast, const char* key);
+GLMSAST *glms_ast_get_property(GLMSAST *ast, const char *key);
+
+GLMSAST *glms_ast_register_function(struct GLMS_ENV_STRUCT *env, GLMSAST *ast,
+                                    const char *name, GLMSFPTR fptr);
+
+
+GLMSAST* glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env, GLMSAST *ast,
+					     GLMSTokenType op, GLMSASTOperatorOverload func);
 
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)

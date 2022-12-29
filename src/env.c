@@ -85,6 +85,12 @@ GLMSAST *glms_env_new_ast_number(GLMSEnv *env, float v, bool arena) {
   return ast;
 }
 
+GLMSAST *glms_env_new_ast_vec3(GLMSEnv *env, Vector3 v, bool arena) {
+GLMSAST *ast = glms_env_new_ast(env, GLMS_AST_TYPE_VEC3, arena);
+  ast->as.v3 = v;
+  return ast;
+}
+
 GLMSAST *glms_env_new_ast_make(GLMSEnv *env, GLMSAST ast, bool arena) {
   GLMSAST *new_ast = glms_env_new_ast(env, ast.type, arena);
   *new_ast = ast;

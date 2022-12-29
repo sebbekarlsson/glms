@@ -1,5 +1,7 @@
 #include "glms/ast.h"
+#include "glms/ast_type.h"
 #include "glms/stack.h"
+#include "glms/token.h"
 #include "hashy/keylist.h"
 #include <glms/builtin.h>
 #include <glms/env.h>
@@ -167,11 +169,7 @@ GLMSAST *glms_eval_call(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   const char *fname =
       glms_string_view_get_value(&ast->as.call.left->as.id.value);
 
-  if (!fname) {
-    GLMS_WARNING_RETURN(ast, stderr, "function missing name.\n");
-  }
-
-  GLMSAST *func = glms_eval_lookup(eval, fname, stack);
+  GLMSAST *func = fname ? glms_eval_lookup(eval, fname, stack) : 0;
 
   if (!func && ast->as.call.func != 0) {
     func = ast->as.call.func;
@@ -275,6 +273,9 @@ GLMSAST *glms_eval_access(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   GLMSAST *left = glms_eval(eval, ast->as.access.left, stack);
   GLMSAST *right = ast->as.access.right;
 
+
+
+
   if (left->swizzle != 0) {
     GLMSAST *result = 0;
     if ((result = left->swizzle(eval, stack, left, right))) {
@@ -315,12 +316,12 @@ GLMSAST *glms_eval_access(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
 GLMSAST *glms_eval_unop_left(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   switch (ast->as.unop.op) {
   case GLMS_TOKEN_TYPE_SUB: {
-    ast->as.binop.left = glms_eval(eval, ast->as.unop.left, stack);
+    ast->as.unop.left = glms_eval(eval, ast->as.unop.left, stack);
     return glms_env_new_ast_number(eval->env, -GLMSAST_VALUE(ast->as.unop.left),
                                    true);
   }; break;
   case GLMS_TOKEN_TYPE_ADD: {
-    ast->as.binop.left = glms_eval(eval, ast->as.unop.left, stack);
+    ast->as.unop.left = glms_eval(eval, ast->as.unop.left, stack);
     return glms_env_new_ast_number(eval->env, +GLMSAST_VALUE(ast->as.unop.left),
                                    true);
   }; break;
@@ -330,8 +331,8 @@ GLMSAST *glms_eval_unop_left(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     return left;
   }; break;
   case GLMS_TOKEN_TYPE_SUB_SUB: {
-    ast->as.binop.left = glms_eval(eval, ast->as.unop.left, stack);
-    ast->as.binop.left->as.number.value--;
+    ast->as.unop.left = glms_eval(eval, ast->as.unop.left, stack);
+    ast->as.unop.left->as.number.value--;
   }; break;
   default: {
     return ast;
@@ -349,12 +350,12 @@ GLMSAST *glms_eval_unop_right(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     return retval;
   }; break;
   case GLMS_TOKEN_TYPE_SUB: {
-    ast->as.binop.right = glms_eval(eval, ast->as.unop.right, stack);
+    ast->as.unop.right = glms_eval(eval, ast->as.unop.right, stack);
     return glms_env_new_ast_number(eval->env,
                                    -GLMSAST_VALUE(ast->as.unop.right), true);
   }; break;
   case GLMS_TOKEN_TYPE_ADD: {
-    ast->as.binop.right = glms_eval(eval, ast->as.unop.right, stack);
+    ast->as.unop.right = glms_eval(eval, ast->as.unop.right, stack);
     return glms_env_new_ast_number(eval->env,
                                    +GLMSAST_VALUE(ast->as.unop.right), true);
   }; break;
@@ -373,6 +374,7 @@ GLMSAST *glms_eval_unop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
 
 GLMSAST *glms_eval_binop_mul_number_number(GLMSEval *eval, GLMSAST *left,
                                            GLMSAST *right, GLMSStack *stack) {
+
   return glms_env_new_ast_number(
       eval->env, GLMSAST_VALUE(left) * GLMSAST_VALUE(right), true);
 }
@@ -403,10 +405,8 @@ GLMSAST *glms_eval_binop_mul_array_array(GLMSEval *eval, GLMSAST *ast,
 }
 
 GLMSAST *glms_eval_binop_mul(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
-  GLMSAST *left = ast->as.binop.left =
-      glms_eval(eval, ast->as.binop.left, stack);
-  GLMSAST *right = ast->as.binop.right =
-      glms_eval(eval, ast->as.binop.right, stack);
+  GLMSAST *left= glms_eval(eval, ast->as.binop.left, stack);
+  GLMSAST *right =  glms_eval(eval, ast->as.binop.right, stack);
 
   if (left->type == GLMS_AST_TYPE_NUMBER &&
       right->type == GLMS_AST_TYPE_NUMBER) {
@@ -420,6 +420,23 @@ GLMSAST *glms_eval_binop_mul(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
 }
 
 GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
+
+  GLMSAST* left = glms_eval(eval, ast->as.binop.left, stack);
+  GLMSAST* right = glms_eval(eval, ast->as.binop.right, stack);
+
+
+  GLMSTokenType op = ast->as.binop.op;
+
+  GLMSASTOperatorOverload op_fptr = left->op_overloads[op % GLMS_AST_OPERATOR_OVERLOAD_CAP];
+
+  if (op_fptr) {
+    GLMSAST* result = op_fptr(eval, stack, left, right);
+    result = result ? glms_eval(eval, result, stack) : 0;
+    result = result ? glms_env_apply_type(eval->env, eval, stack, result) : 0;
+
+    if (result) return result;
+  }
+
   switch (ast->as.binop.op) {
   case GLMS_TOKEN_TYPE_MUL: {
     return glms_eval_binop_mul(eval, ast, stack);
@@ -445,11 +462,11 @@ GLMSAST *glms_eval_binop(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
     return ast->as.binop.left;
   }; break;
   case GLMS_TOKEN_TYPE_ADD: {
-    ast->as.binop.left = glms_eval(eval, ast->as.binop.left, stack);
-    ast->as.binop.right = glms_eval(eval, ast->as.binop.right, stack);
+    GLMSAST* left = glms_eval(eval, ast->as.binop.left, stack);
+    GLMSAST* right = glms_eval(eval, ast->as.binop.right, stack);
     return glms_env_new_ast_number(eval->env,
-                                   GLMSAST_VALUE(ast->as.binop.left) +
-                                       GLMSAST_VALUE(ast->as.binop.right),
+                                   GLMSAST_VALUE(left) +
+                                       GLMSAST_VALUE(right),
                                    true);
   }; break;
   case GLMS_TOKEN_TYPE_SUB: {
@@ -606,10 +623,10 @@ GLMSAST *glms_eval_function(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
 
   const char *fname = glms_ast_get_name(ast);
 
-  if (!fname)
-    GLMS_WARNING_RETURN(ast, stderr, "Expected a name to exist.\n");
 
-  glms_stack_push(stack, fname, ast);
+  if (fname) {
+    glms_stack_push(stack, fname, ast);
+  }
 
   return ast;
 }
@@ -777,4 +794,16 @@ GLMSAST *glms_eval_compound(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack) {
   glms_stack_clear_trash(stack);
 
   return ast;
+}
+
+int glms_eval_ast_list(GLMSEval *eval, GLMSASTList *list, GLMSStack *stack) {
+  if (!list) return 0;
+  if (list->length <= 0 || list->items == 0) return 0;
+
+
+  for (int64_t i = 0; i < list->length; i++) {
+    list->items[i] = glms_eval(eval, list->items[i], stack);
+  }
+
+  return 1;
 }

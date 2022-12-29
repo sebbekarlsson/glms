@@ -39,6 +39,9 @@ GLMSAST* glms_eval_block(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
 GLMSAST* glms_eval_struct(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
 
-GLMSAST* glms_eval_for(GLMSEval* eval, GLMSAST* ast, GLMSStack* stack);
+GLMSAST *glms_eval_for(GLMSEval *eval, GLMSAST *ast, GLMSStack *stack);
+
+
+int glms_eval_ast_list(GLMSEval* eval, GLMSASTList* list, GLMSStack* stack);
 
 #endif

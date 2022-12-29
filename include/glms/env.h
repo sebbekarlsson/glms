@@ -49,6 +49,8 @@ GLMSAST* glms_env_new_ast_make(GLMSEnv* env, GLMSAST ast, bool arena);
 
 GLMSAST* glms_env_new_ast_number(GLMSEnv* env, float v, bool arena);
 
+GLMSAST* glms_env_new_ast_vec3(GLMSEnv* env, Vector3 v, bool arena);
+
 GLMSAST* glms_env_new_ast_string(GLMSEnv* env, const char* value, bool arena);
 
 GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name, bool arena);
