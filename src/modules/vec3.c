@@ -1,3 +1,4 @@
+#include "glms/ast.h"
 #include <glms/eval.h>
 #include <glms/env.h>
 
@@ -28,10 +29,13 @@ int glms_struct_vec3_op_overload_mul(GLMSEval *eval, GLMSStack *stack,
                                      GLMSAST *left, GLMSAST *right,
                                      GLMSAST *out) {
 
+
+  
   if (!glms_ast_is_vector(left) && !glms_ast_is_vector(right))
     return 0;
 
   Vector3 v = VEC31(0);
+
 
   if (left->type == GLMS_AST_TYPE_VEC3 && right->type == GLMS_AST_TYPE_NUMBER) {
     v = left->as.v3;

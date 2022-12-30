@@ -102,11 +102,11 @@ const char *glms_ast_get_string_value(GLMSAST *ast) {
   return glms_ast_get_name(ast);
 }
 
-
 bool glms_ast_is_truthy(GLMSAST ast) {
   switch (ast.type) {
   case GLMS_AST_TYPE_STACK_PTR: {
-    if (ast.as.stackptr.ptr == 0) return false;
+    if (ast.as.stackptr.ptr == 0)
+      return false;
     return glms_ast_is_truthy(*ast.as.stackptr.ptr);
   }; break;
   case GLMS_AST_TYPE_BOOL: {
@@ -152,6 +152,9 @@ GLMSAST *glms_ast_access_by_index(GLMSAST *ast, int64_t index, GLMSEnv *env) {
     return 0;
 
   switch (ast->type) {
+  case GLMS_AST_TYPE_STACK_PTR: {
+    return glms_ast_access_by_index(ast->as.stackptr.ptr, index, env);
+  }; break;
   case GLMS_AST_TYPE_ARRAY: {
     return glms_ast_access_child_by_index(ast, index);
   }; break;
@@ -175,9 +178,9 @@ GLMSAST *glms_ast_access_by_index(GLMSAST *ast, int64_t index, GLMSEnv *env) {
 }
 
 GLMSAST *glms_ast_access_by_key_private(GLMSAST *ast, const char *key,
-                                       GLMSEnv *env) {
+                                        GLMSEnv *env) {
 
-    if (!ast || !key)
+  if (!ast || !key)
     return 0;
 
   if (ast->type == GLMS_AST_TYPE_UNDEFINED)
@@ -185,25 +188,24 @@ GLMSAST *glms_ast_access_by_key_private(GLMSAST *ast, const char *key,
   if (ast->type == GLMS_AST_TYPE_NUMBER)
     GLMS_WARNING_RETURN(0, stderr, "cannot index number.\n");
   if (!ast->props.initialized)
-    return 0; 
+    return 0;
   return (GLMSAST *)hashy_map_get(&ast->props, key);
-  
 }
 
 GLMSAST *glms_ast_access_by_key(GLMSAST *ast, const char *key, GLMSEnv *env) {
-if (!ast || !key)
+  if (!ast || !key)
     return 0;
 
+  GLMSAST *v = glms_ast_access_by_key_private(ast, key, env);
 
- GLMSAST* v = glms_ast_access_by_key_private(ast, key, env);
+  if (v)
+    return v;
 
- if (v) return v;
+  if (ast->value_type != 0) {
+    return glms_ast_access_by_key(ast->value_type, key, env);
+  }
 
- if (ast->value_type != 0) {
-   return glms_ast_access_by_key(ast->value_type, key, env);
- }
-
- return 0;
+  return 0;
 }
 
 bool glms_ast_compare_equals_equals(GLMSAST a, GLMSAST b) {
@@ -215,20 +217,22 @@ bool glms_ast_compare_equals_equals(GLMSAST a, GLMSAST b) {
   if (b.type == GLMS_AST_TYPE_STACK_PTR && b.as.stackptr.ptr != 0) {
     return glms_ast_compare_equals_equals(a, *b.as.stackptr.ptr);
   }
-  
+
   if (a.type != b.type)
     return false;
 
   switch (a.type) {
   case GLMS_AST_TYPE_NUMBER: {
-    return a.as.number.value == b.as.number.value; 
+    return a.as.number.value == b.as.number.value;
   }; break;
   case GLMS_AST_TYPE_STRING: {
-    const char* stra = glms_string_view_get_value(&a.as.string.value);
-    const char* strb = glms_string_view_get_value(&a.as.string.value);
+    const char *stra = glms_string_view_get_value(&a.as.string.value);
+    const char *strb = glms_string_view_get_value(&a.as.string.value);
 
-    if (!stra && !strb) return true;
-    if (!stra || !strb) return false;
+    if (!stra && !strb)
+      return true;
+    if (!stra || !strb)
+      return false;
 
     return strcmp(stra, strb) == 0;
   }; break;
@@ -248,9 +252,9 @@ bool glms_ast_compare_gt(GLMSAST a, GLMSAST b) {
   if (b.type == GLMS_AST_TYPE_STACK_PTR && b.as.stackptr.ptr != 0) {
     return glms_ast_compare_gt(a, *b.as.stackptr.ptr);
   }
-  
+
   if (a.type != b.type)
-    return false;
+    return glms_ast_number(a) > glms_ast_number(b);
 
   switch (a.type) {
   case GLMS_AST_TYPE_NUMBER: {
@@ -276,9 +280,9 @@ bool glms_ast_compare_gte(GLMSAST a, GLMSAST b) {
   if (b.type == GLMS_AST_TYPE_STACK_PTR && b.as.stackptr.ptr != 0) {
     return glms_ast_compare_gte(a, *b.as.stackptr.ptr);
   }
-  
+
   if (a.type != b.type)
-    return false;
+    return glms_ast_number(a) >= glms_ast_number(b);
 
   switch (a.type) {
   case GLMS_AST_TYPE_NUMBER: {
@@ -304,9 +308,9 @@ bool glms_ast_compare_lt(GLMSAST a, GLMSAST b) {
   if (b.type == GLMS_AST_TYPE_STACK_PTR && b.as.stackptr.ptr != 0) {
     return glms_ast_compare_lt(a, *b.as.stackptr.ptr);
   }
-  
+
   if (a.type != b.type)
-    return false;
+    return glms_ast_number(a) < glms_ast_number(b);
 
   switch (a.type) {
   case GLMS_AST_TYPE_NUMBER: {
@@ -325,7 +329,6 @@ bool glms_ast_compare_lt(GLMSAST a, GLMSAST b) {
 }
 bool glms_ast_compare_lte(GLMSAST a, GLMSAST b) {
 
-
   if (a.type == GLMS_AST_TYPE_STACK_PTR && a.as.stackptr.ptr != 0) {
     return glms_ast_compare_lte(*a.as.stackptr.ptr, b);
   }
@@ -333,10 +336,9 @@ bool glms_ast_compare_lte(GLMSAST a, GLMSAST b) {
   if (b.type == GLMS_AST_TYPE_STACK_PTR && b.as.stackptr.ptr != 0) {
     return glms_ast_compare_lte(a, *b.as.stackptr.ptr);
   }
-  
-  
-    if (a.type != b.type)
-    return false;
+
+  if (a.type != b.type)
+    return glms_ast_number(a) <= glms_ast_number(b);
 
   switch (a.type) {
   case GLMS_AST_TYPE_NUMBER: {
@@ -389,8 +391,9 @@ float glms_ast_get_number_by_key(GLMSAST *ast, const char *key) {
   return GLMSAST_VALUE(value);
 }
 
-int glms_ast_get_type(GLMSAST ast, GLMSAST* out) {
-  if (!out) return 0;
+int glms_ast_get_type(GLMSAST ast, GLMSAST *out) {
+  if (!out)
+    return 0;
   if (!ast.flags)
     return 0;
   if (!ast.flags->length)
@@ -398,12 +401,14 @@ int glms_ast_get_type(GLMSAST ast, GLMSAST* out) {
 
   if (ast.value_type) {
     *out = *ast.value_type;
-    return 1; 
+    return 1;
   }
 
   if (ast.type == GLMS_AST_TYPE_BINOP) {
-    if (glms_ast_get_type(*ast.as.binop.left, out)) return 1;
-    if (glms_ast_get_type(*ast.as.binop.right, out)) return 1;
+    if (glms_ast_get_type(*ast.as.binop.left, out))
+      return 1;
+    if (glms_ast_get_type(*ast.as.binop.right, out))
+      return 1;
   }
 
   for (int64_t i = 0; i < ast.flags->length; i++) {
@@ -414,7 +419,7 @@ int glms_ast_get_type(GLMSAST ast, GLMSAST* out) {
     GLMSTokenType t = flag->as.id.op;
 
     if ((t != GLMS_TOKEN_TYPE_SPECIAL_LET &&
-                                    t != GLMS_TOKEN_TYPE_SPECIAL_CONST)) {
+         t != GLMS_TOKEN_TYPE_SPECIAL_CONST)) {
       *out = *flag;
       return 1;
     }
@@ -429,11 +434,15 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
 
   GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
+
+  if (src.type == GLMS_AST_TYPE_STACK_PTR)
+    return dest;
+
   dest->props = (HashyMap){0};
   dest->children = 0;
   dest->flags = 0;
   dest->string_rep = 0;
-  dest->ptr =  src.ptr;
+  dest->ptr = src.ptr;
 
   if (src.children != 0) {
     for (int64_t i = 0; i < src.children->length; i++) {
@@ -580,14 +589,14 @@ void glms_ast_destructor_block(GLMSAST *ast) {
 
 void glms_ast_destructor(GLMSAST *ast) {
   if (!ast)
-    return; 
+    return;
 
   if (ast->destructor) {
     ast->destructor(ast);
   }
 
   return;
-  
+
   switch (ast->type) {
   case GLMS_AST_TYPE_BINOP: {
     glms_ast_destructor_binop(ast);
@@ -625,9 +634,6 @@ void glms_ast_destructor(GLMSAST *ast) {
   }
   ast->string_rep = 0;
 
-
-
-  
   if (ast->children != 0) {
 
     for (int64_t i = 0; i < ast->children->length; i++) {
@@ -653,43 +659,50 @@ void glms_ast_destructor(GLMSAST *ast) {
   ast->fptr = 0;
   hashy_map_clear(&ast->props, false);
 
-  //if (ast->typename != 0) {
+  // if (ast->typename != 0) {
   //  free(ast->typename);
   //  ast->typename = 0;
   //}
 }
 
 int64_t glms_ast_array_get_length(GLMSAST *ast) {
-  if (!ast)  return 0;
-  if (!ast->children) return 0;
+  if (!ast)
+    return 0;
+  if (!ast->children)
+    return 0;
   return ast->children->length;
 }
 
 bool glms_ast_is_vector(GLMSAST *ast) {
-  if (!ast) return false;
-  return (ast->type == GLMS_AST_TYPE_VEC3 || ast->type == GLMS_AST_TYPE_VEC2 || ast->type == GLMS_AST_TYPE_VEC4);
+  if (!ast)
+    return false;
+  return (ast->type == GLMS_AST_TYPE_VEC3 || ast->type == GLMS_AST_TYPE_VEC2 ||
+          ast->type == GLMS_AST_TYPE_VEC4);
 }
 
 void glms_ast_keep(GLMSAST *ast) {
-  if (!ast) return;
+  if (!ast)
+    return;
   ast->keep = true;
 }
 
 GLMSAST *glms_ast_get_property(GLMSAST *ast, const char *key) {
-  if (!ast || !key) return 0;
-  if (!ast->props.initialized) return 0;
+  if (!ast || !key)
+    return 0;
+  if (!ast->props.initialized)
+    return 0;
 
-  return (GLMSAST*)hashy_map_get(&ast->props, key);
-  
+  return (GLMSAST *)hashy_map_get(&ast->props, key);
 }
 
-GLMSAST *glms_ast_register_function(GLMSEnv* env, GLMSAST *ast, const char *name,
-                                    GLMSFPTR fptr) {
+GLMSAST *glms_ast_register_function(GLMSEnv *env, GLMSAST *ast,
+                                    const char *name, GLMSFPTR fptr) {
 
-  if (!ast || !fptr || !name) return ast;
+  if (!ast || !fptr || !name)
+    return ast;
 
   if (!glms_ast_get_property(ast, name)) {
-    GLMSAST* fptr_ast = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC, false);
+    GLMSAST *fptr_ast = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC, false);
     fptr_ast->fptr = fptr;
     glms_ast_object_set_property(ast, name, fptr_ast);
   }
@@ -697,13 +710,11 @@ GLMSAST *glms_ast_register_function(GLMSEnv* env, GLMSAST *ast, const char *name
   return ast;
 }
 
-
 GLMSAST *glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env,
                                              GLMSAST *ast, GLMSTokenType op,
                                              GLMSASTOperatorOverload func) {
-  if (!env || !ast || !func) return 0;
-
-
+  if (!env || !ast || !func)
+    return 0;
 
   int idx = op % GLMS_AST_OPERATOR_OVERLOAD_CAP;
 
@@ -712,12 +723,18 @@ GLMSAST *glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env,
   return ast;
 }
 
-GLMSAST glms_ast_op_add_add(GLMSAST* a) {
-  if (!a) return (GLMSAST){0}; 
+GLMSAST glms_ast_op_add_add(GLMSAST *a) {
+  if (!a)
+    return (GLMSAST){0};
   switch (a->type) {
-    case GLMS_AST_TYPE_NUMBER: { a->as.number.value++; }; break;
-    case GLMS_AST_TYPE_STACK_PTR: { return glms_ast_op_add_add(a->as.stackptr.ptr); }; break;
-  default: {}; break;
+  case GLMS_AST_TYPE_NUMBER: {
+    a->as.number.value++;
+  }; break;
+  case GLMS_AST_TYPE_STACK_PTR: {
+    return glms_ast_op_add_add(a->as.stackptr.ptr);
+  }; break;
+  default: {
+  }; break;
   }
 
   GLMSAST result = {0};
@@ -725,94 +742,152 @@ GLMSAST glms_ast_op_add_add(GLMSAST* a) {
   return result;
 }
 
-GLMSAST glms_ast_op_sub_sub(GLMSAST* a) {
-  if (!a) return (GLMSAST){0}; 
+GLMSAST glms_ast_op_sub_sub(GLMSAST *a) {
+  if (!a)
+    return (GLMSAST){0};
   switch (a->type) {
-    case GLMS_AST_TYPE_NUMBER: { a->as.number.value--; }; break;
-    case GLMS_AST_TYPE_STACK_PTR: { return glms_ast_op_sub_sub(a->as.stackptr.ptr); }; break;
-  default: {}; break;
+  case GLMS_AST_TYPE_NUMBER: {
+    a->as.number.value--;
+  }; break;
+  case GLMS_AST_TYPE_STACK_PTR: {
+    return glms_ast_op_sub_sub(a->as.stackptr.ptr);
+  }; break;
+  default: {
+  }; break;
   }
 
   GLMSAST result = {0};
   result = *a;
   return result;
 }
-
 
 GLMSAST glms_ast_op_eq(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = glms_ast_compare_equals_equals(a, b) };
-  
+  return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+                   .as.boolean = glms_ast_compare_equals_equals(a, b)};
 }
 GLMSAST glms_ast_op_lt(GLMSAST a, GLMSAST b) {
 
-  return (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = glms_ast_compare_lt(a, b) };
-  
+  return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+                   .as.boolean = glms_ast_compare_lt(a, b)};
 }
 GLMSAST glms_ast_op_gt(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = glms_ast_compare_gt(a, b) };
-  
+  return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+                   .as.boolean = glms_ast_compare_gt(a, b)};
 }
 GLMSAST glms_ast_op_lte(GLMSAST a, GLMSAST b) {
 
-  return (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = glms_ast_compare_lte(a, b) };
-  
+  return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+                   .as.boolean = glms_ast_compare_lte(a, b)};
 }
 GLMSAST glms_ast_op_gte(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = glms_ast_compare_gte(a, b) };
+  return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+                   .as.boolean = glms_ast_compare_gte(a, b)};
 }
 
 GLMSAST glms_ast_op_add(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = a.as.number.value + b.as.number.value };
-  
+  return (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                   .as.number.value = glms_ast_number(a) + glms_ast_number(b)};
 }
 GLMSAST glms_ast_op_sub(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = a.as.number.value - b.as.number.value };
+  return (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                   .as.number.value = glms_ast_number(a) - glms_ast_number(b)};
 }
 GLMSAST glms_ast_op_mul(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = a.as.number.value * b.as.number.value };
-  
+  return (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                   .as.number.value = glms_ast_number(a) * glms_ast_number(b)};
 }
 GLMSAST glms_ast_op_mod(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = (int)a.as.number.value % (int)b.as.number.value };
+  return (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                   .as.number.value =
+                       (int)glms_ast_number(a) % (int)glms_ast_number(b)};
 }
 
 GLMSAST glms_ast_op_div(GLMSAST a, GLMSAST b) {
-  return (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = a.as.number.value / b.as.number.value };
+
+  return (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                   .as.number.value = glms_ast_number(a) / glms_ast_number(b)};
 }
 
 GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
                         struct GLMS_STACK_STRUCT *stack) {
 
-  if (!a) return b;
-  bool same_type = a->type == b.type;
+  if (!a)
+    return b;
 
-  if (a->type == GLMS_AST_TYPE_STACK_PTR) {
-    printf("yeah\n");
+  GLMSAST *ptr_a = glms_ast_get_ptr(*a);
+  GLMSAST *ptr_b = glms_ast_get_ptr(b);
+
+  if (ptr_a && ptr_b) {
+    return glms_ast_assign(ptr_a, *ptr_b, eval, stack);
   }
+
+  if (ptr_a != 0) {
+    return glms_ast_assign(ptr_a, b, eval, stack);
+  }
+
+  bool same_type = a->type == b.type;
 
   GLMSASTType type = b.type;
 
   if (!same_type) {
-    GLMS_WARNING_RETURN(b, stderr, "Cannot assign variable of different type.\n");
+    GLMS_WARNING_RETURN(b, stderr,
+                        "Cannot assign variable of different type.\n");
   }
 
   switch (type) {
-  case GLMS_AST_TYPE_NUMBER: { a->as.number.value = b.as.number.value; }; break;
-  case GLMS_AST_TYPE_STRING: { a->as.string.value = b.as.string.value; }; break;
-  default: {}; break;
+  case GLMS_AST_TYPE_NUMBER: {
+    a->as.number.value = b.as.number.value;
+  }; break;
+  case GLMS_AST_TYPE_STRING: {
+    a->as.string.value = b.as.string.value;
+  }; break;
+  default: {
+  }; break;
   }
-  
+
   return (GLMSAST){0};
 }
 
 GLMSAST *glms_ast_get_ptr(GLMSAST a) {
-  if (a.type != GLMS_AST_TYPE_STACK_PTR) return 0;
+  if (a.type != GLMS_AST_TYPE_STACK_PTR)
+    return 0;
 
-  GLMSAST* ptr = a.as.stackptr.ptr;
+  GLMSAST *ptr = a.as.stackptr.ptr;
 
   if (ptr != 0 && ptr->type == GLMS_AST_TYPE_STACK_PTR) {
     return glms_ast_get_ptr(*ptr);
   }
 
   return ptr;
+}
+
+GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast,
+                                                 GLMSTokenType op) {
+  GLMSASTOperatorOverload oload =
+      ast.op_overloads[op % GLMS_AST_OPERATOR_OVERLOAD_CAP];
+  if (oload != 0)
+    return oload;
+
+  GLMSAST *ptr = glms_ast_get_ptr(ast);
+
+  if (ptr != 0)
+    return glms_ast_get_op_overload(*ptr, op);
+
+  return 0;
+}
+
+float glms_ast_number(GLMSAST ast) {
+  switch (ast.type) {
+  case GLMS_AST_TYPE_NUMBER: {
+    return ast.as.number.value;
+  }; break;
+  case GLMS_AST_TYPE_BOOL: {
+    return (float)ast.as.boolean;
+  }; break;
+  default: {
+    return 0.0f;
+  }; break;
+  }
+
+  return 0.0f;
 }

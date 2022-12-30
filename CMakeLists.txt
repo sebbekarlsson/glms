@@ -108,4 +108,4 @@ target_link_libraries(glms_e ${GLMS_DEPS})
 target_link_libraries(glms_static ${GLMS_DEPS})
 
 
-#add_subdirectory(test)
+add_subdirectory(test)

@@ -1,3 +1,8 @@
-vec3 x = vec3(1, 2, 3);
+number a = 2;
 
-print(x);
+
+print(a);
+
+a = 56;
+
+print(a);

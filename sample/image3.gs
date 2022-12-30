@@ -1,5 +1,5 @@
-number w = 300;
-number h = 300;
+number w = 640;
+number h = 480;
 
 image img = image.make(w, h);
 

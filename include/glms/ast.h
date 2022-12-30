@@ -209,7 +209,11 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
                         struct GLMS_STACK_STRUCT *stack);
 
 
-GLMSAST* glms_ast_get_ptr(GLMSAST a);
+GLMSAST *glms_ast_get_ptr(GLMSAST a);
+
+GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast, GLMSTokenType op);
+
+float glms_ast_number(GLMSAST ast);
 
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)

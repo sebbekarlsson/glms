@@ -31,7 +31,7 @@ static void test_sample_var() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/var.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
 
   GLMS_ASSERT(x != 0);
   GLMS_TEST_END();
@@ -43,9 +43,9 @@ static void test_sample_func() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/func.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x == 0);
-  GLMSAST *f = glms_eval_lookup(&env.eval, "hello", &env.stack);
+  GLMSAST *f = glms_eval_lookup(&env.eval, &env.stack, "hello");
   GLMS_ASSERT(f != 0);
   GLMS_TEST_END();
 }
@@ -56,7 +56,7 @@ static void test_sample_arrow_func() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/arrow_func.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *f = glms_eval_lookup(&env.eval, "hello", &env.stack);
+  GLMSAST *f = glms_eval_lookup(&env.eval, &env.stack, "hello");
   GLMS_ASSERT(f != 0);
   GLMS_TEST_END();
 }
@@ -67,9 +67,9 @@ static void test_sample_array() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/array.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
-  GLMSAST *arr = glms_eval_lookup(&env.eval, "arr", &env.stack);
+  GLMSAST *arr = glms_eval_lookup(&env.eval, &env.stack, "arr");
   GLMS_ASSERT(arr != 0);
 
   GLMS_ASSERT(arr->type == GLMS_AST_TYPE_ARRAY);
@@ -82,7 +82,7 @@ static void test_sample_if() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/if.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
   GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(GLMSAST_VALUE(x) == 1);
@@ -95,11 +95,11 @@ static void test_sample_object() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/object.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
   GLMS_ASSERT(x->type == GLMS_AST_TYPE_OBJECT);
 
-  GLMSAST *y = glms_eval_lookup(&env.eval, "y", &env.stack);
+  GLMSAST *y = glms_eval_lookup(&env.eval, &env.stack, "y");
   GLMS_ASSERT(y != 0);
   GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(y->as.number.value == 33);
@@ -125,7 +125,7 @@ static void test_sample_varfunc() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/varfunc.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *w = glms_eval_lookup(&env.eval, "w", &env.stack);
+  GLMSAST *w = glms_eval_lookup(&env.eval, &env.stack, "w");
   GLMS_ASSERT(w != 0);
   GLMS_ASSERT(w->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(GLMSAST_VALUE(w) == 44);
@@ -138,7 +138,7 @@ static void test_sample_add_add() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/add_add.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
   GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(GLMSAST_VALUE(x) == 1);
@@ -151,7 +151,7 @@ static void test_sample_sub_sub() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/sub_sub.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
   GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(GLMSAST_VALUE(x) == 2);
@@ -164,7 +164,7 @@ static void test_sample_while() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/while.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *y = glms_eval_lookup(&env.eval, "y", &env.stack);
+  GLMSAST *y = glms_eval_lookup(&env.eval, &env.stack, "y");
   GLMS_ASSERT(y != 0);
   GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(GLMSAST_VALUE(y) == 500);
@@ -177,7 +177,7 @@ static void test_sample_for() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/for.gs");
 
   GLMS_ASSERT(ast != 0);
-  GLMSAST *y = glms_eval_lookup(&env.eval, "y", &env.stack);
+  GLMSAST *y = glms_eval_lookup(&env.eval, &env.stack, "y");
   GLMS_ASSERT(y != 0);
   GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(GLMSAST_VALUE(y) == 16);
@@ -190,15 +190,15 @@ static void test_sample_vec() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/vec.gs");
   GLMS_ASSERT(ast != 0);
 
-  GLMSAST *v1 = glms_eval_lookup(&env.eval, "v1", &env.stack);
+  GLMSAST *v1 = glms_eval_lookup(&env.eval, &env.stack, "v1");
   GLMS_ASSERT(v1 != 0);
   GLMS_ASSERT(v1->type == GLMS_AST_TYPE_VEC3);
 
-  GLMSAST *v2 = glms_eval_lookup(&env.eval, "v2", &env.stack);
+  GLMSAST *v2 = glms_eval_lookup(&env.eval, &env.stack, "v2");
   GLMS_ASSERT(v2 != 0);
   GLMS_ASSERT(v2->type == GLMS_AST_TYPE_VEC3);
 
-  GLMSAST *d = glms_eval_lookup(&env.eval, "d", &env.stack);
+  GLMSAST *d = glms_eval_lookup(&env.eval, &env.stack, "d");
   GLMS_ASSERT(d != 0);
   GLMS_ASSERT(d->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(d->as.number.value == 1.0f);
@@ -211,13 +211,13 @@ static void test_sample_cos_sin() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/cos_sin.gs");
   GLMS_ASSERT(ast != 0);
 
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
   GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
   printf("%12.6f\n", x->as.number.value);
   GLMS_ASSERT(fabsf(GLMSAST_VALUE(x) - (-0.029200f)) <= 0.00001f);
 
-  GLMSAST *y = glms_eval_lookup(&env.eval, "y", &env.stack);
+  GLMSAST *y = glms_eval_lookup(&env.eval, &env.stack, "y");
   GLMS_ASSERT(y != 0);
   GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
   printf("%12.6f\n", y->as.number.value);
@@ -232,7 +232,7 @@ static void test_sample_clamp() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/clamp.gs");
   GLMS_ASSERT(ast != 0);
 
-  GLMSAST *value = glms_eval_lookup(&env.eval, "value", &env.stack);
+  GLMSAST *value = glms_eval_lookup(&env.eval, &env.stack, "value");
   GLMS_ASSERT(value != 0);
   GLMS_ASSERT(value->type == GLMS_AST_TYPE_NUMBER);
   GLMS_ASSERT(value->as.number.value == 1.0f);
@@ -246,13 +246,13 @@ static void test_sample_minmax() {
   GLMSAST *ast = glms_exec_file(&env, "test/samples/minmax.gs");
   GLMS_ASSERT(ast != 0);
 
-  GLMSAST *x = glms_eval_lookup(&env.eval, "x", &env.stack);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
   GLMS_ASSERT(x->type == GLMS_AST_TYPE_NUMBER);
   printf("%12.6f\n", x->as.number.value);
   GLMS_ASSERT(GLMSAST_VALUE(x) == 9.000000f);
 
-  GLMSAST *y = glms_eval_lookup(&env.eval, "y", &env.stack);
+  GLMSAST *y = glms_eval_lookup(&env.eval, &env.stack, "y");
   GLMS_ASSERT(y != 0);
   GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
   printf("%12.6f\n", y->as.number.value);
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
   test_sample_arrow_func();
   test_sample_array();
   test_sample_if();
-  test_sample_object();
+  //test_sample_object();
   test_sample_varfunc();
   test_sample_add_add();
   test_sample_sub_sub();
