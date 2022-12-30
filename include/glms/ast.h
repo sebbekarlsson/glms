@@ -133,6 +133,7 @@ typedef struct GLMS_AST_STRUCT {
   GLMSASTDestructor destructor;
   char* typename;
   JAST* value_type;
+  JAST* result;
   ArenaRef ref;
   bool keep;
   bool is_tmp;

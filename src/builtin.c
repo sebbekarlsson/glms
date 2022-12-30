@@ -80,8 +80,15 @@ GLMSAST *glms_fptr_distance(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   if (!glms_ast_is_vector(a) || !glms_ast_is_vector(b))
     GLMS_WARNING_RETURN(ast, stderr, "Not a vector.\n");
 
-  return glms_env_new_ast_number(eval->env,
-                                 vector3_distance3d(a->as.v3, b->as.v3), true);
+  float next_value = vector3_distance3d(a->as.v3, b->as.v3);
+  if (ast->result == 0) {
+  ast->result = glms_env_new_ast_number(eval->env,
+                                 next_value, true);
+  } else {
+    ast->result->type = GLMS_AST_TYPE_NUMBER;
+    ast->result->as.number.value = next_value;
+  }
+  return ast->result;
 }
 
 GLMSAST *glms_fptr_cross(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
@@ -212,7 +219,15 @@ GLMSAST *glms_fptr_abs(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   GLMSAST *value = glms_eval(eval, args->items[0], stack);
   float v = GLMSAST_VALUE(value);
 
-  return glms_env_new_ast_number(eval->env, fabsf(v), true);
+  float next_value = fabsf(v);
+  if (ast->result == 0) {
+    ast->result = glms_env_new_ast_number(eval->env, next_value, true);
+  } else {
+    ast->result->type = GLMS_AST_TYPE_NUMBER;
+    ast->result->as.number.value = next_value;
+  }
+
+  return ast->result;
 }
 
 GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
@@ -422,7 +437,7 @@ GLMSAST *glms_struct_vec3_op_overload_mul(GLMSEval *eval, GLMSStack *stack,
   }
 
 
-  return glms_env_new_ast_vec3(eval->env, v, eval->arena);
+  return glms_env_new_ast_vec3(eval->env, v, true);
 }
 
 GLMSAST *glms_struct_vec3_op_overload_div(GLMSEval *eval, GLMSStack *stack,

@@ -59,7 +59,7 @@ FetchContent_MakeAvailable(memo_static)
 
 FetchContent_Declare(
   arena_static
-#  URL /home/ianertson/workspace/arena
+# URL /home/ianertson/workspace/arena
   GIT_REPOSITORY https://github.com/sebbekarlsson/arena.git 
 )
 FetchContent_MakeAvailable(arena_static)

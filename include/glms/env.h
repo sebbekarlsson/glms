@@ -33,6 +33,9 @@ typedef struct GLMS_ENV_STRUCT {
 
   GLMSAST* undefined;
   GLMSAST* stackptr;
+
+
+  bool use_arena;
 } GLMSEnv;
 
 

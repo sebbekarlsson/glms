@@ -33,8 +33,10 @@ GLMSAST *glms_stack_push(GLMSStack *stack, const char *name, GLMSAST *ast) {
 
   GLMSAST* existing = glms_stack_get(stack, name);
 
+  if (!existing) {
     stack->names[stack->names_length++] = name;
     glms_GLMSAST_list_push(&stack->list, ast);
+  }
 
  hashy_map_set(&stack->locals, name, ast);
   
@@ -125,9 +127,9 @@ int glms_stack_clear_trash(GLMSStack *stack) {
     GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
 
-  if (stack->locals.used < 16) {
-    return 1;
-  }
+  // if (stack->locals.used < 16) {
+  //  return 1;
+  // }
 
 HashyIterator it = {0};
 

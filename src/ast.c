@@ -723,7 +723,7 @@ void glms_ast_destructor_block(GLMSAST *ast) {
 
 void glms_ast_destructor(GLMSAST *ast) {
   if (!ast)
-    return;
+    return; 
 
   if (ast->destructor) {
     ast->destructor(ast);
@@ -765,6 +765,10 @@ void glms_ast_destructor(GLMSAST *ast) {
     free(ast->string_rep);
   }
   ast->string_rep = 0;
+
+
+
+  
   if (ast->children != 0) {
 
     for (int64_t i = 0; i < ast->children->length; i++) {
@@ -789,6 +793,11 @@ void glms_ast_destructor(GLMSAST *ast) {
 
   ast->fptr = 0;
   hashy_map_clear(&ast->props, false);
+
+  //if (ast->typename != 0) {
+  //  free(ast->typename);
+  //  ast->typename = 0;
+  //}
 }
 
 int64_t glms_ast_array_get_length(GLMSAST *ast) {

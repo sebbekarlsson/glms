@@ -2,6 +2,7 @@
 #include "arena/config.h"
 #include "glms/ast.h"
 #include "glms/eval.h"
+#include "glms/stack.h"
 #include "hashy/hashy.h"
 #include <glms/builtin.h>
 #include <glms/constants.h>
@@ -17,8 +18,8 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   env->initialized = true;
   env->config = cfg;
   env->source = source;
-  hashy_map_init(&env->globals, GLMS_MEMO_AST_PAGE_CAPACITY);
-  hashy_map_init(&env->types, GLMS_MEMO_AST_PAGE_CAPACITY);
+  hashy_map_init(&env->globals, 256);
+  hashy_map_init(&env->types, 256);
   memo_init(
       &env->memo_ast,
       (MemoConfig){.item_size = sizeof(GLMSAST),
@@ -52,10 +53,14 @@ int glms_env_clear(GLMSEnv *env) {
   env->source = 0;
   hashy_map_clear(&env->parser.symbols, false);
   hashy_map_clear(&env->globals, false);
+  hashy_map_clear(&env->types, false);
   glms_stack_clear(&env->stack);
   env->undefined = 0;
   memo_clear(&env->memo_ast);
-  arena_clear(&env->arena_ast);
+
+  arena_destroy(&env->arena_ast);
+  //arena_reset(&env->arena_ast);
+  //arena_clear(&env->arena_ast);
 
   env->initialized = false;
 
@@ -68,7 +73,7 @@ GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type, bool arena) {
   if (!env->initialized)
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
-  arena = env->eval.arena;
+  arena = env->use_arena;
 
   ArenaRef ref = {0};
   GLMSAST *ast = 0;
@@ -80,7 +85,12 @@ GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type, bool arena) {
   ast->type = type;
   ast->ref = ref;
 
-  glms_eval_disable_arena(&env->eval);
+  if (env->arena_ast.pages >= GLMS_GC_SWEEP_THRESHOLD) {
+    for (int i = 0; i < GLMS_GC_SWEEP_ITER; i++) {
+      //     arena_defrag(&env->arena_ast);
+    }
+  }
+
   return ast;
 }
 
@@ -128,7 +138,11 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
   if (!env->initialized)
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
+  env->use_arena = false;
+  
   GLMSAST *root = glms_parser_parse(&env->parser);
+
+  env->use_arena = true;
 
   root = glms_eval(&env->eval, root, &env->stack);
   return root;
