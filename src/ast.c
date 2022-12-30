@@ -878,6 +878,9 @@ GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast,
 
 float glms_ast_number(GLMSAST ast) {
   switch (ast.type) {
+  case GLMS_AST_TYPE_STACK_PTR: {
+    return ast.as.stackptr.ptr ? glms_ast_number(*ast.as.stackptr.ptr) : 0.0f;
+  } break;
   case GLMS_AST_TYPE_NUMBER: {
     return ast.as.number.value;
   }; break;
