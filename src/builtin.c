@@ -1,153 +1,155 @@
+#include "glms/allocator.h"
 #include "glms/ast_type.h"
 #include "glms/eval.h"
 #include "glms/stack.h"
+#include "glms/string_view.h"
 #include "glms/token.h"
 #include "text/text.h"
+#include <gimg/gimg.h>
 #include <glms/ast.h>
+#include <glms/builtin.h>
 #include <glms/env.h>
 #include <glms/macros.h>
-#include <vec3/vec3.h>
-#include <glms/builtin.h>
+#include <glms/modules/image.h>
+#include <glms/modules/vec3.h>
+#include <glms/modules/vec4.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
-#include <gimg/gimg.h>
-#include <glms/modules/image.h>
+#include <vec3/vec3.h>
 
-GLMSAST *glms_fptr_print(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                         GLMSStack *stack) {
+static void print_ast(GLMSAST ast, GLMSAllocator alloc) {
+
+  switch (ast.type) {
+  case GLMS_AST_TYPE_NUMBER: {
+    printf("%1.6f\n", ast.as.number.value);
+  }; break;
+  case GLMS_AST_TYPE_STRING: {
+    const char *val = glms_string_view_get_value(&ast.as.string.value);
+    printf("%s\n", val ? val : "");
+  }; break;
+  case GLMS_AST_TYPE_STACK_PTR: {
+
+    if (ast.as.stackptr.ptr) {
+      return print_ast(*ast.as.stackptr.ptr, alloc);
+    };
+    break;
+  default: {
+    char* v = glms_ast_to_string(ast, alloc);
+    if (v != 0) {
+      printf("%s\n", v);
+    }
+  }; break;
+  }
+  }
+}
+
+int glms_fptr_print(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
   if (!args)
-    return ast;
+    return 0;
 
   for (int64_t i = 0; i < args->length; i++) {
-    GLMSAST *arg = glms_eval(eval, args->items[i], stack);
-    if (!arg)
-      continue;
-    switch (arg->type) {
-    case GLMS_AST_TYPE_NUMBER: {
-      printf("%1.6f\n", arg->as.number.value);
-    }; break;
-    case GLMS_AST_TYPE_STRING: {
-      const char *value = glms_ast_get_string_value(arg);
-
-      if (value) {
-        printf("%s\n", value);
-      } else {
-        printf("(null)\n");
-      }
-    }; break;
-    default: {
-      const char* strval = glms_ast_to_string(arg);
-      if (strval != 0) {
-	printf("%s\n", strval);
-      } else {
-	printf("%p\n", arg);
-      }
-    }; break;
-    }
+    GLMSAST arg = glms_eval(eval, args->items[i], stack);
+    print_ast(arg, eval->env->string_alloc);
   }
 
-  return ast;
+  return 0;
 }
 
-GLMSAST *glms_fptr_dot(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                       GLMSStack *stack) {
+int glms_fptr_dot(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
 
   if (!args)
-    return ast;
+    return 0;
   if (args->length < 2)
-    return ast;
+    return 0;
 
-  GLMSAST *a = glms_eval(eval, args->items[0], stack);
-  GLMSAST *b = glms_eval(eval, args->items[1], stack);
+  GLMSAST a = glms_eval(eval, args->items[0], stack);
+  GLMSAST b = glms_eval(eval, args->items[1], stack);
 
-  if (!glms_ast_is_vector(a) || !glms_ast_is_vector(b))
-    GLMS_WARNING_RETURN(ast, stderr, "Not a vector.\n");
+  if (!glms_ast_is_vector(&a) || !glms_ast_is_vector(&b))
+    GLMS_WARNING_RETURN(0, stderr, "Not a vector.\n");
 
-  return glms_env_new_ast_number(eval->env, vector3_dot(a->as.v3, b->as.v3), true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                   .as.number.value = vector3_dot(a.as.v3, b.as.v3)};
+
+  return 1;
 }
 
-GLMSAST *glms_fptr_distance(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                            GLMSStack *stack) {
+int glms_fptr_distance(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                       GLMSStack *stack, GLMSAST *out) {
   if (!args)
-    return ast;
+    return 0;
   if (args->length < 2)
-    return ast;
+    return 0;
 
-  GLMSAST *a = glms_eval(eval, args->items[0], stack);
-  GLMSAST *b = glms_eval(eval, args->items[1], stack);
+  GLMSAST a = glms_eval(eval, args->items[0], stack);
+  GLMSAST b = glms_eval(eval, args->items[1], stack);
 
-  if (!glms_ast_is_vector(a) || !glms_ast_is_vector(b))
-    GLMS_WARNING_RETURN(ast, stderr, "Not a vector.\n");
+  if (!glms_ast_is_vector(&a) || !glms_ast_is_vector(&b))
+    GLMS_WARNING_RETURN(0, stderr, "Not a vector.\n");
 
-  float next_value = vector3_distance3d(a->as.v3, b->as.v3);
-  if (ast->result == 0) {
-  ast->result = glms_env_new_ast_number(eval->env,
-                                 next_value, true);
-  } else {
-    ast->result->type = GLMS_AST_TYPE_NUMBER;
-    ast->result->as.number.value = next_value;
-  }
-  return ast->result;
+  float next_value = vector3_distance3d(a.as.v3, b.as.v3);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = next_value};
+  return 1;
 }
 
-GLMSAST *glms_fptr_cross(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                         GLMSStack *stack) {
+int glms_fptr_cross(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
 
   if (args->length < 2)
-    return ast;
-  GLMSAST *a = glms_eval(eval, args->items[0], stack);
-  GLMSAST *b = glms_eval(eval, args->items[1], stack);
+    return 0;
+  GLMSAST a = glms_eval(eval, args->items[0], stack);
+  GLMSAST b = glms_eval(eval, args->items[1], stack);
 
-  if (!glms_ast_is_vector(a) || !glms_ast_is_vector(b))
-    GLMS_WARNING_RETURN(ast, stderr, "Not a vector.\n");
+  if (!glms_ast_is_vector(&a) || !glms_ast_is_vector(&b))
+    GLMS_WARNING_RETURN(0, stderr, "Not a vector.\n");
 
-  GLMSAST *result = glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC3, true);
-  result->swizzle = a->swizzle;
-  result->to_string = a->to_string;
-  result->constructor = a->constructor;
-  result->as.v3 = vector3_cross(a->as.v3, b->as.v3);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_VEC3,
+                   .as.v3 = vector3_cross(a.as.v3, b.as.v3)};
 
-  return result;
+  return 1;
 }
 
-GLMSAST *glms_fptr_normalize(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                             GLMSStack *stack) {
+int glms_fptr_normalize(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                        GLMSStack *stack, GLMSAST *out) {
 
   if (args->length <= 0)
-    return ast;
-  GLMSAST *a = glms_eval(eval, args->items[0], stack);
+    return 0;
+  GLMSAST a = glms_eval(eval, args->items[0], stack);
 
-  if (!glms_ast_is_vector(a))
-    GLMS_WARNING_RETURN(ast, stderr, "Not a vector.\n");
+  if (!glms_ast_is_vector(&a))
+    GLMS_WARNING_RETURN(0, stderr, "Not a vector.\n");
 
   GLMSAST *result = glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC3, true);
-  result->swizzle = a->swizzle;
-  result->to_string = a->to_string;
-  result->constructor = a->constructor;
-  result->as.v3 = vector3_unit(a->as.v3);
+  Vector3 v = vector3_unit(a.as.v3);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_VEC3, .as.v3 = v};
 
-  return result;
+  return 1;
 }
 
-GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                          GLMSStack *stack) {
+int glms_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                     GLMSStack *stack, GLMSAST *out) {
   if (!args)
-    return ast;
+    return 0;
   if (args->length <= 0)
-    return ast;
+    return 0;
 
-  GLMSAST *value = glms_eval(eval, args->items[0], stack);
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
 
-  if (glms_ast_is_vector(value)) {
-    return glms_env_new_ast_number(eval->env, vector3_mag(value->as.v3), true);
+  if (glms_ast_is_vector(&value)) {
+
+    *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                     .as.number = vector3_mag(value.as.v3)};
+    return 1;
   }
 
   int64_t len = 0;
 
-  switch (value->type) {
+  switch (value.type) {
   case GLMS_AST_TYPE_STRING: {
-    const char *strvalue = glms_ast_get_string_value(value);
+    const char *strvalue = glms_string_view_get_value(&value.as.string.value);
     if (!strvalue)
       len = 0;
     len = strlen(strvalue);
@@ -157,381 +159,183 @@ GLMSAST *glms_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
   }; break;
   }
 
-  return glms_env_new_ast_number(eval->env, (float)len, true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = (float)len};
+
+  return 1;
 }
 
-GLMSAST *glms_fptr_cos(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                       GLMSStack *stack) {
+int glms_fptr_cos(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
 
   if (args->length <= 0)
-    return ast;
+    return 0;
 
-  GLMSAST *value = glms_eval(eval, args->items[0], stack);
-  float v = GLMSAST_VALUE(value);
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+  float v = value.as.number.value;
 
-  return glms_env_new_ast_number(eval->env, cosf(v), true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = cosf(v)};
+  return 1;
 }
 
-GLMSAST *glms_fptr_tan(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                       GLMSStack *stack) {
+int glms_fptr_tan(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
 
   if (args->length <= 0)
-    return ast;
+    return 0;
 
-  GLMSAST *value = glms_eval(eval, args->items[0], stack);
-  float v = GLMSAST_VALUE(value);
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+  float v = value.as.number.value;
 
-  return glms_env_new_ast_number(eval->env, tanf(v), true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = tanf(v)};
+  return 1;
 }
 
-GLMSAST *glms_fptr_atan(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                        GLMSStack *stack) {
+int glms_fptr_atan(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                   GLMSStack *stack, GLMSAST *out) {
 
   if (args->length <= 0)
-    return ast;
+    return 0;
 
   if (args->length == 1) {
-    float a = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-    return glms_env_new_ast_number(eval->env, atanf(a), true);
+    float a = args->items[0].as.number.value;
+    *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = atanf(a)};
+    return 1;
   }
 
-  float a = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-  float b = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
-  return glms_env_new_ast_number(eval->env, atan2f(a, b), true);
+  float a = args->items[0].as.number.value;
+  float b = args->items[1].as.number.value;
+  *out =
+      (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = atan2f(a, b)};
+  return 1;
 }
 
-GLMSAST *glms_fptr_fract(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                         GLMSStack *stack) {
-if (args->length <= 0)
-    return ast;
-
-  GLMSAST *value = glms_eval(eval, args->items[0], stack);
-  float v = GLMSAST_VALUE(value);
-
-  return glms_env_new_ast_number(eval->env, mif_fract(v), true);
-}
-
-GLMSAST *glms_fptr_abs(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                       GLMSStack *stack) {
+int glms_fptr_fract(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
   if (args->length <= 0)
-    return ast;
+    return 0;
 
-  GLMSAST *value = glms_eval(eval, args->items[0], stack);
-  float v = GLMSAST_VALUE(value);
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+  float v = value.as.number.value;
+
+  *out =
+      (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = mif_fract(v)};
+
+  return 1;
+}
+
+int glms_fptr_abs(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
+  if (args->length <= 0)
+    return 0;
+
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+  float v = value.as.number.value;
 
   float next_value = fabsf(v);
-  if (ast->result == 0) {
-    ast->result = glms_env_new_ast_number(eval->env, next_value, true);
-  } else {
-    ast->result->type = GLMS_AST_TYPE_NUMBER;
-    ast->result->as.number.value = next_value;
-  }
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = next_value};
 
-  return ast->result;
+  return 1;
 }
 
-GLMSAST *glms_fptr_sin(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                       GLMSStack *stack) {
+int glms_fptr_sin(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
   if (args->length <= 0)
-    return ast;
+    return 0;
 
-  GLMSAST *value = glms_eval(eval, args->items[0], stack);
-  float v = GLMSAST_VALUE(value);
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+  float v = value.as.number.value;
 
-  return glms_env_new_ast_number(eval->env, sinf(v), true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = sinf(v)};
+
+  return 1;
 }
 
-GLMSAST *glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                        GLMSStack *stack) {
+int glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                   GLMSStack *stack, GLMSAST *out) {
 
   if (args->length < 3)
-    return ast;
+    return 0;
 
-  float from_ = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-  float to_ = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
-  float scale_ = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
+  float from_ = glms_eval(eval, args->items[0], stack).as.number.value;
+  float to_ = glms_eval(eval, args->items[1], stack).as.number.value;
+  float scale_ = glms_eval(eval, args->items[2], stack).as.number.value;
 
   float v = from_ + (to_ - from_) * scale_;
-
-  return glms_env_new_ast_number(eval->env, v, true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = v};
+  return 1;
 }
 
-GLMSAST *glms_fptr_clamp(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                         GLMSStack *stack) {
+int glms_fptr_clamp(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
   if (args->length < 3)
-    return ast;
+    return 0;
 
-  float value = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-  float min = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
-  float max = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
+  float value = glms_eval(eval, args->items[0], stack).as.number.value;
+  float min = glms_eval(eval, args->items[1], stack).as.number.value;
+  float max = glms_eval(eval, args->items[2], stack).as.number.value;
 
   float v = mif_clamp(value, min, max);
 
-  return glms_env_new_ast_number(eval->env, v, true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = v};
+
+  return 1;
 }
 
-GLMSAST *glms_fptr_random(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                          GLMSStack *stack) {
+int glms_fptr_random(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                     GLMSStack *stack, GLMSAST *out) {
 
   float min = 0.0f;
   float max = 1.0f;
   float seed = 32.0f;
   if (args && args->length >= 2) {
-    min = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-    max = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
+    min = glms_eval(eval, args->items[0], stack).as.number.value;
+    max = glms_eval(eval, args->items[1], stack).as.number.value;
   }
 
   if (args && args->length >= 3) {
-    seed = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
+    seed = glms_eval(eval, args->items[2], stack).as.number.value;
   } else {
     seed = ((float)rand() / (float)RAND_MAX) * 321415.0f;
   }
 
-  return glms_env_new_ast_number(eval->env, mif_random_float(min, max, seed), true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
+                   .as.number.value = mif_random_float(min, max, seed)};
+  return 1;
 }
 
-GLMSAST *glms_fptr_min(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                       GLMSStack *stack) {
+int glms_fptr_min(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
   if (!args || args->length <= 0)
-    return ast;
+    return 0;
 
   float min = INFINITY;
 
   for (int64_t i = 0; i < args->length; i++) {
-    float v = GLMSAST_VALUE(glms_eval(eval, args->items[i], stack));
+    float v = glms_eval(eval, args->items[i], stack).as.number.value;
 
     min = fminf(min, v);
   }
 
-  return glms_env_new_ast_number(eval->env, min, true);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = min};
+  return 1;
 }
 
-GLMSAST *glms_fptr_max(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                       GLMSStack *stack) {
+int glms_fptr_max(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
 
   if (!args || args->length <= 0)
-    return ast;
+    return 0;
 
   float max = -INFINITY;
 
   for (int64_t i = 0; i < args->length; i++) {
-    float v = GLMSAST_VALUE(glms_eval(eval, args->items[i], stack));
+    float v = glms_eval(eval, args->items[i], stack).as.number.value;
 
     max = fmaxf(max, v);
   }
 
-  return glms_env_new_ast_number(eval->env, max, true);
-}
-
-GLMSAST *glms_fptr_keep(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                        GLMSStack *stack) {
-  if (!args || args->length <= 0) return ast;
-
-  GLMSAST* a = glms_eval(eval, args->items[0], stack);
-  glms_ast_keep(a);
-
-  return a;
-}
-
-GLMSAST *glms_fptr_trace(GLMSEval *eval, GLMSAST *ast, GLMSASTList *args,
-                        GLMSStack *stack) {
-
-
-  glms_stack_dump(stack);
-
-  return ast;
-}
-
-void glms_struct_vec2(GLMSEnv *env) {
-  glms_env_register_struct(
-      env, "vec2",
-      (GLMSAST *[]){
-	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x", true),
-	glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y", true)},
-      2);
-}
-
-GLMSAST *glms_struct_vec4_swizzle(GLMSEval *eval, GLMSStack *stack,
-                                  GLMSAST *ast, GLMSAST *accessor) {
-  const char *id = glms_ast_get_string_value(accessor);
-  if (!id)
-    return 0;
-
-  if (strlen(id) > 1) {
-    GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
-  }
-
-  int idx = ((int)id[0]) - 120;
-
-  if (idx < 0 || idx >= 3) {
-    GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
-  }
-
-  float v = vector3_get_component(ast->as.v3, idx);
-
-  return glms_env_new_ast_number(eval->env, v, true);
-}
-
-GLMSAST *glms_struct_vec4_constructor(GLMSEval *eval, GLMSStack *stack,
-                                      GLMSASTList *args, GLMSAST* self) {
-  GLMSAST *ast = self ? self : glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC4, true);
-
-  ast->swizzle = glms_struct_vec4_swizzle;
-  ast->constructor = glms_struct_vec4_constructor;
-  ast->to_string = glms_struct_vec4_to_string;
-
-  if (!args)
-    return ast;
-
-  if (args->length >= 4) {
-    float x = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-    float y = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
-    float z = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
-    float w = GLMSAST_VALUE(glms_eval(eval, args->items[3], stack));
-
-    ast->as.v4 = VEC4(x, y, z, w);
-  } else if (args->length == 1) {
-    float x = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-    ast->as.v4 = VEC41(x);
-  }
-
-  return ast;
-}
-
-GLMSAST *glms_struct_vec3_swizzle(GLMSEval *eval, GLMSStack *stack,
-                                  GLMSAST *ast, GLMSAST *accessor) {
-  const char *id = glms_ast_get_string_value(accessor);
-  if (!id)
-    return 0;
-
-  if (strlen(id) > 1) {
-    GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
-  }
-
-  int idx = ((int)id[0]) - 120;
-
-  if (idx < 0 || idx >= 3) {
-    GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
-  }
-
-  float v = vector3_get_component(ast->as.v3, idx);
-
-  return glms_env_new_ast_number(eval->env, v, true);
-}
-
-GLMSAST *glms_struct_vec3_op_overload_mul(GLMSEval *eval, GLMSStack *stack,
-                                      GLMSAST* left, GLMSAST* right) {
-
-  if (!glms_ast_is_vector(left) && !glms_ast_is_vector(right)) return 0;
-
-  Vector3 v = VEC31(0);
-  
-  if (left->type == GLMS_AST_TYPE_VEC3 && right->type == GLMS_AST_TYPE_NUMBER) {
-    v = left->as.v3;
-    v = vector3_scale(v, right->as.number.value);
-  } else if (left->type == GLMS_AST_TYPE_NUMBER && right->type == GLMS_AST_TYPE_VEC3) {
-    v = right->as.v3;
-    v = vector3_scale(v, left->as.number.value);
-  } else if (left->type == GLMS_AST_TYPE_VEC3 && right->type == GLMS_AST_TYPE_VEC3) {
-    v = vector3_mul(left->as.v3, right->as.v3);
-  }
-
-
-  return glms_env_new_ast_vec3(eval->env, v, true);
-}
-
-GLMSAST *glms_struct_vec3_op_overload_div(GLMSEval *eval, GLMSStack *stack,
-                                      GLMSAST* left, GLMSAST* right) {
-
-  if (!glms_ast_is_vector(left) && !glms_ast_is_vector(right)) return 0;
-
-  Vector3 v = VEC31(0);
-  
-  if (left->type == GLMS_AST_TYPE_VEC3 && right->type == GLMS_AST_TYPE_NUMBER) {
-    v = left->as.v3;
-    v = vector3_scale(v, 1.0f / right->as.number.value);
-  } else if (left->type == GLMS_AST_TYPE_NUMBER && right->type == GLMS_AST_TYPE_VEC3) {
-    v = right->as.v3;
-    v = vector3_scale(v, 1.0f / left->as.number.value);
-  } else if (left->type == GLMS_AST_TYPE_VEC3 && right->type == GLMS_AST_TYPE_VEC3) {
-    v.x = left->as.v3.x / right->as.v3.x; 
-    v.y = left->as.v3.y / right->as.v3.y; 
-    v.z = left->as.v3.z / right->as.v3.z; 
-  }
-
-  return glms_env_new_ast_vec3(eval->env, v, true);
-}
-
-GLMSAST *glms_struct_vec3_constructor(GLMSEval *eval, GLMSStack *stack,
-                                      GLMSASTList *args, GLMSAST* self) {
-  GLMSAST *ast = self ? self : glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC3, true);
-
-  ast->swizzle = glms_struct_vec3_swizzle;
-  ast->constructor = glms_struct_vec3_constructor;
-  ast->to_string = glms_struct_vec3_to_string;
-  glms_ast_register_operator_overload(eval->env, ast, GLMS_TOKEN_TYPE_MUL, glms_struct_vec3_op_overload_mul);
-  glms_ast_register_operator_overload(eval->env, ast, GLMS_TOKEN_TYPE_DIV, glms_struct_vec3_op_overload_div);
-
-  if (!args)
-    return ast;
-
-  if (args->length >= 3) {
-    float x = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-    float y = GLMSAST_VALUE(glms_eval(eval, args->items[1], stack));
-    float z = GLMSAST_VALUE(glms_eval(eval, args->items[2], stack));
-
-    ast->as.v3 = VEC3(x, y, z);
-  } else if (args->length == 1) {
-    float x = GLMSAST_VALUE(glms_eval(eval, args->items[0], stack));
-    ast->as.v3 = VEC31(x);
-  }
-
-  return ast;
-}
-
-const char *glms_struct_vec3_to_string(GLMSAST *ast) {
-  Vector3 v = ast->as.v3;
-
-  char tmp[256];
-  if (ast->string_rep != 0) {
-    free(ast->string_rep);
-    ast->string_rep = 0;
-  }
-  sprintf(tmp, "VEC3(%1.6f, %1.6f, %1.6f)", v.x, v.y, v.z);
-  ast->string_rep = strdup(tmp);
-
-  return ast->string_rep;
-}
-
-const char *glms_struct_vec4_to_string(GLMSAST *ast) {
-  Vector3 v = ast->as.v3;
-
-  char tmp[256];
-  if (ast->string_rep != 0) {
-    free(ast->string_rep);
-    ast->string_rep = 0;
-  }
-  sprintf(tmp, "VEC4(%1.6f, %1.6f, %1.6f, %1.6f)", v.x, v.y, v.z, v.w);
-  ast->string_rep = strdup(tmp);
-
-  return ast->string_rep;
-}
-
-void glms_struct_vec3(GLMSEnv *env) {
-  glms_env_register_type(env, "vec3", glms_env_new_ast(env, GLMS_AST_TYPE_VEC3, false),
-                         glms_struct_vec3_constructor, glms_struct_vec3_swizzle,
-                         glms_struct_vec3_to_string, 0);
-  //  glms_env_register_struct(env, "vec3", (GLMSAST*[]){
-  //    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x"),
-  //    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "y"),
-  //    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "z")
-  //  }, 3);
-}
-
-void glms_struct_vec4(GLMSEnv *env) {
-  glms_env_register_type(env, "vec4", glms_env_new_ast(env, GLMS_AST_TYPE_VEC4, false),
-                         glms_struct_vec4_constructor, glms_struct_vec4_swizzle,
-                         glms_struct_vec4_to_string, 0);
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = max};
+  return 1;
 }
 
 
@@ -540,9 +344,10 @@ void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
 
   glms_env_register_any(env, "PI", glms_env_new_ast_number(env, M_PI, true));
-  glms_env_register_any(env, "TAU", glms_env_new_ast_number(env, M_PI*2.0f, true));
-  
+  glms_env_register_any(env, "TAU",
+                        glms_env_new_ast_number(env, M_PI * 2.0f, true));
   glms_env_register_function(env, "print", glms_fptr_print);
+
   glms_env_register_function(env, "dot", glms_fptr_dot);
   glms_env_register_function(env, "distance", glms_fptr_distance);
   glms_env_register_function(env, "cross", glms_fptr_cross);
@@ -560,50 +365,9 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "clamp", glms_fptr_clamp);
   glms_env_register_function(env, "min", glms_fptr_min);
   glms_env_register_function(env, "max", glms_fptr_max);
-  glms_env_register_function(env, "keep", glms_fptr_keep);
-  glms_env_register_function(env, "trace", glms_fptr_trace);
   glms_env_register_function(env, "random", glms_fptr_random);
 
-  glms_struct_image(env);
-  // glms_struct_vec2(env);
   glms_struct_vec3(env);
   glms_struct_vec4(env);
-}
-
-
-bool glms_fptr_expect_args(GLMSEval *eval, GLMSStack *stack,
-                           GLMSASTList *in_args, GLMSType *types,
-                           int nr_types) {
-
-  if (!eval || !stack) return false;
-  if (types == 0 || nr_types <= 0) return true;
-
-
-  if (in_args == 0 || (in_args->length <= 0 || in_args->length < nr_types)) {
-    GLMS_WARNING_RETURN(eval->env->undefined, stderr, "Expected `%d` arguments but got `%ld`.\n", nr_types, in_args ? in_args->length : 0);
-  }
-
-  glms_eval_ast_list(eval, in_args, stack);
-
-  for (int i = 0; i < nr_types; i++) {
-    GLMSType type = types[i];
-    GLMSAST* arg = in_args->items[i];
-
-    const char* typename = glms_ast_get_type_name(arg);
-    GLMSAST* t = glms_ast_get_type(arg);
-
-    if (type.typename && !typename) GLMS_WARNING_RETURN(eval->env->undefined, stderr, "Unexpected non-type value.\n");
-
-    if (type.typename && typename && strcmp(type.typename, typename) != 0) GLMS_WARNING_RETURN(eval->env->undefined, stderr, "Expected type `%s` but got `%s`.\n", type.typename, typename);
-
-
-    if (t == 0) continue;
-
-    if (!type.typename && type.ast_type != GLMS_AST_TYPE_EOF && t->type != type.ast_type) {
-      GLMS_WARNING_RETURN(eval->env->undefined, stderr, "Expected type `%s` but got `%s`.\n", GLMS_AST_TYPE_STR[type.ast_type], GLMS_AST_TYPE_STR[t->type]);
-    }
-  }
-
-  return true;
-
+  glms_struct_image(env);
 }

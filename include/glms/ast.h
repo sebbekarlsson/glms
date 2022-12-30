@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <vec3/vec3.h>
 #include <glms/ast_type.h>
+#include <glms/allocator.h>
 
 #define GLMS_AST_OPERATOR_OVERLOAD_CAP 24
 
@@ -26,24 +27,24 @@ struct GLMS_AST_STRUCT;
 
 #define JAST struct GLMS_AST_STRUCT
 
-typedef struct GLMS_AST_STRUCT* (*GLMSASTContructor)(
+typedef void (*GLMSASTContructor)(
 						     struct GLMS_EVAL_STRUCT* eval,
 						     struct GLMS_STACK_STRUCT* stack,
-						     struct GLMS_GLMSAST_LIST_STRUCT* args,
+						     struct GLMS_BUFFER_GLMSAST* args,
 						     struct GLMS_AST_STRUCT* self
 						     );
 
-typedef struct GLMS_AST_STRUCT *(*GLMSASTSwizzle)(
+typedef int(*GLMSASTSwizzle)(
     struct GLMS_EVAL_STRUCT *eval, struct GLMS_STACK_STRUCT *stack,
-    struct GLMS_AST_STRUCT *ast, struct GLMS_AST_STRUCT *accessor);
+    struct GLMS_AST_STRUCT *ast, struct GLMS_AST_STRUCT *accessor, struct GLMS_AST_STRUCT *out);
 
-typedef const char *(*GLMSASTToString)(struct GLMS_AST_STRUCT *ast);
+typedef char* (*GLMSASTToString)(struct GLMS_AST_STRUCT *ast, GLMSAllocator alloc);
 
 typedef void (*GLMSASTDestructor)(struct GLMS_AST_STRUCT *ast);
 
-typedef struct GLMS_AST_STRUCT *(*GLMSASTOperatorOverload)(
+typedef int (*GLMSASTOperatorOverload)(
     struct GLMS_EVAL_STRUCT *eval, struct GLMS_STACK_STRUCT *stack,
-    struct GLMS_AST_STRUCT *left, struct GLMS_AST_STRUCT *right);
+    struct GLMS_AST_STRUCT *left, struct GLMS_AST_STRUCT *right, struct GLMS_AST_STRUCT * out);
 
 typedef struct GLMS_AST_STRUCT {
 
@@ -109,6 +110,7 @@ typedef struct GLMS_AST_STRUCT {
 
     struct {
       int idx;
+      JAST* ptr;
     } stackptr;
 
     bool boolean;
@@ -151,15 +153,15 @@ const char* glms_ast_get_name(GLMSAST* ast);
 
 const char* glms_ast_get_string_value(GLMSAST* ast);
 
-const char* glms_ast_to_string(GLMSAST* ast);
+char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc);
 
-bool glms_ast_is_truthy(GLMSAST* ast);
+bool glms_ast_is_truthy(GLMSAST ast);
 
-bool glms_ast_compare_equals_equals(GLMSAST* a, GLMSAST* b);
-bool glms_ast_compare_gt(GLMSAST* a, GLMSAST* b);
-bool glms_ast_compare_gte(GLMSAST* a, GLMSAST* b);
-bool glms_ast_compare_lt(GLMSAST* a, GLMSAST* b);
-bool glms_ast_compare_lte(GLMSAST* a, GLMSAST* b);
+bool glms_ast_compare_equals_equals(GLMSAST a, GLMSAST b);
+bool glms_ast_compare_gt(GLMSAST a, GLMSAST b);
+bool glms_ast_compare_gte(GLMSAST a, GLMSAST b);
+bool glms_ast_compare_lt(GLMSAST a, GLMSAST b);
+bool glms_ast_compare_lte(GLMSAST a, GLMSAST b);
 
 float glms_ast_get_number_by_key(GLMSAST* ast, const char* key);
 
@@ -170,9 +172,7 @@ GLMSAST* glms_ast_access_by_key(GLMSAST* ast, const char* key, struct GLMS_ENV_S
 
 int64_t glms_ast_array_get_length(GLMSAST* ast);
 
-GLMSAST *glms_ast_get_type(GLMSAST *ast);
-
-const char* glms_ast_get_type_name(GLMSAST* ast);
+int glms_ast_get_type(GLMSAST ast, GLMSAST* out);
 
 GLMSAST* glms_ast_copy(GLMSAST src, struct GLMS_ENV_STRUCT* env);
 
@@ -188,8 +188,28 @@ GLMSAST *glms_ast_register_function(struct GLMS_ENV_STRUCT *env, GLMSAST *ast,
                                     const char *name, GLMSFPTR fptr);
 
 
-GLMSAST* glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env, GLMSAST *ast,
-					     GLMSTokenType op, GLMSASTOperatorOverload func);
+GLMSAST *glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env,
+                                             GLMSAST *ast, GLMSTokenType op,
+                                             GLMSASTOperatorOverload func);
+
+GLMSAST glms_ast_op_add_add(GLMSAST* a);
+GLMSAST glms_ast_op_sub_sub(GLMSAST* a);
+
+GLMSAST glms_ast_op_add(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_sub(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_mul(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_mod(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_div(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_eq(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_lt(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_gt(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_lte(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_gte(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
+                        struct GLMS_STACK_STRUCT *stack);
+
+
+GLMSAST* glms_ast_get_ptr(GLMSAST a);
 
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)

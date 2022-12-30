@@ -82,7 +82,7 @@ void glms_stack_dump(GLMSStack *stack) {
     GLMSAST *ast = glms_stack_get(stack, stack->names[i]);
 
     printf("%d (%s) => %s\n", i, stack->names[i],
-           ast ? glms_ast_to_string(ast) : stack->names[i]);
+           stack->names[i]);
   }
 }
 

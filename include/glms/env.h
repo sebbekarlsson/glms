@@ -10,6 +10,7 @@
 #include <glms/stack.h>
 #include <hashy/hashy.h>
 #include <stdbool.h>
+#include <glms/allocator.h>
 
 typedef struct {
   bool debug;
@@ -34,8 +35,9 @@ typedef struct GLMS_ENV_STRUCT {
   GLMSAST* undefined;
   GLMSAST* stackptr;
 
-
   bool use_arena;
+
+  GLMSAllocator string_alloc;
 } GLMSEnv;
 
 

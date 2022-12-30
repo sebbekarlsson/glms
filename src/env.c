@@ -1,5 +1,6 @@
 #include "arena/arena.h"
 #include "arena/config.h"
+#include "glms/allocator.h"
 #include "glms/ast.h"
 #include "glms/eval.h"
 #include "glms/stack.h"
@@ -18,6 +19,7 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   env->initialized = true;
   env->config = cfg;
   env->source = source;
+  glms_allocator_string_allocator(&env->string_alloc);
   hashy_map_init(&env->globals, 256);
   hashy_map_init(&env->types, 256);
   memo_init(
@@ -144,7 +146,7 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
 
   env->use_arena = true;
 
-  root = glms_eval(&env->eval, root, &env->stack);
+  glms_eval(&env->eval, *root, &env->stack);
   return root;
 }
 
@@ -264,7 +266,17 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
 
 
   if (type->constructor) {
-    ast = type->constructor(eval, stack, ast->children, ast);
+    GLMSASTBuffer args = {0};
+    glms_GLMSAST_buffer_init(&args);
+
+    if (ast->children) {
+      for (int64_t i = 0; i < ast->children->length; i++) {
+	glms_GLMSAST_buffer_push(&args, glms_eval(eval, *ast->children->items[i], stack));
+      }
+    }
+    type->constructor(eval, stack, &args, ast);
+
+    glms_GLMSAST_buffer_clear(&args);
   }
   //ast->to_string = type->to_string;
   // ast->swizzle = type->swizzle;
