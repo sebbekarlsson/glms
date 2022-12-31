@@ -493,7 +493,7 @@ void glms_ast_destructor_binop(GLMSAST *ast) {
   }
 
   if (ast->as.binop.right != 0) {
-    //glms_ast_destructor(ast->as.binop.right);
+    // glms_ast_destructor(ast->as.binop.right);
     ast->as.binop.right = 0;
   }
 }
@@ -657,7 +657,7 @@ void glms_ast_destructor(GLMSAST *ast) {
   ast->fptr = 0;
   hashy_map_clear(&ast->props, false);
 
-   if (ast->typename != 0) {
+  if (ast->typename != 0) {
     free(ast->typename);
     ast->typename = 0;
   }
