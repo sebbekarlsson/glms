@@ -162,3 +162,6 @@ for (number i = 0; i < 3; i++) {
 // 2.000000
 
 ```
+
+## Syntax highlighting
+* [glms-mode for emacs](https://github.com/sebbekarlsson/glms-mode)
