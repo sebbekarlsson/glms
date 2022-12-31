@@ -340,6 +340,43 @@ int glms_fptr_max(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
 }
 
 
+int glms_fptr_pow(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
+
+  glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_NUMBER, GLMS_AST_TYPE_NUMBER }, 2, args);
+
+  float x = glms_ast_number(args->items[0]);
+  float y = glms_ast_number(args->items[1]);
+
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = powf(x, y) };
+
+  return 1;
+}
+
+int glms_fptr_log(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
+
+  glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_NUMBER }, 1, args);
+  
+  float x = glms_ast_number(args->items[0]);
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = logf(x) };
+
+  return 1;
+}
+
+int glms_fptr_log10(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
+
+  glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_NUMBER }, 1, args);
+  
+  float x = glms_ast_number(args->items[0]);
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = log10f(x) };
+
+  return 1;
+}
+
+int glms_fptr_log10(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                       GLMSStack *stack, GLMSAST* out);
 
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
@@ -366,6 +403,9 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "clamp", glms_fptr_clamp);
   glms_env_register_function(env, "min", glms_fptr_min);
   glms_env_register_function(env, "max", glms_fptr_max);
+  glms_env_register_function(env, "pow", glms_fptr_pow);
+  glms_env_register_function(env, "log", glms_fptr_log);
+  glms_env_register_function(env, "log10", glms_fptr_log10);
   glms_env_register_function(env, "random", glms_fptr_random);
 
 

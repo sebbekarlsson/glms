@@ -42,6 +42,9 @@ cmake .. && make -j8
 * `clamp(number value, number min, number max)`
 * `min(number a)`
 * `max(number a)`
+* `pow(number a, number b)`
+* `log(number a)`
+* `log10(number a)`
 * `random()`
 * `random(number min, number max)`
 * `random(number min, number max, number seed)`

@@ -38,6 +38,15 @@ int glms_fptr_fract(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
                          GLMSStack *stack, GLMSAST* out);
 
 int glms_fptr_abs(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out);
+
+int glms_fptr_pow(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out);
+
+int glms_fptr_log(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out);
+
+int glms_fptr_log10(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
                        GLMSStack *stack, GLMSAST* out);
 
 int glms_fptr_lerp(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
