@@ -52,7 +52,7 @@ cmake .. && make -j8
 ## Some examples
 
 ### Shader-like image manipulation
-```
+```glsl
 number w = 512;
 number h = 512;
 
@@ -69,7 +69,7 @@ img.save("test.png");
 ```
 
 ### Functional programming
-```
+```glsl
 array arr = [1, 2, 3];
 
 array mapped = arr.map((number v) => v*2);
@@ -78,7 +78,7 @@ print(mapped);  // [2.000000, 4.000000, 6.000000]
 ```
 
 ### Vectors
-```
+```glsl
 vec3 a = vec3(1, 0, 0);
 vec3 b = vec3(0, 1, 0);
 vec3 c = cross(a, b);
@@ -101,7 +101,7 @@ print(dp);
 ```
 
 ### Lerp
-```
+```glsl
 number x = 25.012;
 number y = 98.241;
 
@@ -111,7 +111,7 @@ print(z); // 32.334900
 ```
 
 ### Clamp
-```
+```glsl
 number value = 2312.0;
 value = clamp(value, 0.0, 1.0);
 print(value); // 1.000000
@@ -125,7 +125,7 @@ greeting("hello world!"); // hello world!
 ```
 
 ### Structs
-```
+```glsl
 typedef struct {
   number age;
   string name;
