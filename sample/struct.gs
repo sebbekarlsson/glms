@@ -1,5 +1,5 @@
 typedef struct {
-  number age;
+  number age = 2;
   string name;
 } Person;
 

@@ -86,10 +86,11 @@ GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type, bool arena) {
 
   ast->type = type;
   ast->ref = ref;
+  ast->is_heap = true;
 
   if (env->arena_ast.pages >= GLMS_GC_SWEEP_THRESHOLD) {
     for (int i = 0; i < GLMS_GC_SWEEP_ITER; i++) {
-      //     arena_defrag(&env->arena_ast);
+       arena_defrag(&env->arena_ast);
     }
   }
 

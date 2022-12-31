@@ -488,12 +488,12 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
 
 void glms_ast_destructor_binop(GLMSAST *ast) {
   if (ast->as.binop.left != 0) {
-    glms_ast_destructor(ast->as.binop.left);
+    // glms_ast_destructor(ast->as.binop.left);
     ast->as.binop.left = 0;
   }
 
   if (ast->as.binop.right != 0) {
-    glms_ast_destructor(ast->as.binop.right);
+    //glms_ast_destructor(ast->as.binop.right);
     ast->as.binop.right = 0;
   }
 }
@@ -595,8 +595,6 @@ void glms_ast_destructor(GLMSAST *ast) {
     ast->destructor(ast);
   }
 
-  return;
-
   switch (ast->type) {
   case GLMS_AST_TYPE_BINOP: {
     glms_ast_destructor_binop(ast);
@@ -659,10 +657,10 @@ void glms_ast_destructor(GLMSAST *ast) {
   ast->fptr = 0;
   hashy_map_clear(&ast->props, false);
 
-  // if (ast->typename != 0) {
-  //  free(ast->typename);
-  //  ast->typename = 0;
-  //}
+   if (ast->typename != 0) {
+    free(ast->typename);
+    ast->typename = 0;
+  }
 }
 
 int64_t glms_ast_array_get_length(GLMSAST *ast) {

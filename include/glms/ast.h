@@ -139,6 +139,7 @@ typedef struct GLMS_AST_STRUCT {
   ArenaRef ref;
   bool keep;
   bool is_tmp;
+  bool is_heap;
 } GLMSAST;
 
 GLMS_DEFINE_BUFFER(GLMSAST);
