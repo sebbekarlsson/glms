@@ -31,16 +31,14 @@ GLMSAST *glms_stack_push(GLMSStack *stack, const char *name, GLMSAST *ast) {
     return 0;
   }
 
-  GLMSAST* existing = glms_stack_get(stack, name);
+  GLMSAST *existing = glms_stack_get(stack, name);
 
   if (!existing) {
     stack->names[stack->names_length++] = name;
     glms_GLMSAST_list_push(&stack->list, ast);
   }
 
- hashy_map_set(&stack->locals, name, ast);
-  
-
+  hashy_map_set(&stack->locals, name, ast);
 
   return ast;
 }
@@ -81,8 +79,7 @@ void glms_stack_dump(GLMSStack *stack) {
   for (int i = 0; i < stack->names_length; i++) {
     GLMSAST *ast = glms_stack_get(stack, stack->names[i]);
 
-    printf("%d (%s) => %s\n", i, stack->names[i],
-           stack->names[i]);
+    printf("%d (%s) => %s\n", i, stack->names[i], stack->names[i]);
   }
 }
 
@@ -126,12 +123,11 @@ int glms_stack_clear_trash(GLMSStack *stack) {
   if (!stack->initialized)
     GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
-
   // if (stack->locals.used < 16) {
   //  return 1;
   // }
 
-HashyIterator it = {0};
+  HashyIterator it = {0};
 
   while (hashy_map_iterate(&stack->locals, &it)) {
     if (!it.bucket->key)
@@ -142,8 +138,10 @@ HashyIterator it = {0};
     const char *key = it.bucket->key;
     GLMSAST *value = (GLMSAST *)it.bucket->value;
 
-    if (value->keep) continue;
-    if (value->ref.arena == 0) continue;
+    if (value->keep)
+      continue;
+    if (value->ref.arena == 0)
+      continue;
 
     hashy_map_unset(&stack->locals, key);
     arena_free(value->ref);
