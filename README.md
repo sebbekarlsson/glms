@@ -1,4 +1,7 @@
-# GLMS
+<div align="center" style="text-align: center;">
+  <img width="200" src="glms.png"/>
+</div>
+
 ### Generalized Linear Model Script
 > A scripting language focused on linear algebra, heavily inspired by [GLSL](https://en.wikipedia.org/wiki/OpenGL_Shading_Language)
 > and [Javascript](https://en.wikipedia.org/wiki/JavaScript).
