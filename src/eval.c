@@ -70,6 +70,105 @@ GLMSAST *glms_eval_lookup(GLMSEval *eval, GLMSStack *stack, const char *key) {
   return glms_stack_get(stack, key);
 }
 
+
+GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
+                            GLMSASTBuffer args) {
+
+
+    GLMSAST *self = glms_stack_get(stack, "self");
+
+    if (self == 0) self = func;
+
+      // constructor
+  if (func->type == GLMS_AST_TYPE_STRUCT) {
+    GLMSAST *copied = glms_ast_copy(*func, eval->env);
+
+    GLMSStack tmp_stack = {0};
+    glms_stack_init(&tmp_stack);
+    glms_stack_copy(*stack, &tmp_stack);
+
+    if (func->props.initialized) {
+      HashyIterator it = {0};
+
+      int64_t i = 0;
+      while (hashy_map_iterate(&func->props, &it)) {
+        if (!it.bucket->key)
+          continue;
+        if (!it.bucket->value)
+          continue;
+
+        const char *key = it.bucket->key;
+	GLMSAST* val = (GLMSAST *)it.bucket->value;
+        GLMSAST value =
+            glms_eval(eval, *val, &tmp_stack);
+
+        GLMSAST arg_value = glms_eval(
+            eval, args.items[i],
+            &tmp_stack);
+        glms_ast_object_set_property(copied, key, glms_ast_copy(arg_value, eval->env));
+        i++;
+
+        if (i >= args.length) {
+          hashy_key_list_clear(&it.keys);
+          break;
+        }
+      }
+    }
+
+    glms_stack_clear(&tmp_stack);
+
+    GLMSAST ptr = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = copied };
+    return ptr;
+  }
+
+  if (func->fptr) {
+    GLMSAST result = {0};
+    if (func->fptr(eval, self, &args, stack, &result)) {
+      if (result.type == GLMS_AST_TYPE_STACK_PTR) {
+        glms_env_apply_type(eval->env, eval, stack, result.as.stackptr.ptr);
+      }
+      return glms_eval(eval, result, stack);
+    }
+  }
+
+  if (func->constructor) {
+    GLMSAST *new_ast =
+        glms_env_new_ast(eval->env, GLMS_AST_TYPE_UNDEFINED, true);
+    func->constructor(eval, stack, &args, new_ast);
+    return *new_ast;
+  }
+
+  if (func->as.func.body != 0) {
+
+    GLMSStack tmp_stack = {0};
+    glms_stack_init(&tmp_stack);
+    glms_stack_copy(*stack, &tmp_stack);
+
+    if (func->children != 0) {
+      for (int64_t i = 0; i < MIN(args.length, func->children->length);
+           i++) {
+        GLMSAST arg_value =
+            glms_eval(eval, args.items[i], &tmp_stack);
+        GLMSAST *arg_func = func->children->items[i];
+
+        const char *arg_name = glms_ast_get_name(arg_func);
+        if (!arg_name)
+          continue;
+
+        GLMSAST *copy = glms_ast_copy(arg_value, eval->env);
+        glms_stack_push(&tmp_stack, arg_name, copy);
+      }
+    }
+
+    GLMSAST result = glms_eval(eval, *func->as.func.body, &tmp_stack);
+    glms_stack_clear(&tmp_stack);
+    return result;
+  }
+
+  return *func;
+
+}
+
 GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   GLMSAST *func = ast.as.call.func;
   const char *name = glms_string_view_get_value(&ast.as.func.id->as.id.value);
@@ -104,99 +203,10 @@ GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     GLMS_WARNING_RETURN(ast, stderr, "No such function `%s`\n", name);
   }
 
-    // constructor
-  if (func->type == GLMS_AST_TYPE_STRUCT) {
-    GLMSAST *copied = glms_ast_copy(*func, eval->env);
-
-    GLMSStack tmp_stack = {0};
-    glms_stack_init(&tmp_stack);
-    glms_stack_copy(*stack, &tmp_stack);
-
-    if (ast.children != 0 && func->props.initialized) {
-      HashyIterator it = {0};
-
-      int64_t i = 0;
-      while (hashy_map_iterate(&func->props, &it)) {
-        if (!it.bucket->key)
-          continue;
-        if (!it.bucket->value)
-          continue;
-
-        const char *key = it.bucket->key;
-	GLMSAST* val = (GLMSAST *)it.bucket->value;
-        GLMSAST value =
-            glms_eval(eval, *val, &tmp_stack);
-
-        GLMSAST arg_value = glms_eval(
-            eval, *ast.children->items[MAX(0, (ast.children->length - 1) - i)],
-            &tmp_stack);
-        glms_ast_object_set_property(copied, key, glms_ast_copy(arg_value, eval->env));
-        i++;
-
-        if (i >= ast.children->length) {
-          hashy_key_list_clear(&it.keys);
-          break;
-        }
-      }
-    }
-
-    glms_stack_clear(&tmp_stack);
-
-    GLMSAST ptr = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = copied };
-    glms_GLMSAST_buffer_clear(&args);
-    return ptr;
-  }
-
-  if (func->fptr) {
-    GLMSAST *self = glms_stack_get(stack, "self");
-    GLMSAST result = {0};
-    if (func->fptr(eval, self ? self : &ast, &args, stack, &result)) {
-      if (result.type == GLMS_AST_TYPE_STACK_PTR) {
-        glms_env_apply_type(eval->env, eval, stack, result.as.stackptr.ptr);
-      }
-      glms_GLMSAST_buffer_clear(&args);
-      return glms_eval(eval, result, stack);
-    }
-  }
-
-  if (func->constructor) {
-    GLMSAST *new_ast =
-        glms_env_new_ast(eval->env, GLMS_AST_TYPE_UNDEFINED, true);
-    func->constructor(eval, stack, &args, new_ast);
-    glms_GLMSAST_buffer_clear(&args);
-    return *new_ast;
-  }
-
-  if (func->as.func.body != 0) {
-
-    GLMSStack tmp_stack = {0};
-    glms_stack_init(&tmp_stack);
-    glms_stack_copy(*stack, &tmp_stack);
-
-    if (ast.children != 0 && func->children != 0) {
-      for (int64_t i = 0; i < MIN(ast.children->length, func->children->length);
-           i++) {
-        GLMSAST arg_value =
-            glms_eval(eval, *ast.children->items[i], &tmp_stack);
-        GLMSAST *arg_func = func->children->items[i];
-
-        const char *arg_name = glms_ast_get_name(arg_func);
-        if (!arg_name)
-          continue;
-
-        GLMSAST *copy = glms_ast_copy(arg_value, eval->env);
-        glms_stack_push(&tmp_stack, arg_name, copy);
-      }
-    }
-
-    GLMSAST result = glms_eval(eval, *func->as.func.body, &tmp_stack);
-    glms_stack_clear(&tmp_stack);
-    glms_GLMSAST_buffer_clear(&args);
-    return result;
-  }
+  GLMSAST result = glms_eval_call_func(eval, stack, func, args);
 
   glms_GLMSAST_buffer_clear(&args);
-  return ast;
+  return result;
 }
 
 GLMSAST glms_eval_compound(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
@@ -252,13 +262,15 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
       if (t.constructor) {
         t.constructor(eval, stack, 0, copy);
       } else {
+	// TODO: Don't think we need this.
+	/*
         GLMSAST *look = glms_env_lookup_type(
             eval->env, glms_string_view_get_value(&t.as.id.value));
 
         if (look && look->constructor) {
           look->constructor(eval, stack, 0, copy);
           copy->value_type = look;
-        }
+	  }*/
       }
     }
 
@@ -703,4 +715,31 @@ GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   }
 
   return (GLMSAST){.type = GLMS_AST_TYPE_NOOP};
+}
+
+bool glms_eval_expect(GLMSEval *eval, GLMSStack *stack, GLMSASTType *types,
+                      int nr_types, GLMSASTBuffer* args) {
+
+  if (!eval || !stack) return false;
+  if (!types || nr_types <= 0) return true;
+
+
+  if (args == 0 || (args->length != nr_types)) GLMS_WARNING_RETURN(false, stderr, "Expected `%d` arguments but got `%ld`.\n", nr_types, args ? args->length : 0);
+
+  for (int i = 0; i < nr_types; i++) {
+    GLMSAST arg = args->items[i];
+    GLMSAST* ptr = glms_ast_get_ptr(arg);
+    if (ptr != 0) arg = *ptr;
+
+    if (arg.type != types[i]) {
+      GLMS_WARNING_RETURN(false, stderr, "Expected `%s` at arg `%d` but got `%s`.\n",
+			  GLMS_AST_TYPE_STR[types[i]],
+			  i,
+			  GLMS_AST_TYPE_STR[arg.type]
+			  );
+    }
+  }
+
+  return true;
+  
 }

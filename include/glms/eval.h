@@ -16,6 +16,12 @@ int glms_eval_init(GLMSEval* eval, struct GLMS_ENV_STRUCT* env);
 GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack);
 
 
-GLMSAST* glms_eval_lookup(GLMSEval* eval, GLMSStack* stack, const char* key);
+GLMSAST *glms_eval_lookup(GLMSEval *eval, GLMSStack *stack, const char *key);
+
+bool glms_eval_expect(GLMSEval *eval, GLMSStack *stack, GLMSASTType *types,
+                      int nr_types, GLMSASTBuffer *args);
+
+GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
+                            GLMSASTBuffer args);
 
 #endif

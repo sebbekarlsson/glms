@@ -65,6 +65,15 @@ img.shade((vec3 uv, vec3 fragCoord, vec3 resolution) => {
 img.save("test.png");
 ```
 
+### Functional programming
+```
+array arr = [1, 2, 3];
+
+array mapped = arr.map((number v) => v*2);
+
+print(mapped);  // [2.000000, 4.000000, 6.000000]
+```
+
 ### Vectors
 ```
 vec3 a = vec3(1, 0, 0);

@@ -26,7 +26,7 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
     }; break;
     case GLMS_AST_TYPE_NUMBER: {
 	char tmp[256];
-	sprintf(tmp, "%1.6f\n", ast.as.number.value);
+	sprintf(tmp, "%1.6f", ast.as.number.value);
 	return alloc.strdup(alloc.user_ptr, tmp);
     }; break;
     default: {

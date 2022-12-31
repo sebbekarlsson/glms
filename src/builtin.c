@@ -13,6 +13,7 @@
 #include <glms/modules/image.h>
 #include <glms/modules/vec3.h>
 #include <glms/modules/vec4.h>
+#include <glms/modules/array.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
@@ -367,6 +368,8 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "max", glms_fptr_max);
   glms_env_register_function(env, "random", glms_fptr_random);
 
+
+  glms_array_type(env);
   glms_struct_vec3(env);
   glms_struct_vec4(env);
   glms_struct_image(env);
