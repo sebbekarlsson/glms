@@ -4,7 +4,7 @@
 
 ### Generalized Linear Model Script
 > A scripting language focused on linear algebra, heavily inspired by [GLSL](https://en.wikipedia.org/wiki/OpenGL_Shading_Language)
-> and [Javascript](https://en.wikipedia.org/wiki/JavaScript).
+> and [JavaScript](https://en.wikipedia.org/wiki/JavaScript).
 
 > This language comes with types, functions and structures commonly used when doing linear algebra,
 > such as: `vec2`, `vec3`, `vec4`, `dot`, `cross`, `lerp`, `sin`, `cos` ...etc
@@ -72,7 +72,7 @@ img.save("test.png");
 ```glsl
 array arr = [1, 2, 3];
 
-array mapped = arr.map((number v) => v*2);
+array mapped = arr.map((number v) => v * 2);
 
 print(mapped);  // [2.000000, 4.000000, 6.000000]
 ```
