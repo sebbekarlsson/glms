@@ -45,6 +45,23 @@ cmake .. && make -j8
 
 ## Some examples
 
+### Shader-like image manipulation
+```
+number w = 512;
+number h = 512;
+
+image img = image.make(w, h);
+
+img.shade((vec3 uv, vec3 fragCoord, vec3 resolution) => {
+  vec3 center = resolution * 0.5;
+  number d = abs(distance(fragCoord, center));
+  number g = 255 * (d < TAU * 6.0);
+  return vec4(g, g, g, 255.0);
+});
+
+img.save("test.png");
+```
+
 ### Vectors
 ```
 vec3 a = vec3(1, 0, 0);
@@ -132,41 +149,4 @@ for (number i = 0; i < 3; i++) {
 // 1.000000
 // 2.000000
 
-```
-
-### Image manipulation
-```
-number w = 300;
-number h = 300;
-
-image img = image.make(w, h);
-
-for (number x = 0; x < w; x++) {
-  for (number y = 0; y < h; y++) {
-    if (random(0, 1) >= 0.5) {
-      img.setPixel(x, y, vec4(255, 0, 0, 255));
-    } else {
-      img.setPixel(x, y, vec4(0, 0, 0, 255));
-    }
-  }
-}
-
-img.save("test.png");
-```
-
-### Shader-like image manipulation
-```
-number w = 512;
-number h = 512;
-
-image img = image.make(w, h);
-
-img.shade((vec3 uv, vec3 fragCoord, vec3 resolution) => {
-  vec3 center = resolution * 0.5;
-  number d = abs(distance(fragCoord, center));
-  number g = 255 * (d < TAU * 6.0);
-  return vec4(g, g, g, 255.0);
-});
-
-img.save("test.png");
 ```
