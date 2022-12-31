@@ -3,6 +3,7 @@
 #include <glms/ast.h>
 #include <glms/macros.h>
 #include <string.h>
+#include <text/text.h>
 
 char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
   if (!alloc.strdup)
@@ -35,4 +36,63 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
   }
 
   return 0;
+}
+
+char *glms_ast_to_string_debug_binop(GLMSAST ast) {
+  char* s = 0;
+  text_append(&s, glms_ast_to_string_debug(*ast.as.binop.left));
+  text_append(&s, glms_ast_to_string_debug(*ast.as.binop.left));
+  text_append(&s, GLMS_TOKEN_TYPE_STR[ast.as.binop.op]);
+  text_append(&s, glms_ast_to_string_debug(*ast.as.binop.right));
+  return s;
+}
+char *glms_ast_to_string_debug_unop(GLMSAST ast) {
+    char* s = 0;
+
+    if (ast.as.unop.left) {
+    text_append(&s, glms_ast_to_string_debug(*ast.as.unop.left));
+    }
+  text_append(&s, GLMS_TOKEN_TYPE_STR[ast.as.unop.op]);
+
+  if (ast.as.unop.right) {
+  text_append(&s, glms_ast_to_string_debug(*ast.as.unop.right));
+  }
+  return s;
+  
+}
+char *glms_ast_to_string_debug_id(GLMSAST ast) {
+  return strdup(glms_string_view_get_value(&ast.as.id.value));
+  
+}
+char *glms_ast_to_string_debug_string(GLMSAST ast) {
+  return strdup(glms_string_view_get_value(&ast.as.string.value));
+}
+char *glms_ast_to_string_debug_number(GLMSAST ast) {
+  char tmp[256];
+  sprintf(tmp, "%1.6f", glms_ast_number(ast));
+  return strdup(tmp);
+}
+
+static char* glms_ast_to_string_debug_(GLMSAST ast) {
+
+  switch (ast.type) {
+  case GLMS_AST_TYPE_BINOP: { return glms_ast_to_string_debug_binop(ast); }; break;
+  case GLMS_AST_TYPE_UNOP: { return glms_ast_to_string_debug_unop(ast); }; break;
+  case GLMS_AST_TYPE_ID: { return glms_ast_to_string_debug_id(ast); }; break;
+  case GLMS_AST_TYPE_STRING: { return glms_ast_to_string_debug_string(ast); }; break;
+  case GLMS_AST_TYPE_NUMBER: { return glms_ast_to_string_debug_number(ast); }; break;
+  default: { return strdup(GLMS_AST_TYPE_STR[ast.type]); }; break;
+  }
+}
+char *glms_ast_to_string_debug(GLMSAST ast) {
+  char* ast_str = glms_ast_to_string_debug_(ast);
+
+  char* s = 0;
+  text_append(&s, GLMS_AST_TYPE_STR[ast.type]);
+  text_append(&s, "(");
+  text_append(&s, ast_str ? ast_str : "?");
+  text_append(&s, ")");
+
+  return s;
+  
 }

@@ -436,9 +436,6 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
 
-  //  if (src.type == GLMS_AST_TYPE_STACK_PTR)
-  // return dest;
-
   dest->props = (HashyMap){0};
   dest->children = 0;
   dest->flags = 0;
@@ -823,16 +820,16 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
   GLMSAST *ptr_a = glms_ast_get_ptr(*a);
   GLMSAST *ptr_b = glms_ast_get_ptr(b);
 
-  if (ptr_a && ptr_b) {
-    return glms_ast_assign(ptr_a, *ptr_b, eval, stack);
-  }
+  //if (ptr_a && ptr_b) {
+    // return glms_ast_assign(ptr_a, *ptr_b, eval, stack);
+  // }
 
-  if (ptr_a != 0) {
-    return glms_ast_assign(ptr_a, b, eval, stack);
-  }
+  // if (ptr_a != 0) {
+    //  return glms_ast_assign(ptr_a, b, eval, stack);
+  // }
 
   if (ptr_b != 0 && b.type == GLMS_AST_TYPE_STACK_PTR) {
-    return glms_ast_assign(ptr_a, *ptr_b, eval, stack);
+     return glms_ast_assign(a, *ptr_b, eval, stack);
   }
 
   bool same_type = a->type == b.type;

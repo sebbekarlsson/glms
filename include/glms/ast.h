@@ -231,6 +231,9 @@ GLMSFPTR glms_ast_get_func_overload(GLMSAST ast, const char* name);
 float glms_ast_number(GLMSAST ast);
 
 
+char* glms_ast_to_string_debug(GLMSAST ast);
+
+
 #define GLMSAST_VALUE(ast) (ast->as.number.value)
 
 #endif

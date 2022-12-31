@@ -137,5 +137,8 @@ print(p.age); // 33.000000
 print(p.name); // John Doe
 ```
 
+### More examples
+> For more examples, see [examples](EXAMPLES.md)
+
 ## Syntax highlighting
 * [glms-mode for emacs](https://github.com/sebbekarlsson/glms-mode)

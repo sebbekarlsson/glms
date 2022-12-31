@@ -8,7 +8,6 @@ object x = {
   }
 };
 
-
 x.hello = 33;
 number y = x.hello;
 print(y);
