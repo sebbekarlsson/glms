@@ -101,7 +101,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(gimg_static)
 target_compile_options(gimg_static PUBLIC -fPIC)
 
-set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static)
+set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static dl)
 
 target_link_libraries(glms ${GLMS_DEPS})
 target_link_libraries(glms_e ${GLMS_DEPS})

@@ -14,6 +14,7 @@
 #include <glms/modules/vec3.h>
 #include <glms/modules/vec4.h>
 #include <glms/modules/array.h>
+#include <glms/modules/file.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
@@ -413,4 +414,5 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_struct_vec3(env);
   glms_struct_vec4(env);
   glms_struct_image(env);
+  glms_file_type(env);
 }

@@ -1,5 +1,14 @@
 ## Examples
 
+### Writing a file
+```glsl
+file f = file.open("test.txt", "w+");
+
+f.write("hello!");
+
+f.close();
+```
+
 ### Struct with function
 ```glsl
 typedef struct {
