@@ -5,6 +5,7 @@
 
 int glms_struct_vec3_swizzle(GLMSEval *eval, GLMSStack *stack, GLMSAST *ast,
                              GLMSAST *accessor, GLMSAST *out) {
+
   const char *id = glms_ast_get_string_value(accessor);
   if (!id)
     return 0;

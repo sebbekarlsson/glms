@@ -1,8 +1,7 @@
-number a = 2;
-
-
-print(a);
-
-a = 56;
+vec3 a = vec3(random());
+vec3 b = vec3(random());
 
 print(a);
+print(b);
+
+print(a.x * b.x);

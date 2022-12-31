@@ -595,6 +595,11 @@ void glms_ast_destructor(GLMSAST *ast) {
     ast->destructor(ast);
   }
 
+
+
+  // this is not needed because all the AST nodes
+  // will be destroyed linearly either way.
+  #if 0
   switch (ast->type) {
   case GLMS_AST_TYPE_BINOP: {
     glms_ast_destructor_binop(ast);
@@ -626,6 +631,7 @@ void glms_ast_destructor(GLMSAST *ast) {
   default: {
   }; break;
   }
+  #endif
 
   if (ast->string_rep != 0) {
     free(ast->string_rep);

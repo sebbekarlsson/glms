@@ -541,6 +541,13 @@ GLMSAST glms_eval_access_by_key(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   GLMSAST *L = ptr ? ptr : &left;
 
+  if (L->swizzle && right.type == GLMS_AST_TYPE_ID) {
+    GLMSAST sw = {0};
+    if (L->swizzle(eval, stack, L, &right, &sw)) {
+      return glms_eval(eval, sw, stack);
+    }
+  }
+
   const char *key = glms_ast_get_string_value(&right);
 
   GLMSAST *value = glms_ast_access_by_key(L, key, eval->env);

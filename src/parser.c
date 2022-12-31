@@ -413,7 +413,7 @@ GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = glms_parser_parse_factor(parser);
+    binop->as.binop.right = glms_parser_parse_term(parser);
     left = binop;
   }
   return left;
