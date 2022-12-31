@@ -117,15 +117,6 @@ value = clamp(value, 0.0, 1.0);
 print(value); // 1.000000
 ```
 
-### cos, sin
-```
-number a = cos(1.63124);
-number b = sin(3.33124);
-
-print(a); // -0.060407
-print(b); // -0.188513
-```
-
 ### Arrow functions
 ```
 const greeting = (msg) => print(msg);
@@ -144,26 +135,6 @@ Person p = Person(33, "John Doe");
 
 print(p.age); // 33.000000
 print(p.name); // John Doe
-```
-
-### Loops
-```
-number x = 100;
-
-while (x > 0) {
-  x--;
-}
-
-print(x); // 0.000000
-
-for (number i = 0; i < 3; i++) {
-  print(i);
-}
-
-// 0.000000
-// 1.000000
-// 2.000000
-
 ```
 
 ## Syntax highlighting
