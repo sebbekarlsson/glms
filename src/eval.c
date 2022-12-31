@@ -226,9 +226,10 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
 
   const char *name = 0;
 
-  if (left.type == GLMS_AST_TYPE_ID) {
-    name = glms_string_view_get_value(&left.as.id.value);
-  }
+
+  // if (left.type == GLMS_AST_TYPE_ID) {
+  name = glms_ast_get_name(&left);//glms_string_view_get_value(&left.as.id.value);
+    //}
 
   GLMSAST *existing = 0;
 
@@ -412,13 +413,7 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   }; break;
   case GLMS_TOKEN_TYPE_EQUALS: {
 
-    if (ast.as.binop.right->type == GLMS_AST_TYPE_FUNC &&
-        !glms_ast_get_name(ast.as.binop.right)) {
-      if (ast.as.binop.left->type == GLMS_AST_TYPE_ID) {
-        ast.as.binop.right->as.func.id = ast.as.binop.left;
-      }
-    }
-
+    
     return glms_eval_assign(eval, left, right, stack);
   }; break;
   default: {
@@ -608,9 +603,14 @@ GLMSAST glms_eval_function(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   const char *fname = glms_ast_get_name(&ast);
 
+  GLMSAST* copy = 0;
   if (fname && !glms_stack_get(stack, fname)) {
-    GLMSAST *copy = glms_ast_copy(ast, eval->env);
+    copy = glms_ast_copy(ast, eval->env);
     glms_stack_push(stack, fname, copy);
+  }
+
+  if (copy) {
+    return (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = copy };
   }
 
   return ast;

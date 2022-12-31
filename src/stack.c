@@ -121,7 +121,6 @@ int glms_stack_clear(GLMSStack *stack) {
 }
 
 int glms_stack_clear_trash(GLMSStack *stack) {
-  return 1;
   if (!stack)
     return 0;
   if (!stack->initialized)

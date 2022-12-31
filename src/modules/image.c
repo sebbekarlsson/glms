@@ -123,12 +123,12 @@ int glms_struct_image_fptr_shade(GLMSEval *eval, GLMSAST *ast,
   GLMSAST call_ast = (GLMSAST){ .type = GLMS_AST_TYPE_CALL };//glms_env_new_ast(eval->env, GLMS_AST_TYPE_CALL, false);
   call_ast.as.call.func = &arg0;
 
-  GLMSStack tmp_stack = {0};
-  glms_stack_init(&tmp_stack);
-  glms_stack_copy(*stack, &tmp_stack);
+  //GLMSStack tmp_stack = {0};
+  // glms_stack_init(&tmp_stack);
+  // glms_stack_copy(*stack, &tmp_stack);
 
   for (int j = 0; j < 3; j++) {
-    glms_stack_push(&tmp_stack, signature[j], signature_values[j]);
+    glms_stack_push(stack, signature[j], signature_values[j]);
   }
 
   for (int x = 0; x < gimg->width; x++) {
@@ -138,9 +138,9 @@ int glms_struct_image_fptr_shade(GLMSEval *eval, GLMSAST *ast,
       uv_ast->as.v3 = VEC3(u, v, 0);
       coord_ast->as.v3 = VEC3(x, y, 0);
 
-      GLMSAST result = glms_eval(eval, call_ast, &tmp_stack);
+      GLMSAST result = glms_eval(eval, call_ast, stack);
 
-      result = glms_eval(eval, result, &tmp_stack);
+      result = glms_eval(eval, result, stack);
 
 
       if (result.type == GLMS_AST_TYPE_VEC4) {
@@ -153,10 +153,10 @@ int glms_struct_image_fptr_shade(GLMSEval *eval, GLMSAST *ast,
 
  done:
 
-  glms_stack_clear_trash(&tmp_stack);
-  glms_stack_clear(&tmp_stack);
+  // glms_stack_clear_trash(&tmp_stack);
+  //glms_stack_clear(&tmp_stack);
 
-  return 0;
+  return 1;
 }
 
 void glms_struct_image_constructor(GLMSEval *eval, GLMSStack *stack,

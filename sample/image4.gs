@@ -4,9 +4,9 @@ number h = 480;
 image img = image.make(w, h);
 
 
-function noise(vec3 uv) {
+const noise = (vec3 uv) => {
   return fract(cos(uv.x * 2.192 + uv.y) * dot(uv, vec3(1.1245, 0.99181, 0.0)));
-}
+};
 
 
 img.shade((vec3 uv, vec3 fragCoord, vec3 resolution) => {

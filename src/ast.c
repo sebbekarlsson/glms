@@ -829,13 +829,17 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
     return glms_ast_assign(ptr_a, b, eval, stack);
   }
 
+  if (ptr_b != 0 && b.type == GLMS_AST_TYPE_STACK_PTR) {
+    return glms_ast_assign(ptr_a, *ptr_b, eval, stack);
+  }
+
   bool same_type = a->type == b.type;
 
   GLMSASTType type = b.type;
 
   if (!same_type) {
     GLMS_WARNING_RETURN(b, stderr,
-                        "Cannot assign variable of different type.\n");
+                        "Cannot assign variable of different type (%s = %s).\n", GLMS_AST_TYPE_STR[a->type], GLMS_AST_TYPE_STR[b.type]);
   }
 
   switch (type) {

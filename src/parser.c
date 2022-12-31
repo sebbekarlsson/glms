@@ -1,4 +1,5 @@
 #include "glms/ast.h"
+#include "glms/ast_type.h"
 #include "glms/token.h"
 #include <glms/env.h>
 #include <glms/macros.h>
@@ -474,7 +475,12 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
     glms_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = glms_parser_parse_expr(parser);
+    GLMSAST* right = binop->as.binop.right = glms_parser_parse_expr(parser);
+
+    if (right->type == GLMS_AST_TYPE_FUNC && left->type == GLMS_AST_TYPE_ID) {
+      right->as.func.id = glms_ast_copy(*left, parser->env);
+    }
+    
     left = binop;
   }
 
