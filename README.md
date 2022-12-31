@@ -20,6 +20,29 @@ cmake .. && make -j8
 ./glms_e <input_file.gs>
 ```
 
+### Built-in functions
+* `dot(vec a, vec b)`
+* `distance(vec a, vec b)`
+* `cross(vec a, vec b)`
+* `normalize(vec a)`
+* `unit(vec a)` - (alias for `normalize`)
+* `length(any a)` - (can take vectors, strings and arrays) 
+* `cos(number a)`
+* `sin(number a)`
+* `tan(number a)`
+* `fract(number a)`
+* `abs(number a)`
+* `atan(number a)`
+* `atan(number a, number b)`
+* `lerp(number from, number to, number scale)`
+* `mix(number from, number to, number scale)` - (alias for `lerp`)
+* `clamp(number value, number min, number max)`
+* `min(number a)`
+* `max(number a)`
+* `random()`
+* `random(number min, number max)`
+* `random(number min, number max, number seed)`
+
 ## Some examples
 
 ### Vectors
