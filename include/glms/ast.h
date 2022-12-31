@@ -42,9 +42,13 @@ typedef char* (*GLMSASTToString)(struct GLMS_AST_STRUCT *ast, GLMSAllocator allo
 
 typedef void (*GLMSASTDestructor)(struct GLMS_AST_STRUCT *ast);
 
-typedef int (*GLMSASTOperatorOverload)(
-    struct GLMS_EVAL_STRUCT *eval, struct GLMS_STACK_STRUCT *stack,
-    struct GLMS_AST_STRUCT *left, struct GLMS_AST_STRUCT *right, struct GLMS_AST_STRUCT * out);
+typedef int (*GLMSASTOperatorOverload)(struct GLMS_EVAL_STRUCT *eval,
+                                       struct GLMS_STACK_STRUCT *stack,
+                                       struct GLMS_AST_STRUCT *left,
+                                       struct GLMS_AST_STRUCT *right,
+                                       struct GLMS_AST_STRUCT *out);
+
+
 
 typedef struct GLMS_AST_STRUCT {
 
@@ -189,9 +193,7 @@ GLMSAST *glms_ast_register_function(struct GLMS_ENV_STRUCT *env, GLMSAST *ast,
                                     const char *name, GLMSFPTR fptr);
 
 
-GLMSAST *glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env,
-                                             GLMSAST *ast, GLMSTokenType op,
-                                             GLMSASTOperatorOverload func);
+
 
 GLMSAST glms_ast_op_add_add(GLMSAST* a);
 GLMSAST glms_ast_op_sub_sub(GLMSAST* a);
@@ -212,7 +214,19 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
 
 GLMSAST *glms_ast_get_ptr(GLMSAST a);
 
+GLMSAST *glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env,
+                                             GLMSAST *ast, GLMSTokenType op,
+                                             GLMSASTOperatorOverload func);
+
+
+
 GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast, GLMSTokenType op);
+
+GLMSAST *glms_ast_register_func_overload(struct GLMS_ENV_STRUCT *env,
+                                             GLMSAST *ast, const char* name,
+                                             GLMSFPTR func);
+
+GLMSFPTR glms_ast_get_func_overload(GLMSAST ast, const char* name);
 
 float glms_ast_number(GLMSAST ast);
 

@@ -1,4 +1,5 @@
 #include "glms/ast.h"
+#include "vec3/vec3.h"
 #include <glms/eval.h>
 #include <glms/env.h>
 
@@ -81,6 +82,23 @@ int glms_struct_vec3_op_overload_div(GLMSEval *eval, GLMSStack *stack,
   return 1;
 }
 
+int glms_struct_vec3_func_overload_mix(struct GLMS_EVAL_STRUCT* eval, struct GLMS_AST_STRUCT* ast, struct GLMS_BUFFER_GLMSAST* args, struct GLMS_STACK_STRUCT* stack, struct GLMS_AST_STRUCT* out) {
+
+
+  if (!glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_VEC3, GLMS_AST_TYPE_VEC3, GLMS_AST_TYPE_NUMBER }, 3, args)) return 0;
+
+
+  Vector3 v1 = args->items[0].as.v3;
+  Vector3 v2 = args->items[1].as.v3;
+  float scale = glms_ast_number(args->items[2]);
+
+  Vector3 v = vector3_lerp_factor(v1, v2, scale);
+
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_VEC3, .as.v3 = v};
+
+  return 1;
+}
+
 char *glms_struct_vec3_to_string(GLMSAST *ast, GLMSAllocator alloc) {
   Vector3 v = ast->as.v3;
 
@@ -105,6 +123,9 @@ void glms_struct_vec3_constructor(GLMSEval *eval, GLMSStack *stack,
                                       glms_struct_vec3_op_overload_mul);
   glms_ast_register_operator_overload(eval->env, ast, GLMS_TOKEN_TYPE_DIV,
                                       glms_struct_vec3_op_overload_div);
+
+  glms_ast_register_func_overload(eval->env, ast, "mix", glms_struct_vec3_func_overload_mix);
+  glms_ast_register_func_overload(eval->env, ast, "lerp", glms_struct_vec3_func_overload_mix);
 
   if (!args)
     return;

@@ -1,5 +1,6 @@
 #include "glms/ast.h"
 #include "glms/ast_type.h"
+#include "glms/fptr.h"
 #include "glms/stack.h"
 #include "glms/string_view.h"
 #include "glms/token.h"
@@ -75,9 +76,13 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
                             GLMSASTBuffer args) {
 
 
+  GLMSFPTR fptr = func->fptr;
+  
     GLMSAST *self = glms_stack_get(stack, "self");
+    const char* fname = glms_ast_get_name(func);
 
     if (self == 0) self = func;
+
 
       // constructor
   if (func->type == GLMS_AST_TYPE_STRUCT) {
@@ -121,9 +126,9 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
     return ptr;
   }
 
-  if (func->fptr) {
+  if (fptr) {
     GLMSAST result = {0};
-    if (func->fptr(eval, self, &args, stack, &result)) {
+    if (fptr(eval, self, &args, stack, &result)) {
       if (result.type == GLMS_AST_TYPE_STACK_PTR) {
         glms_env_apply_type(eval->env, eval, stack, result.as.stackptr.ptr);
       }
@@ -185,6 +190,8 @@ GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   GLMSASTBuffer args = {0};
   glms_GLMSAST_buffer_init(&args);
 
+  GLMSFPTR overload = 0;
+
   if (ast.children != 0) {
     for (int64_t i = 0; i < ast.children->length; i++) {
       GLMSAST arg = glms_eval(eval, *ast.children->items[i], stack);
@@ -195,6 +202,7 @@ GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
         arg = *ptr;
       }
 
+      overload = overload ? overload : glms_ast_get_func_overload(arg, name);
       glms_GLMSAST_buffer_push(&args, arg);
     }
   }
@@ -203,7 +211,14 @@ GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     GLMS_WARNING_RETURN(ast, stderr, "No such function `%s`\n", name);
   }
 
-  GLMSAST result = glms_eval_call_func(eval, stack, func, args);
+  GLMSAST result = {0};
+
+  if (overload != 0) {
+    GLMSAST tmp_func = (GLMSAST){ .type = GLMS_AST_TYPE_FUNC, .fptr = overload };
+    result = glms_eval_call_func(eval, stack, &tmp_func, args);
+  } else {
+    result = glms_eval_call_func(eval, stack, func, args);
+  }
 
   glms_GLMSAST_buffer_clear(&args);
   return result;

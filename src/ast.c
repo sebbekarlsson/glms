@@ -5,6 +5,7 @@
 #include <glms/env.h>
 #include <glms/macros.h>
 #include <text/text.h>
+#include <glms/constants.h>
 
 GLMS_IMPLEMENT_BUFFER(GLMSAST);
 GLMS_IMPLEMENT_LIST(GLMSAST);
@@ -902,4 +903,44 @@ float glms_ast_number(GLMSAST ast) {
   }
 
   return 0.0f;
+}
+
+
+GLMSAST *glms_ast_register_func_overload(struct GLMS_ENV_STRUCT *env,
+                                         GLMSAST *ast, const char *name,
+                                         GLMSFPTR func) {
+  if (!env || !ast || !name || !func) return ast;
+
+
+  char tmp[256];
+  sprintf(tmp, GLMS_FUNC_OVERLOAD_TEMPLATE, name);
+
+
+
+  if (!ast->props.initialized) {
+    hashy_map_init_v2(&ast->props
+		      , (HashyMapConfig){ .capacity = 256, .remember_keys = true });
+  }
+
+  GLMSAST* arb = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC_OVERLOAD_PTR, false);
+  arb->ptr = func;
+  hashy_map_set(&ast->props, tmp, arb);
+
+  return ast;
+}
+
+GLMSFPTR glms_ast_get_func_overload(GLMSAST ast,
+                                                   const char *name) {
+
+  if (!ast.props.initialized || !name) return 0;
+
+  char tmp[256];
+  sprintf(tmp, GLMS_FUNC_OVERLOAD_TEMPLATE, name);
+
+  GLMSAST* arb = (GLMSAST*)hashy_map_get(&ast.props, tmp);
+
+  if (!arb) return 0;
+  if (!arb->ptr) return 0;
+
+  return (GLMSFPTR)arb->ptr;
 }
