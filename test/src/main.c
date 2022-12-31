@@ -1,3 +1,4 @@
+#include "glms/ast.h"
 #include <assert.h>
 #include <glms/glms.h>
 #include <glms/io.h>
@@ -261,6 +262,33 @@ static void test_sample_minmax() {
   GLMS_TEST_END();
 }
 
+static void test_sample_mix() {
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST *ast = glms_exec_file(&env, "test/samples/mix.gs");
+  GLMS_ASSERT(ast != 0);
+
+  GLMSAST *v1 = glms_eval_lookup(&env.eval, &env.stack, "v1");
+  GLMS_ASSERT(v1 != 0);
+  GLMS_ASSERT(v1->type == GLMS_AST_TYPE_VEC3);
+
+  GLMSAST *v2 = glms_eval_lookup(&env.eval, &env.stack, "v2");
+  GLMS_ASSERT(v2 != 0);
+  GLMS_ASSERT(v2->type == GLMS_AST_TYPE_VEC3);
+
+  GLMSAST *v3 = glms_eval_lookup(&env.eval, &env.stack, "v3");
+  GLMS_ASSERT(v3 != 0);
+
+  GLMS_ASSERT(v3->type == GLMS_AST_TYPE_VEC3);
+
+  Vector3 v3v = v3->as.v3;
+  GLMS_ASSERT(v3v.x == 0.5f);
+  GLMS_ASSERT(v3v.y == 0.55f);
+  GLMS_ASSERT(v3v.z == 0.15f);
+
+  GLMS_TEST_END();
+}
+
 int main(int argc, char *argv[]) {
   test_sample_var();
   test_sample_func();
@@ -277,5 +305,6 @@ int main(int argc, char *argv[]) {
   test_sample_cos_sin();
   test_sample_clamp();
   test_sample_minmax();
+  test_sample_mix();
   return 0;
 }
