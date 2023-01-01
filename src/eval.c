@@ -199,8 +199,23 @@ GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
         arg = *ptr;
       }
 
-      overload = overload ? overload : glms_ast_get_func_overload(arg, name);
-      glms_GLMSAST_buffer_push(&args, arg);
+
+      // TODO: this is to have certain types describe that they contain elements
+      // of which operations should be applied upon instead of the actual type.
+      // Not sure if I want to do it this way yet.
+      
+      // GLMSASTBuffer atoms = {0};
+      //      if (glms_ast_get_atoms(arg, &atoms)) {
+      //	for (int64_t j = 0; j < atoms.length; j++) {
+      //	  GLMSAST atom = atoms.items[j];
+      //	  glms_GLMSAST_buffer_push(&args, atom);
+      //	}
+      //	glms_GLMSAST_buffer_clear(&atoms);
+      //      } else {
+
+	overload = overload ? overload : glms_ast_get_func_overload(arg, name);
+	glms_GLMSAST_buffer_push(&args, arg);
+	// }
     }
   }
 

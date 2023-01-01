@@ -44,6 +44,8 @@ typedef char* (*GLMSASTToString)(struct GLMS_AST_STRUCT *ast, GLMSAllocator allo
 
 typedef void (*GLMSASTDestructor)(struct GLMS_AST_STRUCT *ast);
 
+typedef int (*GLMSASTAtomFunc)(struct GLMS_AST_STRUCT *ast, struct GLMS_BUFFER_GLMSAST* out);
+
 typedef int (*GLMSASTOperatorOverload)(struct GLMS_EVAL_STRUCT *eval,
                                        struct GLMS_STACK_STRUCT *stack,
                                        struct GLMS_AST_STRUCT *left,
@@ -157,6 +159,7 @@ typedef struct GLMS_AST_STRUCT {
   GLMSASTSwizzle swizzle;
   GLMSASTToString to_string;
   GLMSASTDestructor destructor;
+  GLMSASTAtomFunc get_atoms;
   char* typename;
   JAST* value_type;
   JAST* result;
@@ -261,6 +264,7 @@ typedef struct {
 
 char* glms_ast_generate_docstring(GLMSAST ast, const char* name, const char* suffix, int depth, GLMSDocstringGenerator* gen);
 
+int glms_ast_get_atoms(GLMSAST ast, GLMSASTBuffer* out);
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)
 

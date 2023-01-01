@@ -1109,3 +1109,13 @@ char *glms_ast_generate_docstring(GLMSAST ast, const char *name,
 
   return s;
 }
+
+int glms_ast_get_atoms(GLMSAST ast, GLMSASTBuffer* out) {
+  if (!out) return 0;
+  if (!ast.get_atoms) return 0;
+  if (!out->initialized) {
+    glms_GLMSAST_buffer_init(out);
+  }
+
+  return ast.get_atoms(&ast, out);
+}
