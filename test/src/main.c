@@ -103,11 +103,14 @@ static void test_sample_object() {
 
   GLMSAST *y = glms_eval_lookup(&env.eval, &env.stack, "y");
   GLMS_ASSERT(y != 0);
-  GLMS_ASSERT(y->type == GLMS_AST_TYPE_STACK_PTR);
-  GLMSAST* ptr = glms_ast_get_ptr(*y);
-  GLMS_ASSERT(ptr != 0);
-  GLMS_ASSERT(ptr->type == GLMS_AST_TYPE_NUMBER);
-  GLMS_ASSERT(ptr->as.number.value == 33);
+  // printf("%s\n", GLMS_AST_TYPE_STR[y->type]);
+  // GLMS_ASSERT(y->type == GLMS_AST_TYPE_STACK_PTR);
+  //  GLMSAST* ptr = glms_ast_get_ptr(*y);
+  //  GLMS_ASSERT(ptr != 0);
+  //  GLMS_ASSERT(ptr->type == GLMS_AST_TYPE_NUMBER);
+  //  GLMS_ASSERT(ptr->as.number.value == 33);
+  GLMS_ASSERT(y->type == GLMS_AST_TYPE_NUMBER);
+  GLMS_ASSERT(y->as.number.value == 33);
 
   GLMSAST *nested = glms_ast_access_by_key(x, "nested", &env);
 
@@ -301,11 +304,11 @@ static void test_sample_self() {
   GLMS_ASSERT(ast != 0);
   GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
   GLMS_ASSERT(x != 0);
-  GLMS_ASSERT(x->type == GLMS_AST_TYPE_STACK_PTR);
-  GLMSAST* ptr = glms_ast_get_ptr(*x);
-  GLMS_ASSERT(ptr != 0);
-  GLMS_ASSERT(ptr->type == GLMS_AST_TYPE_STRING);
-  const char* strval = glms_ast_get_string_value(ptr);
+  //  GLMS_ASSERT(x->type == GLMS_AST_TYPE_STACK_PTR);
+  //GLMSAST* ptr = glms_ast_get_ptr(*x);
+  //GLMS_ASSERT(ptr != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_STRING);
+  const char* strval = glms_ast_get_string_value(x);
   GLMS_ASSERT(strval != 0);
   GLMS_ASSERT(strcmp(strval, "David Doe") == 0);
   GLMS_TEST_END();

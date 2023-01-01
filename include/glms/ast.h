@@ -144,6 +144,7 @@ typedef struct GLMS_AST_STRUCT {
   bool keep;
   bool is_tmp;
   bool is_heap;
+  bool constructed;
 } GLMSAST;
 
 GLMS_DEFINE_BUFFER(GLMSAST);

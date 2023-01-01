@@ -436,12 +436,17 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
 
+  //if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
+
   dest->props = (HashyMap){0};
   dest->children = 0;
   dest->flags = 0;
   dest->string_rep = 0;
   dest->ptr = src.ptr;
   dest->constructor = src.constructor;
+  dest->value_type = src.value_type;
+
+  if (src.typename) dest->typename = strdup(src.typename);
 
   if (src.children != 0) {
     for (int64_t i = 0; i < src.children->length; i++) {

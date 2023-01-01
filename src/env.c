@@ -2,6 +2,7 @@
 #include "arena/config.h"
 #include "glms/allocator.h"
 #include "glms/ast.h"
+#include "glms/ast_type.h"
 #include "glms/eval.h"
 #include "glms/stack.h"
 #include "hashy/hashy.h"
@@ -213,7 +214,7 @@ GLMSAST *glms_env_register_type(GLMSEnv *env, const char *name, GLMSAST *ast,
 
   const char *typename = GLMS_AST_TYPE_STR[ast->type];
 
-  hashy_map_set(&env->types, typename, ast);
+  //hashy_map_set(&env->types, typename, ast);
   hashy_map_set(&env->types, name, ast);
 
   return ast;
@@ -248,9 +249,15 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
   if (!env || !ast)
     return 0;
 
+  if (ast->type == GLMS_AST_TYPE_STACK_PTR) {
+    GLMSAST* ptr = glms_ast_get_ptr(*ast);
+
+    if (ptr) return glms_env_apply_type(env, eval, stack, ptr);
+  }
 
   if (ast->type == GLMS_AST_TYPE_BINOP) return ast;
-  if (ast->value_type != 0 && ast->constructor != 0) return ast;
+  //  if (ast->value_type != 0 && ast->constructor != 0) return ast;
+  if (ast->constructed) return ast;
 
   GLMSAST *type = ast->value_type;
 
@@ -278,6 +285,7 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
       }
     }
     type->constructor(eval, stack, &args, ast);
+    ast->constructed = true;
 
     glms_GLMSAST_buffer_clear(&args);
   }

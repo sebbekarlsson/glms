@@ -143,8 +143,13 @@ void glms_struct_vec3_constructor(GLMSEval *eval, GLMSStack *stack,
 }
 
 void glms_struct_vec3(GLMSEnv *env) {
+  GLMSAST* t = glms_env_new_ast(env, GLMS_AST_TYPE_VEC3, false);
   glms_env_register_type(
-      env, "vec3", glms_env_new_ast(env, GLMS_AST_TYPE_VEC3, false),
+      env, "vec3", t,
+      glms_struct_vec3_constructor, glms_struct_vec3_swizzle, 0, 0);
+
+  glms_env_register_type(
+      env, GLMS_AST_TYPE_STR[GLMS_AST_TYPE_VEC3], t,
       glms_struct_vec3_constructor, glms_struct_vec3_swizzle, 0, 0);
   //  glms_env_register_struct(env, "vec3", (GLMSAST*[]){
   //    glms_env_new_ast_field(env, GLMS_TOKEN_TYPE_SPECIAL_NUMBER, "x"),

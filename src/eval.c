@@ -71,20 +71,18 @@ GLMSAST *glms_eval_lookup(GLMSEval *eval, GLMSStack *stack, const char *key) {
   return glms_stack_get(stack, key);
 }
 
-
-GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
+GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
                             GLMSASTBuffer args) {
 
-
   GLMSFPTR fptr = func->fptr;
-  
-    GLMSAST *self = glms_stack_get(stack, "self");
-    const char* fname = glms_ast_get_name(func);
 
-    if (self == 0) self = func;
+  GLMSAST *self = glms_stack_get(stack, "self");
+  const char *fname = glms_ast_get_name(func);
 
+  if (self == 0)
+    self = func;
 
-      // constructor
+  // constructor
   if (func->type == GLMS_AST_TYPE_STRUCT) {
     GLMSAST *copied = glms_ast_copy(*func, eval->env);
 
@@ -103,14 +101,12 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
           continue;
 
         const char *key = it.bucket->key;
-	GLMSAST* val = (GLMSAST *)it.bucket->value;
-        GLMSAST value =
-            glms_eval(eval, *val, &tmp_stack);
+        GLMSAST *val = (GLMSAST *)it.bucket->value;
+        GLMSAST value = glms_eval(eval, *val, &tmp_stack);
 
-        GLMSAST arg_value = glms_eval(
-            eval, args.items[i],
-            &tmp_stack);
-        glms_ast_object_set_property(copied, key, glms_ast_copy(arg_value, eval->env));
+        GLMSAST arg_value = glms_eval(eval, args.items[i], &tmp_stack);
+        glms_ast_object_set_property(copied, key,
+                                     glms_ast_copy(arg_value, eval->env));
         i++;
 
         if (i >= args.length) {
@@ -122,7 +118,8 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
 
     glms_stack_clear(&tmp_stack);
 
-    GLMSAST ptr = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = copied };
+    GLMSAST ptr =
+        (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = copied};
     return ptr;
   }
 
@@ -150,10 +147,8 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
     glms_stack_copy(*stack, &tmp_stack);
 
     if (func->children != 0) {
-      for (int64_t i = 0; i < MIN(args.length, func->children->length);
-           i++) {
-        GLMSAST arg_value =
-            glms_eval(eval, args.items[i], &tmp_stack);
+      for (int64_t i = 0; i < MIN(args.length, func->children->length); i++) {
+        GLMSAST arg_value = glms_eval(eval, args.items[i], &tmp_stack);
         GLMSAST *arg_func = func->children->items[i];
 
         const char *arg_name = glms_ast_get_name(arg_func);
@@ -171,7 +166,6 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
   }
 
   return *func;
-
 }
 
 GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
@@ -183,8 +177,9 @@ GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   }
 
   if (func && func->type == GLMS_AST_TYPE_STACK_PTR) {
-    GLMSAST* ptr = glms_ast_get_ptr(*func);
-    if (ptr != 0) func = ptr;
+    GLMSAST *ptr = glms_ast_get_ptr(*func);
+    if (ptr != 0)
+      func = ptr;
   }
 
   GLMSASTBuffer args = {0};
@@ -214,7 +209,7 @@ GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   GLMSAST result = {0};
 
   if (overload != 0) {
-    GLMSAST tmp_func = (GLMSAST){ .type = GLMS_AST_TYPE_FUNC, .fptr = overload };
+    GLMSAST tmp_func = (GLMSAST){.type = GLMS_AST_TYPE_FUNC, .fptr = overload};
     result = glms_eval_call_func(eval, stack, &tmp_func, args);
   } else {
     result = glms_eval_call_func(eval, stack, func, args);
@@ -252,36 +247,38 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
   const char *name = 0;
 
   // if (left.type == GLMS_AST_TYPE_ID) {
-  name = glms_ast_get_name(&left);//glms_string_view_get_value(&left.as.id.value);
-    //}
+  name = glms_ast_get_name(
+      &left); // glms_string_view_get_value(&left.as.id.value);
+              //}
 
   GLMSAST *existing = glms_ast_get_ptr(left);
 
-    if (existing == 0 && name != 0) {
-      existing = glms_eval_lookup(eval, stack, name);
-    }
+  if (existing == 0 && name != 0) {
+    existing = glms_eval_lookup(eval, stack, name);
+  }
 
   if (existing) {
     glms_ast_assign(existing, right, eval, stack);
   } else if (name) {
-    GLMSAST *copy = glms_ast_copy(right, eval->env);
+    GLMSAST *ptr = glms_ast_get_ptr(right);
+    GLMSAST *copy = ptr ? ptr : glms_ast_copy(right, eval->env);
 
     GLMSAST t = {0};
-    if (glms_ast_get_type(left, &t)) {
+    if (copy->constructed == false && glms_ast_get_type(left, &t)) {
+      //
+      // if (t.constructor) {
+      //  t.constructor(eval, stack, 0, copy);
+      //  } else {
+      // TODO: Don't think we need this.
+      GLMSAST *look = glms_env_lookup_type(
+          eval->env, glms_string_view_get_value(&t.as.id.value));
 
-      if (t.constructor) {
-        t.constructor(eval, stack, 0, copy);
-      } else {
-	// TODO: Don't think we need this.
-	/*
-        GLMSAST *look = glms_env_lookup_type(
-            eval->env, glms_string_view_get_value(&t.as.id.value));
-
-        if (look && look->constructor) {
-          look->constructor(eval, stack, 0, copy);
-          copy->value_type = look;
-	  }*/
+      if (look && look->constructor) {
+        look->constructor(eval, stack, 0, copy);
+        copy->constructed = true;
+        copy->value_type = look;
       }
+      // }
     }
 
     glms_stack_push(stack, name, copy);
@@ -379,7 +376,7 @@ GLMSAST glms_eval_unop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
 GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
-  //bool is_assign = ast.as.binop.op == GLMS_TOKEN_TYPE_EQUALS;
+  // bool is_assign = ast.as.binop.op == GLMS_TOKEN_TYPE_EQUALS;
   GLMSAST left = glms_eval(eval, *ast.as.binop.left, stack);
   GLMSAST right = glms_eval(eval, *ast.as.binop.right, stack);
 
@@ -437,7 +434,6 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   }; break;
   case GLMS_TOKEN_TYPE_EQUALS: {
 
-    
     return glms_eval_assign(eval, left, right, stack);
   }; break;
   default: {
@@ -558,7 +554,7 @@ GLMSAST glms_eval_access_by_key(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   GLMSAST *ptr = glms_ast_get_ptr(left);
 
-   GLMSAST *L = ptr ? ptr : &left;
+  GLMSAST *L = ptr ? ptr : &left;
 
   if (L->swizzle && right.type == GLMS_AST_TYPE_ID) {
     GLMSAST sw = {0};
@@ -571,9 +567,10 @@ GLMSAST glms_eval_access_by_key(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   GLMSAST *value = glms_ast_access_by_key(L, key, eval->env);
 
-  GLMSAST* vptr = value ? glms_ast_get_ptr(*value) : 0;
+  GLMSAST *vptr = value ? glms_ast_get_ptr(*value) : 0;
 
-  if (vptr) value = vptr;
+  if (vptr)
+    value = vptr;
 
   GLMSAST *t = glms_eval_get_type(eval, stack, L);
 
@@ -588,7 +585,9 @@ GLMSAST glms_eval_access_by_key(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
       return glms_eval(eval, right, stack);
     }
 
-    return (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = value };//glms_eval(eval, *value, stack);
+    return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR,
+                     .as.stackptr.ptr =
+                         value}; // glms_eval(eval, *value, stack);
   }
 
   return (GLMSAST){.type = GLMS_AST_TYPE_UNDEFINED};
@@ -631,14 +630,14 @@ GLMSAST glms_eval_function(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   const char *fname = glms_ast_get_name(&ast);
 
-  GLMSAST* copy = 0;
+  GLMSAST *copy = 0;
   if (fname && !glms_stack_get(stack, fname)) {
     copy = glms_ast_copy(ast, eval->env);
     glms_stack_push(stack, fname, copy);
   }
 
   if (copy) {
-    return (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = copy };
+    return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = copy};
   }
 
   return ast;
@@ -666,8 +665,7 @@ GLMSAST glms_eval_struct(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   HashyIterator it = {0};
 
-
-  GLMSAST* new_ast = glms_ast_copy(ast, eval->env);
+  GLMSAST *new_ast = glms_ast_copy(ast, eval->env);
 
   while (hashy_map_iterate(&ast.props, &it)) {
     if (!it.bucket->key)
@@ -679,10 +677,12 @@ GLMSAST glms_eval_struct(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     GLMSAST *value = (GLMSAST *)it.bucket->value;
 
     GLMSAST eval_value = glms_eval(eval, *value, stack);
-    glms_ast_object_set_property(new_ast, key, glms_ast_copy(eval_value, eval->env));
+    glms_ast_object_set_property(new_ast, key,
+                                 glms_ast_copy(eval_value, eval->env));
   }
 
-  GLMSAST ptr_ast = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
+  GLMSAST ptr_ast =
+      (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast};
 
   return ptr_ast;
 }
@@ -693,7 +693,7 @@ GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   case GLMS_AST_TYPE_TYPEDEF: {
     return glms_eval_typedef(eval, ast, stack);
   }; break;
-    case GLMS_AST_TYPE_STRUCT: {
+  case GLMS_AST_TYPE_STRUCT: {
     return glms_eval_struct(eval, ast, stack);
   }; break;
   case GLMS_AST_TYPE_ACCESS: {
@@ -735,28 +735,30 @@ GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 }
 
 bool glms_eval_expect(GLMSEval *eval, GLMSStack *stack, GLMSASTType *types,
-                      int nr_types, GLMSASTBuffer* args) {
+                      int nr_types, GLMSASTBuffer *args) {
 
-  if (!eval || !stack) return false;
-  if (!types || nr_types <= 0) return true;
+  if (!eval || !stack)
+    return false;
+  if (!types || nr_types <= 0)
+    return true;
 
-
-  if (args == 0 || (args->length != nr_types)) GLMS_WARNING_RETURN(false, stderr, "Expected `%d` arguments but got `%ld`.\n", nr_types, args ? args->length : 0);
+  if (args == 0 || (args->length != nr_types))
+    GLMS_WARNING_RETURN(false, stderr,
+                        "Expected `%d` arguments but got `%ld`.\n", nr_types,
+                        args ? args->length : 0);
 
   for (int i = 0; i < nr_types; i++) {
     GLMSAST arg = args->items[i];
-    GLMSAST* ptr = glms_ast_get_ptr(arg);
-    if (ptr != 0) arg = *ptr;
+    GLMSAST *ptr = glms_ast_get_ptr(arg);
+    if (ptr != 0)
+      arg = *ptr;
 
     if (arg.type != types[i]) {
-      GLMS_WARNING_RETURN(false, stderr, "Expected `%s` at arg `%d` but got `%s`.\n",
-			  GLMS_AST_TYPE_STR[types[i]],
-			  i,
-			  GLMS_AST_TYPE_STR[arg.type]
-			  );
+      GLMS_WARNING_RETURN(
+          false, stderr, "Expected `%s` at arg `%d` but got `%s`.\n",
+          GLMS_AST_TYPE_STR[types[i]], i, GLMS_AST_TYPE_STR[arg.type]);
     }
   }
 
   return true;
-  
 }
