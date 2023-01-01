@@ -331,13 +331,18 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
   type = type ? type : glms_env_lookup_type(env, glms_ast_get_name(ast));
   type = type ? type : glms_env_lookup_type(env, GLMS_AST_TYPE_STR[ast->type]);
 
-  if (!type)
+  GLMSASTContructor constructor = ast->constructor;
+
+  if (type && type->constructor) constructor = type->constructor;
+
+  if (!constructor)
     return 0;
 
-  ast->constructor = type->constructor;
+  ast->constructor = constructor;
+  ast->to_string = type ? type->to_string : ast->to_string;
 
 
-  if (type->constructor) {
+  if (constructor) {
     GLMSASTBuffer args = {0};
     glms_GLMSAST_buffer_init(&args);
 
@@ -346,7 +351,7 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
 	glms_GLMSAST_buffer_push(&args, glms_eval(eval, *ast->children->items[i], stack));
       }
     }
-    type->constructor(eval, stack, &args, ast);
+    constructor(eval, stack, &args, ast);
     ast->constructed = true;
 
     glms_GLMSAST_buffer_clear(&args);
@@ -371,7 +376,7 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
     }
    }*/
 
-  ast->value_type = type;
+  ast->value_type = ast->value_type ? ast->value_type : type;
 
   return ast;
 }

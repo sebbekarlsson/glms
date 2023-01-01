@@ -1,3 +1,4 @@
+#include "cglm/struct/vec4.h"
 #include "glms/allocator.h"
 #include "glms/ast.h"
 #include <glms/env.h>
@@ -36,7 +37,6 @@ int glms_struct_vec4_swizzle(GLMSEval *eval, GLMSStack *stack, GLMSAST *ast,
   *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = v};
   return 1;
 }
-
 
 
 void glms_struct_vec4_constructor(GLMSEval *eval, GLMSStack *stack,

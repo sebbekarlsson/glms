@@ -13,6 +13,7 @@
 #include <glms/ast_type.h>
 #include <glms/type.h>
 #include <glms/allocator.h>
+#include <cglm/struct.h>
 
 #define GLMS_AST_OPERATOR_OVERLOAD_CAP 24
 
@@ -139,6 +140,9 @@ typedef struct GLMS_AST_STRUCT {
     Vector3 v3;
     Vector4 v4;
 
+    mat3s m3;
+    mat4s m4;
+
   } as;
 
   GLMSASTType type;
@@ -156,6 +160,7 @@ typedef struct GLMS_AST_STRUCT {
   char* typename;
   JAST* value_type;
   JAST* result;
+  float* floats;
   ArenaRef ref;
   bool keep;
   bool is_tmp;

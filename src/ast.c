@@ -1,3 +1,4 @@
+#include "cglm/struct/mat4.h"
 #include "glms/ast_type.h"
 #include "glms/stack.h"
 #include "glms/string_view.h"
@@ -460,6 +461,10 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   dest->ptr = src.ptr;
   dest->constructor = src.constructor;
   dest->value_type = src.value_type;
+
+  if (src.type == GLMS_AST_TYPE_MAT4) {
+    dest->as.m4 = glms_mat4_copy(src.as.m4);
+  }
 
   if (src.typename)
     dest->typename = strdup(src.typename);

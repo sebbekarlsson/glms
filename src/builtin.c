@@ -1,3 +1,5 @@
+#include "cglm/cam.h"
+#include "cglm/mat4.h"
 #include "glms/allocator.h"
 #include "glms/ast_type.h"
 #include "glms/eval.h"
@@ -17,6 +19,7 @@
 #include <glms/modules/vec3.h>
 #include <glms/modules/vec4.h>
 #include <glms/modules/string.h>
+#include <glms/modules/mat4.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
@@ -24,6 +27,14 @@
 
 static void print_ast(GLMSAST ast, GLMSAllocator alloc) {
 
+  if (ast.to_string) {
+    char* s = ast.to_string(&ast, alloc);
+
+    if (s) {
+      printf("%s\n", s);
+      return;
+    }
+  }
   switch (ast.type) {
   case GLMS_AST_TYPE_NUMBER: {
     printf("%1.6f\n", ast.as.number.value);
@@ -36,10 +47,9 @@ static void print_ast(GLMSAST ast, GLMSAllocator alloc) {
     printf("%c\n", ast.as.character.c);
   }; break;
   case GLMS_AST_TYPE_STACK_PTR: {
+    GLMSAST* ptr = glms_ast_get_ptr(ast);
 
-    if (ast.as.stackptr.ptr) {
-      return print_ast(*ast.as.stackptr.ptr, alloc);
-    };
+    if (ptr) return print_ast(*ptr, alloc);
   break;
   default: {
     char *v = glms_ast_to_string(ast, alloc);
@@ -382,8 +392,95 @@ int glms_fptr_log10(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
-int glms_fptr_log10(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
-                    GLMSStack *stack, GLMSAST *out);
+int glms_fptr_perspective(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+  float fov = glms_ast_number(args->items[0]);
+  float aspect = glms_ast_number(args->items[1]);
+  float near = glms_ast_number(args->items[2]);
+  float far = glms_ast_number(args->items[3]);
+
+
+  
+
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_MAT4, .as.m4 = glms_perspective(fov, aspect, near, far) };
+
+  mat4s m = result.as.m4;
+
+  *out = result;
+
+  return 1;
+}
+
+int glms_fptr_ortho(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+  float left = glms_ast_number(args->items[0]);
+  float right = glms_ast_number(args->items[1]);
+  float bottom = glms_ast_number(args->items[2]);
+  float top = glms_ast_number(args->items[3]);
+  float near = glms_ast_number(args->items[4]);
+  float far = glms_ast_number(args->items[5]);
+
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_MAT4, .as.m4 = glms_ortho(left, right, bottom, top, near, far) };
+
+  *out = result;
+
+  return 1;
+}
+
+int glms_fptr_identity(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+
+  
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_MAT4, .as.m4 = glms_mat4_identity() };
+  *out = result;
+
+  return 1;
+}
+
+int glms_fptr_transpose(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+
+  
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_MAT4, .as.m4 = glms_mat4_transpose(args->items[0].as.m4) };
+  *out = result;
+
+  glms_env_apply_type(eval->env, eval, stack, out);
+  return 1;
+}
+
+int glms_fptr_inverse(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+
+  
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_MAT4, .as.m4 = glms_mat4_inv(args->items[0].as.m4) };
+  *out = result;
+
+
+  return 1;
+}
+
+int glms_fptr_radians(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+
+  float v = glms_ast_number(args->items[0]);
+  
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = glm_rad(v) };
+  *out = result;
+
+  return 1;
+}
 
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
@@ -392,6 +489,89 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_any(env, "TAU",
                         glms_env_new_ast_number(env, M_PI * 2.0f, true));
   glms_env_register_function(env, "print", glms_fptr_print);
+
+  glms_env_register_function(env, "radians", glms_fptr_radians);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "radians",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+
+  glms_env_register_function(env, "identity", glms_fptr_identity);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "identity",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_MAT4},
+      .args_length = 0
+    }
+  );
+
+  glms_env_register_function(env, "transpose", glms_fptr_identity);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "transpose",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_MAT4},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_MAT4 } },
+      .args_length = 1
+    }
+  );
+
+  glms_env_register_function(env, "inverse", glms_fptr_identity);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "inverse",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_MAT4},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_MAT4 } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "ortho", glms_fptr_ortho);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "ortho",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_MAT4},
+      .args = (GLMSType[]){
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "left" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "right" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "bottom" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "top" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "near" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "far" }
+      },
+      .args_length = 6
+    }
+  );
+
+  glms_env_register_function(env, "perspective", glms_fptr_perspective);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "perspective",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_MAT4},
+      .args = (GLMSType[]){
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "fov" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "aspect" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "near" },
+	(GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "far" }
+      },
+      .args_length = 4
+    }
+  );
 
   glms_env_register_function(env, "dot", glms_fptr_dot);
   glms_env_register_function_signature(
@@ -695,6 +875,7 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_array_type(env);
   glms_struct_vec3(env);
   glms_struct_vec4(env);
+  glms_mat4_type(env);
   glms_struct_image(env);
   glms_file_type(env);
 }

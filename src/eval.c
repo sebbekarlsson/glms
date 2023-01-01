@@ -157,6 +157,7 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
           continue;
 
         GLMSAST *copy = glms_ast_copy(arg_value, eval->env);
+
         glms_stack_push(&tmp_stack, arg_name, copy);
       }
     }
@@ -301,8 +302,12 @@ GLMSAST glms_eval_id(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 }
 
 GLMSAST glms_eval_stack_ptr(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
-  if (!ast.as.stackptr.ptr)
-    return ast;
+  GLMSAST* ptr = glms_ast_get_ptr(ast);
+
+  if (ptr) {
+    glms_env_apply_type(eval->env, eval, stack, ptr);
+  }
+  
   return ast;
 }
 
@@ -357,6 +362,7 @@ GLMSAST glms_eval_unop_right(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     GLMSAST right = glms_eval(eval, *ast.as.unop.right, stack);
 
     GLMSAST *retval = glms_ast_copy(right, eval->env);
+    glms_env_apply_type(eval->env, eval, stack, retval);
 
     glms_stack_push(stack, "return", retval);
     stack->return_flag = true;
@@ -388,10 +394,14 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     GLMSAST r = right;
 
 
-    if ((ptr_left = glms_ast_get_ptr(left)))
+    if ((ptr_left = glms_ast_get_ptr(left))) {
+      glms_env_apply_type(eval->env, eval, stack, ptr_left);
       l = *ptr_left;
-    if ((ptr_right = glms_ast_get_ptr(right)))
+    }
+    if ((ptr_right = glms_ast_get_ptr(right))) {
+      glms_env_apply_type(eval->env, eval, stack, ptr_right);
       r = *ptr_right;
+    }
 
 
   GLMSASTOperatorOverload overload =

@@ -6,9 +6,21 @@ GLMS_AST_TYPE_VEC3 unit(GLMS_AST_TYPE_VEC3)
 
 ```
 
+### transpose
+```
+GLMS_AST_TYPE_MAT4 transpose(GLMS_AST_TYPE_MAT4)
+
+```
+
 ### clamp
 ```
 GLMS_AST_TYPE_NUMBER clamp(GLMS_AST_TYPE_NUMBER value, GLMS_AST_TYPE_NUMBER min, GLMS_AST_TYPE_NUMBER max)
+
+```
+
+### perspective
+```
+GLMS_AST_TYPE_MAT4 perspective(GLMS_AST_TYPE_NUMBER fov, GLMS_AST_TYPE_NUMBER aspect, GLMS_AST_TYPE_NUMBER near, GLMS_AST_TYPE_NUMBER far)
 
 ```
 
@@ -80,9 +92,21 @@ GLMS_AST_TYPE_NUMBER log10(GLMS_AST_TYPE_NUMBER)
 
 ```
 
+### radians
+```
+GLMS_AST_TYPE_NUMBER radians(GLMS_AST_TYPE_NUMBER)
+
+```
+
 ### abs
 ```
 GLMS_AST_TYPE_NUMBER abs(GLMS_AST_TYPE_NUMBER)
+
+```
+
+### identity
+```
+GLMS_AST_TYPE_MAT4 identity()
 
 ```
 
@@ -131,10 +155,22 @@ GLMS_AST_TYPE_NUMBER length(GLMS_AST_TYPE_ARRAY)
 > No signatures defined.
 
 
+### inverse
+```
+GLMS_AST_TYPE_MAT4 inverse(GLMS_AST_TYPE_MAT4)
+
+```
+
 ### lerp
 ```
 GLMS_AST_TYPE_NUMBER lerp(GLMS_AST_TYPE_NUMBER from, GLMS_AST_TYPE_NUMBER to, GLMS_AST_TYPE_NUMBER scale)
 GLMS_AST_TYPE_VEC3 lerp(GLMS_AST_TYPE_VEC3 from, GLMS_AST_TYPE_VEC3 to, GLMS_AST_TYPE_NUMBER scale)
+
+```
+
+### ortho
+```
+GLMS_AST_TYPE_MAT4 ortho(GLMS_AST_TYPE_NUMBER left, GLMS_AST_TYPE_NUMBER right, GLMS_AST_TYPE_NUMBER bottom, GLMS_AST_TYPE_NUMBER top, GLMS_AST_TYPE_NUMBER near, GLMS_AST_TYPE_NUMBER far)
 
 ```
 
@@ -193,6 +229,8 @@ image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 ### vec3 (struct)
 
 ### vec4 (struct)
+
+### mat4 (struct)
 
 ### file (struct)
 <details><summary>props</summary>
