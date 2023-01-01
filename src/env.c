@@ -11,8 +11,10 @@
 #include <glms/env.h>
 #include <glms/io.h>
 #include <glms/macros.h>
+#include <spath/spath.h>
+#include <limits.h>
 
-int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
+int glms_env_init(GLMSEnv *env, const char *source, const char* entry_path, GLMSConfig cfg) {
   if (!env)
     return 0;
   if (env->initialized)
@@ -20,6 +22,8 @@ int glms_env_init(GLMSEnv *env, const char *source, GLMSConfig cfg) {
   env->initialized = true;
   env->config = cfg;
   env->source = source;
+  env->entry_path = entry_path;
+  env->last_joined_path = 0;
   glms_allocator_string_allocator(&env->string_alloc);
   hashy_map_init(&env->globals, 256);
   hashy_map_init(&env->types, 256);
@@ -312,4 +316,30 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
   ast->value_type = type;
 
   return ast;
+}
+
+const char* glms_env_get_path_for(GLMSEnv* env, const char* path) {
+  if (!env->entry_path) {
+    return path;
+  }
+
+  const char* basepath = env->entry_path;
+  char dirname[PATH_MAX];
+
+  if (spath_get_dirname(basepath, dirname)) {
+    basepath = dirname;
+  }
+  
+  char* joined = spath_join(basepath, path);
+
+  if (!joined) return path;
+
+  if (env->last_joined_path != 0) {
+    free(env->last_joined_path);
+    env->last_joined_path = 0;
+  }
+
+  env->last_joined_path = strdup(joined);
+
+  return env->last_joined_path;
 }

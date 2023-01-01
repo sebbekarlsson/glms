@@ -94,6 +94,14 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(vec3_static)
 
 FetchContent_Declare(
+  spath_static
+#  URL /home/ianertson/workspace/spath
+  GIT_REPOSITORY https://github.com/sebbekarlsson/spath.git 
+)
+FetchContent_MakeAvailable(spath_static)
+target_compile_options(spath_static PUBLIC -fPIC)
+
+FetchContent_Declare(
   gimg_static
 #  URL /home/ianertson/workspace/gimg
   GIT_REPOSITORY https://github.com/sebbekarlsson/gimg.git 
@@ -101,7 +109,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(gimg_static)
 target_compile_options(gimg_static PUBLIC -fPIC)
 
-set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static dl)
+set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static spath_static dl)
 
 target_link_libraries(glms ${GLMS_DEPS})
 target_link_libraries(glms_e ${GLMS_DEPS})

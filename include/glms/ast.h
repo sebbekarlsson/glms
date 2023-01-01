@@ -64,6 +64,11 @@ typedef struct GLMS_AST_STRUCT {
     } id;
 
     struct {
+      GLMSStringView value;
+      JAST* id;
+    } import;
+
+    struct {
       JAST* factor;
       JAST* id;
     } tdef;
@@ -111,6 +116,10 @@ typedef struct GLMS_AST_STRUCT {
       JAST* expr;
       JAST* next;
     } block;
+
+    struct {
+      struct GLMS_ENV_STRUCT* env;
+    } stack;
 
     struct {
       int idx;

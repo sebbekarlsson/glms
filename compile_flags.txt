@@ -11,4 +11,5 @@
 -I./build/_deps/text_static-src/include
 -I./build/_deps/mif_static-src/include
 -I./build/_deps/vec3_static-src/include
+-I./build/_deps/spath_static-src/include
 -I./build/_deps/gimg_static-src/include

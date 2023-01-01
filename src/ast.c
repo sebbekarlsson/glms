@@ -1,4 +1,5 @@
 #include "glms/ast_type.h"
+#include "glms/stack.h"
 #include "glms/string_view.h"
 #include "hashy/hashy.h"
 #include <glms/ast.h>
@@ -183,6 +184,10 @@ GLMSAST *glms_ast_access_by_key_private(GLMSAST *ast, const char *key,
 
   if (!ast || !key)
     return 0;
+
+  if (ast->type == GLMS_AST_TYPE_STACK && ast->as.stack.env != 0) {
+    return glms_stack_get(&ast->as.stack.env->stack, key);
+  }
 
   if (ast->type == GLMS_AST_TYPE_UNDEFINED)
     GLMS_WARNING_RETURN(0, stderr, "cannot index undefined.\n");

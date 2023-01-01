@@ -23,7 +23,7 @@ static GLMSAST *glms_exec_file(GLMSEnv *env, const char *path) {
   char *source = glms_get_file_contents(path);
   if (!source)
     return 0;
-  glms_env_init(env, source, (GLMSConfig){});
+  glms_env_init(env, source, path, (GLMSConfig){});
   return glms_env_exec(env);
 }
 

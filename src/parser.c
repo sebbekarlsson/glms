@@ -296,7 +296,21 @@ GLMSAST *glms_parser_parse_unop(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_UNOP, false);
   ast->as.unop.op = parser->token.type;
   glms_parser_eat(parser, parser->token.type);
-  ast->as.unop.right = glms_parser_parse_term(parser);
+  ast->as.unop.right = glms_parser_parse_expr(parser);
+  return ast;
+}
+
+GLMSAST *glms_parser_parse_import(GLMSParser *parser) {
+  GLMSAST* ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_IMPORT, false);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_IMPORT);
+
+  ast->as.import.value = parser->token.value;
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_STRING);
+
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_AS);
+
+  ast->as.import.id = glms_parser_parse_id(parser, true);
+
   return ast;
 }
 
@@ -342,6 +356,9 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   }; break;
   case GLMS_TOKEN_TYPE_STRING: {
     return glms_parser_parse_string(parser);
+  }; break;
+  case GLMS_TOKEN_TYPE_SPECIAL_IMPORT: {
+    return glms_parser_parse_import(parser);
   }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_FALSE:
   case GLMS_TOKEN_TYPE_SPECIAL_TRUE: {

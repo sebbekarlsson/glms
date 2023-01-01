@@ -22,6 +22,7 @@ typedef struct GLMS_ENV_STRUCT {
   GLMSConfig config;
   bool initialized;
   const char* source;
+  const char* entry_path;
 
   GLMSLexer lexer;
   GLMSParser parser;
@@ -38,12 +39,15 @@ typedef struct GLMS_ENV_STRUCT {
   bool use_arena;
 
   GLMSAllocator string_alloc;
+
+  char* last_joined_path;
 } GLMSEnv;
 
 
 int glms_env_init(
   GLMSEnv* env,
   const char* source,
+  const char* entry_path,
   GLMSConfig cfg
 );
 
@@ -87,6 +91,9 @@ GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name);
 
 GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name);
 
-GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLMSAST* ast);
+GLMSAST *glms_env_apply_type(GLMSEnv *env, GLMSEval *eval, GLMSStack *stack,
+                             GLMSAST *ast);
+
+const char* glms_env_get_path_for(GLMSEnv* env, const char* path);
 
 #endif

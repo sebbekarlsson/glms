@@ -10,6 +10,7 @@
 #include <glms/env.h>
 #include <glms/eval.h>
 #include <glms/macros.h>
+#include <glms/io.h>
 
 #define GLMS_AST_DEBUG_PRINT(ast)                                              \
   { printf("%s\n", glms_ast_to_string(ast, eval->env->string_alloc)); }
@@ -687,9 +688,39 @@ GLMSAST glms_eval_struct(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   return ptr_ast;
 }
 
+GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
+  const char* path = glms_string_view_get_value(&ast.as.import.value);
+  if (!path) return ast;
+
+  const char* abspath = glms_env_get_path_for(eval->env, path);
+
+  if (!glms_file_exists(abspath)) {
+    GLMS_WARNING_RETURN((GLMSAST){ .type = GLMS_AST_TYPE_UNDEFINED }, stderr, "No such file `%s`.\n", path);
+  }
+
+  char* source = glms_get_file_contents(abspath);
+  GLMSEnv* import_env = NEW(GLMSEnv);
+  glms_env_init(import_env, source, abspath, eval->env->config);
+  glms_env_exec(import_env);
+
+  GLMSAST* result_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STACK, false);
+  result_ast->as.stack.env = import_env;
+
+
+  const char* id_name = glms_string_view_get_value(&ast.as.import.id->as.id.value);
+  
+  glms_stack_push(stack, id_name, result_ast);
+
+  return (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = result_ast };
+  
+}
+
 GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   switch (ast.type) {
+  case GLMS_AST_TYPE_IMPORT: {
+    return glms_eval_import(eval, ast, stack);
+  }; break;
   case GLMS_AST_TYPE_TYPEDEF: {
     return glms_eval_typedef(eval, ast, stack);
   }; break;

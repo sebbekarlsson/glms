@@ -1,5 +1,21 @@
 ## Examples
 
+### Importing external files
+> `helpers.gs`
+```glsl
+function add(number x, number y) {
+  return x + y;
+}
+```
+> `main.gs`
+```glsl
+import "helpers.gs" as helpers
+
+number value = helpers.add(5, 3);
+
+print(value);
+```
+
 ### Writing a file
 ```glsl
 file f = file.open("test.txt", "w+");

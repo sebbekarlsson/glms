@@ -12,9 +12,11 @@ typedef struct {
 #define GLMSTOKM(p, t)                                                         \
   (GLMSTokenMap) { .pattern = p, .type = t }
 
-#define GLMS_LEXER_TOKEN_MAP_LEN 24
+#define GLMS_LEXER_TOKEN_MAP_LEN 26
 
 const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
+    GLMSTOKM("import", GLMS_TOKEN_TYPE_SPECIAL_IMPORT),
+    GLMSTOKM("as", GLMS_TOKEN_TYPE_SPECIAL_AS),
     GLMSTOKM("function", GLMS_TOKEN_TYPE_SPECIAL_FUNCTION),
     GLMSTOKM("return", GLMS_TOKEN_TYPE_SPECIAL_RETURN),
     GLMSTOKM("if", GLMS_TOKEN_TYPE_SPECIAL_IF),
