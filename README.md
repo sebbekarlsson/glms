@@ -11,10 +11,10 @@
 
 > (There are more to come, and everything is not implemented yet).
 
-### Caution
+### Caution :warning:
 > This is a work in progress!
 
-### Building & using it
+### Building & using it :hammer:
 ```bash
 mkdir build
 cd build
@@ -23,11 +23,11 @@ cmake .. && make -j8
 ./glms_e <input_file.gs>
 ```
 
-## Documentation
+## Documentation :open_book:
 > To see documentation, built-in functions etc,  
 > Have a look at [this](docs/signatures.md)
 
-## Some examples
+## Some examples :mag:
 
 ### Shader-like image manipulation
 ```glsl
