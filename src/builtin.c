@@ -16,6 +16,7 @@
 #include <glms/modules/image.h>
 #include <glms/modules/vec3.h>
 #include <glms/modules/vec4.h>
+#include <glms/modules/string.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
@@ -28,15 +29,18 @@ static void print_ast(GLMSAST ast, GLMSAllocator alloc) {
     printf("%1.6f\n", ast.as.number.value);
   }; break;
   case GLMS_AST_TYPE_STRING: {
-    const char *val = glms_string_view_get_value(&ast.as.string.value);
-    printf("%s\n", val ? val : "");
+    const char *val = glms_ast_get_string_value(&ast);
+    printf("%s\n", val ? val : "(null)");
+  }; break;
+  case GLMS_AST_TYPE_CHAR: {
+    printf("%c\n", ast.as.character.c);
   }; break;
   case GLMS_AST_TYPE_STACK_PTR: {
 
     if (ast.as.stackptr.ptr) {
       return print_ast(*ast.as.stackptr.ptr, alloc);
     };
-    break;
+  break;
   default: {
     char *v = glms_ast_to_string(ast, alloc);
     if (v != 0) {
@@ -687,6 +691,7 @@ void glms_builtin_init(GLMSEnv *env) {
     }
   );
 
+  glms_string_type(env);
   glms_array_type(env);
   glms_struct_vec3(env);
   glms_struct_vec4(env);

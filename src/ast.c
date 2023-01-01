@@ -100,8 +100,17 @@ const char *glms_ast_get_name(GLMSAST *ast) {
 }
 
 const char *glms_ast_get_string_value(GLMSAST *ast) {
-  if (ast->type == GLMS_AST_TYPE_STRING && ast->as.string.heap != 0) {
-    return ast->as.string.heap;
+  if (!ast) return 0;
+  GLMSAST* ptr = glms_ast_get_ptr(*ast);
+
+  if (ptr != 0) return glms_ast_get_string_value(ptr);
+  
+  if (ast->type == GLMS_AST_TYPE_STRING) {
+    if (ast->as.string.heap != 0) {
+      return ast->as.string.heap;
+    } else {
+      return glms_string_view_get_value(&ast->as.string.value);
+    }
   }
   return glms_ast_get_name(ast);
 }
@@ -163,15 +172,14 @@ GLMSAST *glms_ast_access_by_index(GLMSAST *ast, int64_t index, GLMSEnv *env) {
     return glms_ast_access_child_by_index(ast, index);
   }; break;
   case GLMS_AST_TYPE_STRING: {
-    const char *string_value = glms_ast_get_string_value(ast);
-    if (!string_value)
-      GLMS_WARNING_RETURN(ast, stderr, "string == null.\n");
-    int64_t len = strlen(string_value);
-    if (index < 0 || index >= len)
-      GLMS_WARNING_RETURN(ast, stderr, "index out of bounds.\n");
-    char tmp[3];
-    sprintf(tmp, "%c", string_value[index]);
-    return glms_env_new_ast_string(env, tmp, true);
+    const char* strval = glms_string_view_get_value(&ast->as.string.value);
+    if (!strval) return 0;
+
+    int64_t len = strlen(strval);
+
+    GLMSAST* char_ast = glms_env_new_ast(env, GLMS_AST_TYPE_CHAR, true);
+    char_ast->as.character.c = strval[index % len];
+    return char_ast;
   }; break;
   default: {
     GLMS_WARNING_RETURN(ast, stderr, "value cannot be indexed.\n");
@@ -1030,7 +1038,7 @@ char *glms_ast_generate_docstring_struct(GLMSAST ast, const char *name,
     const char *key = it.bucket->key;
     GLMSAST *value = (GLMSAST *)it.bucket->value;
 
-    if (key[0] == '_')
+    if (key[0] == '_' || strstr(key, "GLMS_") != 0)
       continue;
 
     char *signature_str =
@@ -1042,8 +1050,8 @@ char *glms_ast_generate_docstring_struct(GLMSAST ast, const char *name,
   }
 
   if (count <= 0 && str != 0) {
-    free(str);
-    return 0;
+     free(str);
+     return 0;
   }
   text_append(&str, "\n</details>\n");
   return str;
@@ -1090,8 +1098,8 @@ char *glms_ast_generate_docstring(GLMSAST ast, const char *name,
     text_append(&s, body);
     text_append(&s, "\n");
   } else if (s != 0) {
-    free(s);
-    return 0;
+    // free(s);
+    // return 0;
   }
 
   return s;

@@ -420,7 +420,7 @@ char* glms_env_export_docstrings_from_map(GLMSEnv *env, HashyMap map, bool only_
 
       const char *key = it.bucket->key;
       GLMSAST *value = (GLMSAST *)it.bucket->value;
-      if (key[0] == '_') continue;
+      if (key[0] == '_' || strstr(key, "GLMS_") != 0) continue;
 
 
       if (only_functions && value->type != GLMS_AST_TYPE_FUNC) continue;
@@ -450,7 +450,11 @@ int glms_env_export_docstrings(GLMSEnv* env, const char* filepath) {
     char* str = 0;
 
     char* str0 = 0;
+
+    text_append(&str, "## Global functions\n\n");
     if ((str0 = glms_env_export_docstrings_from_map(env, env->globals, true))) { text_append(&str, str0); }
+
+    text_append(&str, "## Types & structures\n\n");
     if ((str0 = glms_env_export_docstrings_from_map(env, env->types, false))) { text_append(&str, str0); }
 
     FILE* fp = fopen(filepath, "w+");

@@ -381,21 +381,26 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   GLMSAST left = glms_eval(eval, *ast.as.binop.left, stack);
   GLMSAST right = glms_eval(eval, *ast.as.binop.right, stack);
 
-  GLMSASTOperatorOverload overload =
-      glms_ast_get_op_overload(left, ast.as.binop.op);
-  if (overload != 0) {
-    GLMSAST result = {0};
-
-    GLMSAST *ptr_left = 0;
+      GLMSAST *ptr_left = 0;
     GLMSAST *ptr_right = 0;
 
     GLMSAST l = left;
     GLMSAST r = right;
 
+
     if ((ptr_left = glms_ast_get_ptr(left)))
       l = *ptr_left;
     if ((ptr_right = glms_ast_get_ptr(right)))
       r = *ptr_right;
+
+
+  GLMSASTOperatorOverload overload =
+      glms_ast_get_op_overload(l, ast.as.binop.op);
+
+  if (!overload) overload = glms_ast_get_op_overload(r, ast.as.binop.op);
+  
+  if (overload != 0) {
+    GLMSAST result = {0};
 
     if (overload(eval, stack, &l, &r, &result)) {
       return glms_eval(eval, result, stack);
@@ -615,12 +620,14 @@ GLMSAST glms_eval_access(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   int64_t idx = (int64_t)accessor.as.number.value;
 
+
   GLMSAST *v = glms_ast_access_by_index(&left, idx, eval->env);
 
   if (!v)
     return ast;
 
-  return glms_eval(eval, *v, stack);
+  GLMSAST result = glms_eval(eval, *v, stack);
+  return result;
 }
 
 GLMSAST glms_eval_function(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {

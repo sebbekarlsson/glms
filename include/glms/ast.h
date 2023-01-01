@@ -80,6 +80,10 @@ typedef struct GLMS_AST_STRUCT {
     } string;
 
     struct {
+      char c;
+    } character;
+
+    struct {
       GLMSTokenType op;
       JAST* left;
       JAST* right;

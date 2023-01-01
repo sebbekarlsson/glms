@@ -1,3 +1,5 @@
+## Global functions
+
 ### unit
 ```
 GLMS_AST_TYPE_VEC3 unit(GLMS_AST_TYPE_VEC3)
@@ -136,6 +138,10 @@ GLMS_AST_TYPE_VEC3 lerp(GLMS_AST_TYPE_VEC3 from, GLMS_AST_TYPE_VEC3 to, GLMS_AST
 
 ```
 
+## Types & structures
+
+### string (struct)
+
 ### array (struct)
 <details><summary>props</summary>
 
@@ -183,6 +189,10 @@ image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 
 </details>
 
+
+### vec3 (struct)
+
+### vec4 (struct)
 
 ### file (struct)
 <details><summary>props</summary>
