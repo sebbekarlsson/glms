@@ -293,9 +293,14 @@ GLMSAST glms_eval_id(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   const char *name = glms_string_view_get_value(&ast.as.id.value);
   GLMSAST *value = glms_eval_lookup(eval, stack, name);
 
+  
+
   if (value != 0) {
     glms_env_apply_type(eval->env, eval, stack, value);
     return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = value};
+  }
+  else if (value == 0 && ((ast.flags == 0) || (ast.flags->length <= 0))) {
+    GLMS_WARNING_RETURN((GLMSAST){ .type = GLMS_AST_TYPE_UNDEFINED }, stderr, "`%s` is not defined.", name);
   }
 
   return ast;
