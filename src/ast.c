@@ -1,12 +1,14 @@
 #include "glms/ast_type.h"
 #include "glms/stack.h"
 #include "glms/string_view.h"
+#include "glms/type.h"
 #include "hashy/hashy.h"
 #include <glms/ast.h>
+#include <glms/constants.h>
 #include <glms/env.h>
 #include <glms/macros.h>
+#include <linux/limits.h>
 #include <text/text.h>
-#include <glms/constants.h>
 
 GLMS_IMPLEMENT_BUFFER(GLMSAST);
 GLMS_IMPLEMENT_LIST(GLMSAST);
@@ -441,7 +443,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
 
-  //if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
+  // if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
 
   dest->props = (HashyMap){0};
   dest->children = 0;
@@ -451,7 +453,8 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   dest->constructor = src.constructor;
   dest->value_type = src.value_type;
 
-  if (src.typename) dest->typename = strdup(src.typename);
+  if (src.typename)
+    dest->typename = strdup(src.typename);
 
   if (src.children != 0) {
     for (int64_t i = 0; i < src.children->length; i++) {
@@ -604,11 +607,9 @@ void glms_ast_destructor(GLMSAST *ast) {
     ast->destructor(ast);
   }
 
-
-
-  // this is not needed because all the AST nodes
-  // will be destroyed linearly either way.
-  #if 0
+// this is not needed because all the AST nodes
+// will be destroyed linearly either way.
+#if 0
   switch (ast->type) {
   case GLMS_AST_TYPE_BINOP: {
     glms_ast_destructor_binop(ast);
@@ -640,7 +641,7 @@ void glms_ast_destructor(GLMSAST *ast) {
   default: {
   }; break;
   }
-  #endif
+#endif
 
   if (ast->string_rep != 0) {
     free(ast->string_rep);
@@ -830,16 +831,16 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
   GLMSAST *ptr_a = glms_ast_get_ptr(*a);
   GLMSAST *ptr_b = glms_ast_get_ptr(b);
 
-  //if (ptr_a && ptr_b) {
-    // return glms_ast_assign(ptr_a, *ptr_b, eval, stack);
+  // if (ptr_a && ptr_b) {
+  // return glms_ast_assign(ptr_a, *ptr_b, eval, stack);
   // }
 
   // if (ptr_a != 0) {
-    //  return glms_ast_assign(ptr_a, b, eval, stack);
+  //  return glms_ast_assign(ptr_a, b, eval, stack);
   // }
 
   if (ptr_b != 0 && b.type == GLMS_AST_TYPE_STACK_PTR) {
-     return glms_ast_assign(a, *ptr_b, eval, stack);
+    return glms_ast_assign(a, *ptr_b, eval, stack);
   }
 
   bool same_type = a->type == b.type;
@@ -848,7 +849,8 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
 
   if (!same_type) {
     GLMS_WARNING_RETURN(b, stderr,
-                        "Cannot assign variable of different type (%s = %s).\n", GLMS_AST_TYPE_STR[a->type], GLMS_AST_TYPE_STR[b.type]);
+                        "Cannot assign variable of different type (%s = %s).\n",
+                        GLMS_AST_TYPE_STR[a->type], GLMS_AST_TYPE_STR[b.type]);
   }
 
   switch (type) {
@@ -912,42 +914,185 @@ float glms_ast_number(GLMSAST ast) {
   return 0.0f;
 }
 
-
 GLMSAST *glms_ast_register_func_overload(struct GLMS_ENV_STRUCT *env,
                                          GLMSAST *ast, const char *name,
                                          GLMSFPTR func) {
-  if (!env || !ast || !name || !func) return ast;
-
+  if (!env || !ast || !name || !func)
+    return ast;
 
   char tmp[256];
   sprintf(tmp, GLMS_FUNC_OVERLOAD_TEMPLATE, name);
 
-
-
   if (!ast->props.initialized) {
-    hashy_map_init_v2(&ast->props
-		      , (HashyMapConfig){ .capacity = 256, .remember_keys = true });
+    hashy_map_init_v2(&ast->props,
+                      (HashyMapConfig){.capacity = 256, .remember_keys = true});
   }
 
-  GLMSAST* arb = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC_OVERLOAD_PTR, false);
+  GLMSAST *arb = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC_OVERLOAD_PTR, false);
   arb->ptr = func;
   hashy_map_set(&ast->props, tmp, arb);
 
   return ast;
 }
 
-GLMSFPTR glms_ast_get_func_overload(GLMSAST ast,
-                                                   const char *name) {
+GLMSFPTR glms_ast_get_func_overload(GLMSAST ast, const char *name) {
 
-  if (!ast.props.initialized || !name) return 0;
+  if (!ast.props.initialized || !name)
+    return 0;
 
   char tmp[256];
   sprintf(tmp, GLMS_FUNC_OVERLOAD_TEMPLATE, name);
 
-  GLMSAST* arb = (GLMSAST*)hashy_map_get(&ast.props, tmp);
+  GLMSAST *arb = (GLMSAST *)hashy_map_get(&ast.props, tmp);
 
-  if (!arb) return 0;
-  if (!arb->ptr) return 0;
+  if (!arb)
+    return 0;
+  if (!arb->ptr)
+    return 0;
 
   return (GLMSFPTR)arb->ptr;
+}
+
+char *glms_ast_generate_docstring_func(GLMSAST ast, const char *fname,
+                                       const char *suffix, int depth,
+                                       GLMSDocstringGenerator *gen) {
+  if (ast.type != GLMS_AST_TYPE_FUNC)
+    return 0;
+
+  const char *name =
+      ast.as.func.id ? glms_string_view_get_value(&ast.as.func.id->as.id.value)
+                     : ast.as.func.name;
+
+  if (!name)
+    name = fname;
+  if (!name)
+    name = "?";
+
+  char *s = 0;
+
+  char fullname[PATH_MAX];
+  bool has_fullname = false;
+
+  if (name != 0 && suffix != 0) {
+    sprintf(fullname, "%s.%s", suffix, name);
+    has_fullname = true;
+  }
+
+  if (ast.as.func.signatures.length) {
+    text_append(&s, "```\n");
+    for (int64_t i = 0; i < ast.as.func.signatures.length; i++) {
+
+      char *next = glms_function_signature_to_string(
+          ast.as.func.signatures.items[i], has_fullname ? fullname : name);
+
+      if (!next)
+        continue;
+
+      text_append(&s, next);
+      free(next);
+      next = 0;
+      text_append(&s, "\n");
+    }
+    text_append(&s, "\n```");
+  } else {
+    char tmp[256];
+    sprintf(tmp, "> No signatures defined.");
+    text_append(&s, tmp);
+    text_append(&s, "\n");
+  }
+
+  return s;
+}
+
+char *glms_ast_generate_docstring_struct(GLMSAST ast, const char *name,
+                                         const char *suffix, int depth,
+                                         GLMSDocstringGenerator *gen) {
+
+  if (!ast.props.initialized)
+    return 0;
+
+  HashyIterator it = {0};
+
+  char tmp[PATH_MAX];
+  sprintf(tmp, "<details><summary>props</summary>\n\n");
+
+  char *str = 0;
+
+  text_append(&str, tmp);
+
+  int64_t count = 0;
+  while (hashy_map_iterate(&ast.props, &it)) {
+    if (!it.bucket->key)
+      continue;
+    if (!it.bucket->value)
+      continue;
+
+    const char *key = it.bucket->key;
+    GLMSAST *value = (GLMSAST *)it.bucket->value;
+
+    if (key[0] == '_')
+      continue;
+
+    char *signature_str =
+        glms_ast_generate_docstring(*value, key, name, depth + 1, gen);
+
+    text_append(&str, signature_str);
+    text_append(&str, "\n");
+    count++;
+  }
+
+  if (count <= 0 && str != 0) {
+    free(str);
+    return 0;
+  }
+  text_append(&str, "\n</details>\n");
+  return str;
+}
+
+char *glms_ast_generate_docstring(GLMSAST ast, const char *name,
+                                  const char *suffix, int depth,
+                                  GLMSDocstringGenerator *gen) {
+  char *s = 0;
+  char tmp[PATH_MAX];
+
+
+  char* fullname = 0;
+
+  if (name != 0 && suffix != 0) {
+    text_append(&fullname, suffix);
+    text_append(&fullname, ".");
+    text_append(&fullname, name);
+  }
+
+  if (ast.type != GLMS_AST_TYPE_FUNC) {
+    sprintf(tmp, "### %s (struct)", name);
+  } else {
+    sprintf(tmp, "### %s", fullname ? fullname : name);
+  }
+  text_append(&s, tmp);
+  text_append(&s, "\n");
+
+  char *body = 0;
+  switch (ast.type) {
+  case GLMS_AST_TYPE_FUNC: {
+    body = glms_ast_generate_docstring_func(ast, name, suffix, depth, gen);
+  }; break;
+  default: {
+    body = glms_ast_generate_docstring_struct(ast, name, suffix, depth, gen);
+  }; break;
+  }
+
+  if (fullname) {
+    free(fullname);
+    fullname = 0;
+  }
+  if (body) {
+    text_append(&s, body);
+    text_append(&s, "\n");
+  } else if (s != 0) {
+    free(s);
+    return 0;
+  }
+
+  return s;
 }

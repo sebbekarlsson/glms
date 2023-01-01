@@ -75,6 +75,38 @@ void glms_file_constructor(GLMSEval *eval, GLMSStack *stack,
   glms_ast_register_function(eval->env, self, "open", glms_file_fptr_open);
   glms_ast_register_function(eval->env, self, "close", glms_file_fptr_close);
   glms_ast_register_function(eval->env, self, "write", glms_file_fptr_write);
+
+  glms_env_register_function_signature(
+    eval->env,
+    self,
+    "open",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ .typename = "file" },
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_STRING, .valuename = "filename" }, (GLMSType){ GLMS_AST_TYPE_STRING, .valuename = "mode" }},
+      .args_length = 2
+    }
+  );
+
+  glms_env_register_function_signature(
+    eval->env,
+    self,
+    "close",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ GLMS_AST_TYPE_BOOL },
+      .args_length = 0
+    }
+  );
+
+  glms_env_register_function_signature(
+    eval->env,
+    self,
+    "write",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ GLMS_AST_TYPE_BOOL },
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_STRING, .valuename = "text" }},
+      .args_length = 1
+    }
+  );
 }
 
 void glms_file_type(GLMSEnv *env) {

@@ -77,7 +77,7 @@ void glms_stack_dump(GLMSStack *stack) {
     GLMS_WARNING_RETURN(, stderr, "stack not initialized.\n");
 
   for (int i = 0; i < stack->names_length; i++) {
-    GLMSAST *ast = glms_stack_get(stack, stack->names[i]);
+    //    GLMSAST *ast = glms_stack_get(stack, stack->names[i]);
 
     printf("%d (%s) => %s\n", i, stack->names[i], stack->names[i]);
   }

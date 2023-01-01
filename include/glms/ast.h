@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <vec3/vec3.h>
 #include <glms/ast_type.h>
+#include <glms/type.h>
 #include <glms/allocator.h>
 
 #define GLMS_AST_OPERATOR_OVERLOAD_CAP 24
@@ -98,6 +99,8 @@ typedef struct GLMS_AST_STRUCT {
     struct {
       JAST* id;
       JAST* body;
+      char* name;
+      GLMSFunctionSignatureBuffer signatures;
     } func;
 
     struct {
@@ -241,7 +244,13 @@ GLMSFPTR glms_ast_get_func_overload(GLMSAST ast, const char* name);
 float glms_ast_number(GLMSAST ast);
 
 
-char* glms_ast_to_string_debug(GLMSAST ast);
+char *glms_ast_to_string_debug(GLMSAST ast);
+
+typedef struct {
+  bool have_detail;
+} GLMSDocstringGenerator;
+
+char* glms_ast_generate_docstring(GLMSAST ast, const char* name, const char* suffix, int depth, GLMSDocstringGenerator* gen);
 
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)

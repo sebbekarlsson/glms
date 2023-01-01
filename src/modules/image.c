@@ -188,6 +188,61 @@ void glms_struct_image_constructor(GLMSEval *eval, GLMSStack *stack,
                              glms_struct_image_fptr_save);
   glms_ast_register_function(eval->env, ast, "shade",
                              glms_struct_image_fptr_shade);
+
+  glms_env_register_function_signature(
+    eval->env,
+    ast,
+    "shade",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_BOOL},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_FUNC } },
+      .args_length = 1
+    }
+  );
+
+  glms_env_register_function_signature(
+    eval->env,
+    ast,
+    "make",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){.typename = "image"},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "width" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "height" } },
+      .args_length = 2
+    }
+  );
+
+  glms_env_register_function_signature(
+    eval->env,
+    ast,
+    "setPixel",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ GLMS_AST_TYPE_VOID },
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC4, .valuename = "pixel" }},
+      .args_length = 1
+    }
+  );
+
+  glms_env_register_function_signature(
+    eval->env,
+    ast,
+    "getPixel",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ GLMS_AST_TYPE_VEC4 },
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "x" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "y" } },
+      .args_length = 2
+    }
+  );
+
+  glms_env_register_function_signature(
+    eval->env,
+    ast,
+    "save",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ GLMS_AST_TYPE_BOOL },
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_STRING, .valuename = "filename" }},
+      .args_length = 1
+    }
+  );
 }
 
 void glms_struct_image_destructor(GLMSAST *ast) {

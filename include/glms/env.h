@@ -1,5 +1,6 @@
 #ifndef GLMS_ENV_H
 #define GLMS_ENV_H
+#include "glms/type.h"
 #include <memo/memo.h>
 #include <arena/arena.h>
 #include <glms/ast.h>
@@ -67,7 +68,11 @@ GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const cha
 
 GLMSAST* glms_env_exec(GLMSEnv* env);
 
-GLMSAST* glms_env_register_function(GLMSEnv* env, const char* name, GLMSFPTR fptr);
+GLMSAST *glms_env_register_function(GLMSEnv *env, const char *name,
+                                    GLMSFPTR fptr);
+
+int glms_env_register_function_signature(GLMSEnv *env, GLMSAST* ast, const char *name,
+					 GLMSFunctionSignature signature);
 
 GLMSAST *glms_env_register_struct(GLMSEnv *env, const char *name,
                                   GLMSAST **fields, int fields_length);
@@ -94,6 +99,8 @@ GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name);
 GLMSAST *glms_env_apply_type(GLMSEnv *env, GLMSEval *eval, GLMSStack *stack,
                              GLMSAST *ast);
 
-const char* glms_env_get_path_for(GLMSEnv* env, const char* path);
+const char *glms_env_get_path_for(GLMSEnv *env, const char *path);
+
+int glms_env_export_docstrings(GLMSEnv* env, const char* filepath);
 
 #endif

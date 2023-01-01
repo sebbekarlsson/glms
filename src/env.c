@@ -5,7 +5,9 @@
 #include "glms/ast_type.h"
 #include "glms/eval.h"
 #include "glms/stack.h"
+#include "glms/type.h"
 #include "hashy/hashy.h"
+#include "text/text.h"
 #include <glms/builtin.h>
 #include <glms/constants.h>
 #include <glms/env.h>
@@ -13,6 +15,8 @@
 #include <glms/macros.h>
 #include <spath/spath.h>
 #include <limits.h>
+#include <stdio.h>
+#include <string.h>
 
 int glms_env_init(GLMSEnv *env, const char *source, const char* entry_path, GLMSConfig cfg) {
   if (!env)
@@ -45,8 +49,11 @@ int glms_env_init(GLMSEnv *env, const char *source, const char* entry_path, GLMS
   glms_eval_init(&env->eval, env);
   glms_stack_init(&env->stack);
   glms_builtin_init(env);
-  glms_lexer_init(&env->lexer, env->source);
-  glms_parser_init(&env->parser, env);
+
+  if (env->source != 0) {
+    glms_lexer_init(&env->lexer, env->source);
+    glms_parser_init(&env->parser, env);
+  }
 
   return 1;
 }
@@ -158,6 +165,56 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
   return root;
 }
 
+int glms_env_register_function_signature(GLMSEnv *env, GLMSAST* ast, const char *name,
+                                          GLMSFunctionSignature signature) {
+
+ if (!env || !name)
+    return 0;
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+  GLMSAST* func =  0;
+
+  if (ast != 0) {
+    func = glms_ast_access_by_key(ast, name, env);
+  } else {
+    func = glms_env_lookup_function(env, name);
+  }
+
+  if (!func) return 0;
+  if (func->type != GLMS_AST_TYPE_FUNC) return 0;
+
+  if (func->as.func.signatures.initialized == false) {
+    glms_GLMSFunctionSignature_buffer_init(&func->as.func.signatures);
+  }
+
+GLMSFunctionSignature next = {0};
+next.args_length = signature.args_length;
+next.return_type = signature.return_type;
+
+ if (signature.description) next.description = strdup(signature.description);
+
+if (signature.args && signature.args_length) {
+    next.args = (GLMSType*)calloc(signature.args_length, sizeof(GLMSType));
+
+    for (int i = 0; i < signature.args_length; i++) {
+      next.args[i] = signature.args[i];
+
+      if (signature.args[i].valuename != 0) {
+	next.args[i].valuename = strdup(signature.args[i].valuename);
+      }
+
+       if (signature.args[i].typename != 0) {
+	next.args[i].typename = strdup(signature.args[i].typename);
+      }
+    }
+}
+
+glms_GLMSFunctionSignature_buffer_push(&func->as.func.signatures, next);
+  
+  return 1;
+}
+
 GLMSAST *glms_env_register_function(GLMSEnv *env, const char *name,
 				    GLMSFPTR fptr) {
   if (!env || !name || !fptr)
@@ -167,6 +224,7 @@ GLMSAST *glms_env_register_function(GLMSEnv *env, const char *name,
 
   GLMSAST *func = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC, false);
   func->fptr = fptr;
+  func->as.func.name = strdup(name);
   hashy_map_set(&env->globals, name, func);
 
   return func;
@@ -342,4 +400,66 @@ const char* glms_env_get_path_for(GLMSEnv* env, const char* path) {
   env->last_joined_path = strdup(joined);
 
   return env->last_joined_path;
+}
+
+
+char* glms_env_export_docstrings_from_map(GLMSEnv *env, HashyMap map, bool only_functions) {
+
+   char* str = 0;
+  HashyIterator it = {0};
+
+
+  if (!map.initialized) return 0;
+
+  GLMSDocstringGenerator gen = {0};
+    while (hashy_map_iterate(&map, &it)) {
+      if (!it.bucket->key)
+	continue;
+      if (!it.bucket->value)
+	continue;
+
+      const char *key = it.bucket->key;
+      GLMSAST *value = (GLMSAST *)it.bucket->value;
+      if (key[0] == '_') continue;
+
+
+      if (only_functions && value->type != GLMS_AST_TYPE_FUNC) continue;
+
+      glms_env_apply_type(env, &env->eval, &env->stack, value);
+
+      char* signature_str = glms_ast_generate_docstring(*value, key, 0, 0, &gen);
+
+      if (!signature_str) continue;
+
+      text_append(&str, signature_str);
+      text_append(&str, "\n");
+    }
+
+    if (!str) return 0;
+
+    return str;
+}
+
+int glms_env_export_docstrings(GLMSEnv* env, const char* filepath) {
+    if (!env || !filepath)
+    return 0;
+
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+    char* str = 0;
+
+    char* str0 = 0;
+    if ((str0 = glms_env_export_docstrings_from_map(env, env->globals, true))) { text_append(&str, str0); }
+    if ((str0 = glms_env_export_docstrings_from_map(env, env->types, false))) { text_append(&str, str0); }
+
+    FILE* fp = fopen(filepath, "w+");
+
+    if (!fp) GLMS_WARNING_RETURN(0, stderr, "Failed to open `%s`\n", filepath);
+
+    fwrite(&str[0], sizeof(char), strlen(str), fp);
+
+    fclose(fp);
+
+    return 1;
 }

@@ -4,17 +4,18 @@
 #include "glms/stack.h"
 #include "glms/string_view.h"
 #include "glms/token.h"
+#include "glms/type.h"
 #include "text/text.h"
 #include <gimg/gimg.h>
 #include <glms/ast.h>
 #include <glms/builtin.h>
 #include <glms/env.h>
 #include <glms/macros.h>
+#include <glms/modules/array.h>
+#include <glms/modules/file.h>
 #include <glms/modules/image.h>
 #include <glms/modules/vec3.h>
 #include <glms/modules/vec4.h>
-#include <glms/modules/array.h>
-#include <glms/modules/file.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
@@ -37,7 +38,7 @@ static void print_ast(GLMSAST ast, GLMSAllocator alloc) {
     };
     break;
   default: {
-    char* v = glms_ast_to_string(ast, alloc);
+    char *v = glms_ast_to_string(ast, alloc);
     if (v != 0) {
       printf("%s\n", v);
     }
@@ -340,16 +341,17 @@ int glms_fptr_max(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
-
 int glms_fptr_pow(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
                   GLMSStack *stack, GLMSAST *out) {
 
-  glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_NUMBER, GLMS_AST_TYPE_NUMBER }, 2, args);
+  glms_eval_expect(eval, stack,
+                   (GLMSASTType[]){GLMS_AST_TYPE_NUMBER, GLMS_AST_TYPE_NUMBER},
+                   2, args);
 
   float x = glms_ast_number(args->items[0]);
   float y = glms_ast_number(args->items[1]);
 
-  *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = powf(x, y) };
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = powf(x, y)};
 
   return 1;
 }
@@ -357,27 +359,27 @@ int glms_fptr_pow(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
 int glms_fptr_log(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
                   GLMSStack *stack, GLMSAST *out) {
 
-  glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_NUMBER }, 1, args);
-  
+  glms_eval_expect(eval, stack, (GLMSASTType[]){GLMS_AST_TYPE_NUMBER}, 1, args);
+
   float x = glms_ast_number(args->items[0]);
-  *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = logf(x) };
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = logf(x)};
 
   return 1;
 }
 
 int glms_fptr_log10(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
-                  GLMSStack *stack, GLMSAST *out) {
+                    GLMSStack *stack, GLMSAST *out) {
 
-  glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_NUMBER }, 1, args);
-  
+  glms_eval_expect(eval, stack, (GLMSASTType[]){GLMS_AST_TYPE_NUMBER}, 1, args);
+
   float x = glms_ast_number(args->items[0]);
-  *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = log10f(x) };
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = log10f(x)};
 
   return 1;
 }
 
 int glms_fptr_log10(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
-                       GLMSStack *stack, GLMSAST* out);
+                    GLMSStack *stack, GLMSAST *out);
 
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
@@ -388,27 +390,302 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "print", glms_fptr_print);
 
   glms_env_register_function(env, "dot", glms_fptr_dot);
-  glms_env_register_function(env, "distance", glms_fptr_distance);
-  glms_env_register_function(env, "cross", glms_fptr_cross);
-  glms_env_register_function(env, "normalize", glms_fptr_normalize);
-  glms_env_register_function(env, "unit", glms_fptr_normalize);
-  glms_env_register_function(env, "length", glms_fptr_length);
-  glms_env_register_function(env, "cos", glms_fptr_cos);
-  glms_env_register_function(env, "sin", glms_fptr_sin);
-  glms_env_register_function(env, "tan", glms_fptr_tan);
-  glms_env_register_function(env, "fract", glms_fptr_fract);
-  glms_env_register_function(env, "abs", glms_fptr_abs);
-  glms_env_register_function(env, "atan", glms_fptr_atan);
-  glms_env_register_function(env, "lerp", glms_fptr_lerp);
-  glms_env_register_function(env, "mix", glms_fptr_lerp);
-  glms_env_register_function(env, "clamp", glms_fptr_clamp);
-  glms_env_register_function(env, "min", glms_fptr_min);
-  glms_env_register_function(env, "max", glms_fptr_max);
-  glms_env_register_function(env, "pow", glms_fptr_pow);
-  glms_env_register_function(env, "log", glms_fptr_log);
-  glms_env_register_function(env, "log10", glms_fptr_log10);
-  glms_env_register_function(env, "random", glms_fptr_random);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "dot",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3 }, (GLMSType){ GLMS_AST_TYPE_VEC3 } },
+      .args_length = 2
+    }
+  );
 
+  glms_env_register_function(env, "distance", glms_fptr_distance);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "distance",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3 }, (GLMSType){ GLMS_AST_TYPE_VEC3 } },
+      .args_length = 2
+    }
+  );
+  
+  glms_env_register_function(env, "cross", glms_fptr_cross);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "cross",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC3},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3 }, (GLMSType){ GLMS_AST_TYPE_VEC3 } },
+      .args_length = 2
+    }
+  );
+  
+  glms_env_register_function(env, "normalize", glms_fptr_normalize);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "normalize",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC3},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3 } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "unit", glms_fptr_normalize);
+  glms_env_register_function_signature(
+   env, 0,
+    "unit",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC3},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3 } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "length", glms_fptr_length);
+  glms_env_register_function_signature(
+   env, 0,
+    "length",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3 } },
+      .args_length = 1
+    }
+  );
+  glms_env_register_function_signature(
+   env, 0,
+    "length",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_STRING } },
+      .args_length = 1
+    }
+  );
+  glms_env_register_function_signature(
+   env, 0,
+    "length",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_ARRAY } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "cos", glms_fptr_cos);
+  glms_env_register_function_signature(
+   env, 0,
+    "cos",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "sin", glms_fptr_sin);
+  glms_env_register_function_signature(
+   env, 0,
+    "sin",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "tan", glms_fptr_tan);
+  glms_env_register_function_signature(
+   env, 0,
+    "tan",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "fract", glms_fptr_fract);
+  glms_env_register_function_signature(
+   env, 0,
+    "fract",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "abs", glms_fptr_abs);
+  glms_env_register_function_signature(
+   env, 0,
+    "abs",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "atan", glms_fptr_atan);
+  glms_env_register_function_signature(
+   env, 0,
+    "atan",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  glms_env_register_function_signature(
+   env, 0,
+    "atan",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER }, (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 2
+    }
+  );
+  
+  glms_env_register_function(env, "lerp", glms_fptr_lerp);
+  glms_env_register_function_signature(
+   env, 0,
+    "lerp",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "from" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "to" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "scale" } },
+      .args_length = 3
+    }
+  );
+  glms_env_register_function_signature(
+   env, 0,
+    "lerp",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC3},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "from" }, (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "to" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "scale" } },
+      .args_length = 3
+    }
+  );
+  
+  glms_env_register_function(env, "mix", glms_fptr_lerp);
+  glms_env_register_function_signature(
+   env, 0,
+    "mix",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "from" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "to" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "scale" } },
+      .args_length = 3
+    }
+  );
+  glms_env_register_function_signature(
+   env, 0,
+    "mix",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC3},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "from" }, (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "to" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "scale" } },
+      .args_length = 3
+    }
+  );
+  
+  glms_env_register_function(env, "clamp", glms_fptr_clamp);
+  glms_env_register_function_signature(
+   env, 0,
+    "clamp",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "value" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "min" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "max" } },
+      .args_length = 3
+    }
+  );
+  
+  glms_env_register_function(env, "min", glms_fptr_min);
+  glms_env_register_function_signature(
+   env, 0,
+    "min",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER }, (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 2
+    }
+  );
+  
+  glms_env_register_function(env, "max", glms_fptr_max);
+  glms_env_register_function_signature(
+   env, 0,
+    "max",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER }, (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 2
+    }
+  );
+  
+  glms_env_register_function(env, "pow", glms_fptr_pow);
+  glms_env_register_function_signature(
+   env, 0,
+    "pow",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER }, (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 2
+    }
+  );
+  
+  glms_env_register_function(env, "log", glms_fptr_log);
+  glms_env_register_function_signature(
+   env, 0,
+    "log",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "log10", glms_fptr_log10);
+  glms_env_register_function_signature(
+   env, 0,
+    "log10",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER } },
+      .args_length = 1
+    }
+  );
+  
+  glms_env_register_function(env, "random", glms_fptr_random);
+  glms_env_register_function_signature(
+   env, 0,
+    "random",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args_length = 0,
+      .description = "Returns a random value between 0 and 1."
+    }
+  );
+  glms_env_register_function_signature(
+   env, 0,
+    "random",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "min" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "max" } },
+      .args_length = 2
+    }
+  );
+  glms_env_register_function_signature(
+   env, 0,
+    "random",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "min" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "max" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "seed" } },
+      .args_length = 3
+    }
+  );
 
   glms_array_type(env);
   glms_struct_vec3(env);
