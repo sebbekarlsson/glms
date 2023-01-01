@@ -174,6 +174,14 @@ GLMS_AST_TYPE_MAT4 ortho(GLMS_AST_TYPE_NUMBER left, GLMS_AST_TYPE_NUMBER right, 
 
 ```
 
+### smoothstep
+```
+GLMS_AST_TYPE_NUMBER smoothstep(GLMS_AST_TYPE_NUMBER edge0, GLMS_AST_TYPE_NUMBER edge1, GLMS_AST_TYPE_NUMBER value)
+GLMS_AST_TYPE_VEC3 smoothstep(GLMS_AST_TYPE_VEC3 edge0, GLMS_AST_TYPE_VEC3 edge1, GLMS_AST_TYPE_NUMBER value)
+GLMS_AST_TYPE_VEC3 smoothstep(GLMS_AST_TYPE_VEC3 edge0, GLMS_AST_TYPE_VEC3 edge1, GLMS_AST_TYPE_VEC3 value)
+
+```
+
 ## Types & structures
 
 ### string (struct)

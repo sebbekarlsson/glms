@@ -20,6 +20,7 @@
 #include <glms/modules/vec4.h>
 #include <glms/modules/string.h>
 #include <glms/modules/mat4.h>
+#include <glms/math.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
@@ -482,6 +483,38 @@ int glms_fptr_radians(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
+int glms_fptr_smoothstep(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+  GLMSAST arg0 = args->items[0];
+  GLMSAST arg1 = args->items[1];
+  GLMSAST arg2 = args->items[2];
+
+
+  if (arg0.type == GLMS_AST_TYPE_NUMBER && arg1.type == GLMS_AST_TYPE_NUMBER && arg2.type == GLMS_AST_TYPE_NUMBER) {
+    float edge0 = glms_ast_number(arg0);
+    float edge1 = glms_ast_number(arg1);
+    float f = glms_ast_number(arg2);
+    *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = glms_smoothstep_factor(edge0, edge1, f) };
+    return 1;
+  } else if (arg0.type == GLMS_AST_TYPE_VEC3 && arg1.type == GLMS_AST_TYPE_VEC3 && arg2.type == GLMS_AST_TYPE_NUMBER) {
+    Vector3 edge0 = arg0.as.v3;
+    Vector3 edge1 = arg1.as.v3;
+    float f = glms_ast_number(arg2);
+    *out = (GLMSAST){ .type = GLMS_AST_TYPE_VEC3, .as.v3 = glms_smoothstep_vec3_factor(edge0, edge1, f) };
+    return 1;
+  } else if (arg0.type == GLMS_AST_TYPE_VEC3 && arg1.type == GLMS_AST_TYPE_VEC3 && arg2.type == GLMS_AST_TYPE_VEC3) {
+    Vector3 edge0 = arg0.as.v3;
+    Vector3 edge1 = arg1.as.v3;
+    Vector3 f = arg2.as.v3;
+    *out = (GLMSAST){ .type = GLMS_AST_TYPE_VEC3, .as.v3 = glms_smoothstep_vec3_vec3(edge0, edge1, f) };
+    return 1;
+  }
+
+  return 0;
+}
+
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
 
@@ -489,6 +522,38 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_any(env, "TAU",
                         glms_env_new_ast_number(env, M_PI * 2.0f, true));
   glms_env_register_function(env, "print", glms_fptr_print);
+
+  glms_env_register_function(env, "smoothstep", glms_fptr_smoothstep);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "smoothstep",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "edge0" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "edge1" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "value" } },
+      .args_length = 3
+    }
+  );
+  glms_env_register_function_signature(
+    env,
+    0,
+    "smoothstep",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC3},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "edge0" }, (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "edge1" }, (GLMSType){ GLMS_AST_TYPE_NUMBER, .valuename = "value" } },
+      .args_length = 3
+    }
+  );
+  glms_env_register_function_signature(
+    env,
+    0,
+    "smoothstep",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC3},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "edge0" }, (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "edge1" }, (GLMSType){ GLMS_AST_TYPE_VEC3, .valuename = "value" } },
+      .args_length = 3
+    }
+  );
 
   glms_env_register_function(env, "radians", glms_fptr_radians);
   glms_env_register_function_signature(
