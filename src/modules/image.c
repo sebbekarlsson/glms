@@ -144,7 +144,12 @@ int glms_struct_image_fptr_shade(GLMSEval *eval, GLMSAST *ast,
 
 
       if (result.type == GLMS_AST_TYPE_VEC4) {
-        if (!gimg_set_pixel_vec4(gimg, x, y, result.as.v4)) {
+	Vector4 translated = result.as.v4;
+	translated.x *= 255.0f;
+	translated.y *= 255.0f;
+	translated.z *= 255.0f;
+	translated.w *= 255.0f;
+        if (!gimg_set_pixel_vec4(gimg, x, y, translated)) {
 	  goto done;
 	}
       }

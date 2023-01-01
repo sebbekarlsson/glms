@@ -1,4 +1,5 @@
 #include "glms/allocator.h"
+#include "glms/ast.h"
 #include <glms/env.h>
 #include <glms/eval.h>
 
@@ -51,11 +52,15 @@ void glms_struct_vec4_constructor(GLMSEval *eval, GLMSStack *stack,
   if (!args)
     return;
 
-  if (args->length >= 4) {
-    float x = (glms_eval(eval, args->items[0], stack)).as.number.value;
-    float y = (glms_eval(eval, args->items[1], stack)).as.number.value;
-    float z = (glms_eval(eval, args->items[2], stack)).as.number.value;
-    float w = (glms_eval(eval, args->items[3], stack)).as.number.value;
+  if (args->length == 2) {
+    Vector3 xyz = args->items[0].as.v3;
+    float w = glms_ast_number(args->items[1]); 
+    ast->as.v4 = VEC4(xyz.x, xyz.y, xyz.z, w);
+  } else if (args->length >= 4) {
+    float x = glms_ast_number(args->items[0]);
+    float y = glms_ast_number(args->items[1]);
+    float z = glms_ast_number(args->items[2]);
+    float w = glms_ast_number(args->items[3]);
 
     ast->as.v4 = VEC4(x, y, z, w);
   } else if (args->length == 1) {

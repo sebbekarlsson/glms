@@ -11,11 +11,27 @@ int glms_struct_vec3_swizzle(GLMSEval *eval, GLMSStack *stack, GLMSAST *ast,
   if (!id)
     return 0;
 
-  if (strlen(id) > 1) {
-    GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
-  }
+  int idx = 0;
+  Vector3 v3 = ast->as.v3;
 
-  int idx = ((int)id[0]) - 120;
+  if (strlen(id) > 1) {
+    if (strcmp(id, "xyz") == 0) {
+      *out = (GLMSAST){.type = GLMS_AST_TYPE_VEC3, .as.v3 = v3};
+      return 1;
+    } else {
+      GLMS_WARNING_RETURN(0, stderr, "Unsupported swizzle %s\n", id);
+    }
+  } else {
+
+    idx = ((int)id[0]) - 120;
+
+    switch (id[0]) {
+	case 'r': idx = 0; break;
+	case 'g': idx = 1; break;
+	case 'b': idx = 2; break;
+	default: {}; break;
+    }
+  }
 
   if (idx < 0 || idx >= 3) {
     GLMS_WARNING_RETURN(0, stderr, "Invalid swizzle `%s`\n", id);
