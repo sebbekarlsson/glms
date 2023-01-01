@@ -23,7 +23,7 @@ cmake .. && make -j8
 ./glms_e <input_file.gs>
 ```
 
-### Documentation
+## Documentation
 > To see documentation, built-in functions etc,  
 > Have a look at [this](docs/signatures.md)
 
