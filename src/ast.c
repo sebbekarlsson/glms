@@ -461,6 +461,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   dest->ptr = src.ptr;
   dest->constructor = src.constructor;
   dest->value_type = src.value_type;
+  dest->constructed = false;
 
   if (src.type == GLMS_AST_TYPE_MAT4) {
     dest->as.m4 = glms_mat4_copy(src.as.m4);

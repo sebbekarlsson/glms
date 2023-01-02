@@ -20,6 +20,7 @@
 #include <glms/modules/vec4.h>
 #include <glms/modules/string.h>
 #include <glms/modules/mat4.h>
+#include <glms/modules/canvas.h>
 #include <glms/math.h>
 #include <math.h>
 #include <mif/utils.h>
@@ -943,4 +944,5 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_mat4_type(env);
   glms_struct_image(env);
   glms_file_type(env);
+  glms_canvas_type(env);
 }

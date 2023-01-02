@@ -83,6 +83,13 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
   if (self == 0)
     self = func;
 
+  if (func->constructor) {
+    GLMSAST *new_ast =
+        glms_env_new_ast(eval->env, GLMS_AST_TYPE_UNDEFINED, true);
+    func->constructor(eval, stack, &args, new_ast);
+    return *new_ast;
+  }
+
   // constructor
   if (func->type == GLMS_AST_TYPE_STRUCT) {
     GLMSAST *copied = glms_ast_copy(*func, eval->env);
@@ -132,14 +139,7 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
       }
       return glms_eval(eval, result, stack);
     }
-  }
-
-  if (func->constructor) {
-    GLMSAST *new_ast =
-        glms_env_new_ast(eval->env, GLMS_AST_TYPE_UNDEFINED, true);
-    func->constructor(eval, stack, &args, new_ast);
-    return *new_ast;
-  }
+  } 
 
   if (func->as.func.body != 0) {
 
@@ -292,7 +292,7 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
 
       if (look && look->constructor) {
         look->constructor(eval, stack, 0, copy);
-        copy->constructed = true;
+	//        copy->constructed = true;
         copy->value_type = look;
       }
       // }

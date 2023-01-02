@@ -119,7 +119,22 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(cglm)
 endif()
 
-set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static spath_static cglm dl)
+
+find_library(GLFW_LIB glfw)
+
+
+if (NOT GLFW_LIB)
+    if (NOT TARGET glfw)
+	FetchContent_Declare(
+	glfw
+	GIT_REPOSITORY https://github.com/glfw/glfw
+	GIT_TAG "3.3.8"
+	)
+	FetchContent_MakeAvailable(glfw)
+    endif()
+endif()
+
+set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static spath_static cglm GL glfw GLEW dl)
 
 target_link_libraries(glms ${GLMS_DEPS})
 target_link_libraries(glms_e ${GLMS_DEPS})
