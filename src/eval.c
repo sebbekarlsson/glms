@@ -11,6 +11,7 @@
 #include <glms/eval.h>
 #include <glms/macros.h>
 #include <glms/io.h>
+#include <glms/dl.h>
 
 #define GLMS_AST_DEBUG_PRINT(ast)                                              \
   { printf("%s\n", glms_ast_to_string(ast, eval->env->string_alloc)); }
@@ -289,7 +290,7 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
       //  } else {
       // TODO: Don't think we need this.
       GLMSAST *look = glms_env_lookup_type(
-          eval->env, glms_string_view_get_value(&t.as.id.value));
+					   copy->env_ref ? copy->env_ref : eval->env, glms_string_view_get_value(&t.as.id.value));
 
       if (look && look->constructor) {
         look->constructor(eval, stack, 0, copy);
@@ -307,12 +308,15 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
 
 GLMSAST glms_eval_id(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   const char *name = glms_string_view_get_value(&ast.as.id.value);
-  GLMSAST *value = glms_eval_lookup(eval, stack, name);
+  GLMSAST *value = 0;
+
+  value = ast.env_ref ? glms_env_lookup(ast.env_ref, name) : 0;
+  value = value ? value : glms_eval_lookup(eval, stack, name);
 
   
 
   if (value != 0) {
-    glms_env_apply_type(eval->env, eval, stack, value);
+    glms_env_apply_type(ast.env_ref ? ast.env_ref : eval->env, eval, stack, value);
     return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = value};
   }
   else if (value == 0 && ((ast.flags == 0) || (ast.flags->length <= 0))) {
@@ -609,11 +613,11 @@ GLMSAST glms_eval_access_by_key(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   if (vptr)
     value = vptr;
 
-  GLMSAST *t = glms_eval_get_type(eval, stack, L);
+  // GLMSAST *t = glms_eval_get_type(eval, stack, L);
 
-  if (t != 0) {
-    value = value ? value : glms_ast_access_by_key(t, key, eval->env);
-  }
+  //  if (t != 0) {
+  //  value = value ? value : glms_ast_access_by_key(t, key, eval->env);
+  // }
 
   if (value) {
     if (value->type == GLMS_AST_TYPE_FUNC && right.type == GLMS_AST_TYPE_CALL) {
@@ -726,15 +730,49 @@ GLMSAST glms_eval_struct(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   return ptr_ast;
 }
 
+GLMSAST glms_eval_import_extension(GLMSEval *eval, GLMSAST ast,
+                                   GLMSStack *stack, const char* path) {
+
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_UNDEFINED };
+
+  if (!glms_file_exists(path)) GLMS_WARNING_RETURN(result, stderr, "No such file `%s`\n", path);
+  
+  GLMSExtensionEntryFunc  func = glms_load_symbol_function(path, "glms_extension_entry");
+
+  if (!func) GLMS_WARNING_RETURN(result, stderr, "Could not load `%s`\n", path);
+
+  GLMSEnv* import_env = NEW(GLMSEnv);
+   glms_env_init(import_env, 0, path, eval->env->config);
+  func(import_env);
+  //func(eval->env);
+
+
+
+    GLMSAST* result_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STACK, false);
+   result_ast->as.stack.env = import_env;
+
+   
+  const char* id_name = glms_string_view_get_value(&ast.as.import.id->as.id.value);
+  
+  glms_stack_push(stack, id_name, result_ast);
+
+  return (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = result_ast };
+  //*out = (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = true };
+  
+}
+
 GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   const char* path = glms_string_view_get_value(&ast.as.import.value);
   if (!path) return ast;
 
-  const char* abspath = glms_env_get_path_for(eval->env, path);
+
+  const char* abspath = glms_file_exists(path) ? path : glms_env_get_path_for(eval->env, path);
 
   if (!glms_file_exists(abspath)) {
     GLMS_WARNING_RETURN((GLMSAST){ .type = GLMS_AST_TYPE_UNDEFINED }, stderr, "No such file `%s`.\n", path);
   }
+
+  if (strstr(abspath, ".so") != 0) return glms_eval_import_extension(eval, ast, stack, abspath);
 
   char* source = glms_get_file_contents(abspath);
   GLMSEnv* import_env = NEW(GLMSEnv);

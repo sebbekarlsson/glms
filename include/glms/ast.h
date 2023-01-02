@@ -169,6 +169,7 @@ typedef struct GLMS_AST_STRUCT {
   bool is_tmp;
   bool is_heap;
   bool constructed;
+  struct GLMS_ENV_STRUCT* env_ref;
 } GLMSAST;
 
 GLMS_DEFINE_BUFFER(GLMSAST);

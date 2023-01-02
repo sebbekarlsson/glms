@@ -270,6 +270,8 @@ GLMSAST *glms_env_register_type(GLMSEnv *env, const char *name, GLMSAST *ast,
   ast->to_string = to_string;
   ast->destructor = destructor;
 
+  if (ast->constructor) ast->constructor(&env->eval, &env->stack, 0, ast);
+
   if (!ast->typename) ast->typename = strdup(name);
   
   hashy_map_set(&env->globals, name, ast);
@@ -286,6 +288,25 @@ GLMSAST *glms_env_register_any(GLMSEnv *env, const char *name, GLMSAST *ast) {
     return 0;
   hashy_map_set(&env->globals, name, ast);
   return ast;
+}
+
+GLMSAST *glms_env_lookup(GLMSEnv *env, const char *name) {
+  if (!env || !name)
+    return 0;
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+  GLMSAST* v = 0;
+  v = v ? v : (GLMSAST *)hashy_map_get(&env->globals, name);
+  v = v ? v : (GLMSAST *)hashy_map_get(&env->types, name);
+  v = v ? v : glms_stack_get(&env->stack, name);
+
+  if (!v) return 0;
+
+  
+  glms_env_apply_type(env, &env->eval, &env->stack, v);
+
+  return v;
 }
 
 GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name) {
@@ -311,8 +332,11 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
   if (!env || !ast)
     return 0;
 
+  if (ast->env_ref) env = ast->env_ref;
+
   if (ast->type == GLMS_AST_TYPE_STACK_PTR) {
     GLMSAST* ptr = glms_ast_get_ptr(*ast);
+
 
     if (ptr) return glms_env_apply_type(env, eval, stack, ptr);
   }
@@ -337,6 +361,7 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
 
   if (!constructor)
     return 0;
+
 
   ast->constructor = constructor;
   ast->to_string = type ? type->to_string : ast->to_string;

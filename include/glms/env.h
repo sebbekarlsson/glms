@@ -94,6 +94,9 @@ GLMSAST *glms_env_register_type(
 
 GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name);
 
+GLMSAST *glms_env_lookup(GLMSEnv *env, const char *name);
+
+
 
 GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name);
 

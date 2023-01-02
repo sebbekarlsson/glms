@@ -555,34 +555,7 @@ int glms_fptr_smoothstep(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 0;
 }
 
-int glms_fptr_load_extension(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
-                    GLMSStack *stack, GLMSAST *out) {
 
-
-
-  const char* path = glms_ast_get_string_value(&args->items[0]);
-  if (!path) return 0;
-
-  if (!glms_file_exists(path)) GLMS_WARNING_RETURN(0, stderr, "No such file `%s`\n", path);
-  
-  GLMSExtensionEntryFunc  func = glms_load_symbol_function(path, "glms_extension_entry");
-
-  if (!func) GLMS_WARNING_RETURN(0, stderr, "Could not load `%s`\n", path);
-
-  // GLMSEnv* import_env = NEW(GLMSEnv);
-  //  glms_env_init(import_env, 0, path, eval->env->config);
-  func(eval->env);
-
-
-
-  // GLMSAST* result_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STACK, false);
-  //result_ast->as.stack.env = import_env;
-
-  //*out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = result_ast };
-  *out = (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = true };
-  
-  return 1;
-}
 
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
@@ -592,7 +565,6 @@ void glms_builtin_init(GLMSEnv *env) {
                         glms_env_new_ast_number(env, M_PI * 2.0f, true));
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dump", glms_fptr_dump);
-  glms_env_register_function(env, "loadExtension", glms_fptr_load_extension);
 
   glms_env_register_function(env, "smoothstep", glms_fptr_smoothstep);
   glms_env_register_function_signature(

@@ -197,7 +197,11 @@ GLMSAST *glms_ast_access_by_key_private(GLMSAST *ast, const char *key,
     return 0;
 
   if (ast->type == GLMS_AST_TYPE_STACK && ast->as.stack.env != 0) {
-    return glms_stack_get(&ast->as.stack.env->stack, key);
+    GLMSEnv* astenv = ast->as.stack.env;
+    GLMSAST* v =  glms_env_lookup(astenv, key);
+    if (!v) return 0;
+    v->env_ref = astenv;
+    return v;
   }
 
   if (ast->type == GLMS_AST_TYPE_UNDEFINED)
@@ -213,12 +217,14 @@ GLMSAST *glms_ast_access_by_key(GLMSAST *ast, const char *key, GLMSEnv *env) {
   if (!ast || !key)
     return 0;
 
+  if (ast->env_ref) env = ast->env_ref;
+
   GLMSAST *v = glms_ast_access_by_key_private(ast, key, env);
 
   if (v)
     return v;
 
-  if (ast->value_type != 0) {
+  if (ast->value_type != 0 && ast->value_type != ast) {
     return glms_ast_access_by_key(ast->value_type, key, env);
   }
 
@@ -452,7 +458,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
 
-  // if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
+   if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
 
   dest->props = (HashyMap){0};
   dest->children = 0;
@@ -461,6 +467,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   dest->ptr = src.ptr;
   dest->constructor = src.constructor;
   dest->value_type = src.value_type;
+  dest->env_ref = src.env_ref;
 
   if (src.type == GLMS_AST_TYPE_MAT4) {
     dest->as.m4 = glms_mat4_copy(src.as.m4);
