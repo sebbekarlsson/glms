@@ -24,4 +24,6 @@ bool glms_eval_expect(GLMSEval *eval, GLMSStack *stack, GLMSASTType *types,
 GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
                             GLMSASTBuffer args);
 
+GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
+                         GLMSStack *stack);
 #endif

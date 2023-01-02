@@ -3,6 +3,7 @@
 #include "glms/ast_type.h"
 #include "glms/env.h"
 #include "glms/eval.h"
+#include "glms/iterator.h"
 #include "glms/macros.h"
 #include "glms/string_view.h"
 #include <glms/modules/file.h>
@@ -32,7 +33,11 @@ int glms_file_fptr_open(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   }
 
   GLMSAST* file_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STRUCT, true);
-  file_ast->ptr = fp;
+
+  GLMSFile* f = NEW(GLMSFile);
+  f->fp = fp;
+  f->open = true;
+  file_ast->ptr = f;
   file_ast->constructor = glms_file_constructor;
   *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = file_ast };
 
@@ -45,8 +50,14 @@ int glms_file_fptr_close(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
 
   if (!ast->ptr) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
 
-  FILE* fp = (FILE*)ast->ptr;
+  GLMSFile* f = (GLMSFile*)ast->ptr;
+
+  if (!f->fp) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
+  
+  FILE* fp = f->fp;
   fclose(fp);
+  f->fp = 0;
+  f->open = false;
   return 1;
 }
 
@@ -57,11 +68,72 @@ int glms_file_fptr_write(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   if (!ast->ptr) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
   const char* buff = glms_string_view_get_value(&args->items[0].as.string.value);
 
-  FILE* fp = (FILE*)ast->ptr;
+  GLMSFile* f = (GLMSFile*)ast->ptr;
+  if (!f->fp) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
+  
+  FILE* fp = f->fp;
 
   fwrite(buff, sizeof(char), strlen(buff), fp);
   
   
+  return 1;
+}
+
+
+int glms_file_iterator_next(GLMSEnv* env, GLMSAST *self, GLMSIterator *it, GLMSAST *out) {
+  GLMSFileIteratorState* state = (GLMSFileIteratorState*)self->as.iterator.state;
+  GLMSFile* f =  state->file;
+
+
+  char* line = state->line;
+
+
+    size_t len = 0;
+    ssize_t read = 0;
+
+
+
+     if((read = getline(&line, &len, f->fp)) != -1) {
+      state->read_bytes += read;
+      GLMSAST* strast = glms_env_new_ast(env, GLMS_AST_TYPE_STRING, true);
+      strast->as.string.heap = strdup(line);
+      *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = strast };
+      free(state->line);
+      state->line = 0;
+    } else {
+      *out = (GLMSAST){ .type = GLMS_AST_TYPE_NULL };
+
+      if (state->line != 0) {
+	free(state->line);
+	state->line =0;
+      }
+      return 1;
+    }
+
+    return 1;
+}
+
+int glms_file_fptr_read_lines(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                        GLMSStack *stack, GLMSAST *out) {
+
+  if (!ast->ptr) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
+
+  GLMSFile* f = (GLMSFile*)ast->ptr;
+  if (!f->fp) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
+
+
+  GLMSAST* iter_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_ITERATOR, true);
+  iter_ast->as.iterator.it = (GLMSIterator){0};
+  iter_ast->iterator_next = glms_file_iterator_next;
+
+  GLMSFileIteratorState* state = NEW(GLMSFileIteratorState);
+  state->file = f;
+  state->last_ptr = 0;
+  state->line = 0;
+  state->pos = 0;
+  iter_ast->as.iterator.state = state;
+
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = iter_ast };
   return 1;
 }
 
@@ -75,6 +147,17 @@ void glms_file_constructor(GLMSEval *eval, GLMSStack *stack,
   glms_ast_register_function(eval->env, self, "open", glms_file_fptr_open);
   glms_ast_register_function(eval->env, self, "close", glms_file_fptr_close);
   glms_ast_register_function(eval->env, self, "write", glms_file_fptr_write);
+  glms_ast_register_function(eval->env, self, "readLines", glms_file_fptr_read_lines);
+
+  glms_env_register_function_signature(
+    eval->env,
+    self,
+    "readLines",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ GLMS_AST_TYPE_ITERATOR },
+      .args_length = 0
+    }
+  );
 
   glms_env_register_function_signature(
     eval->env,

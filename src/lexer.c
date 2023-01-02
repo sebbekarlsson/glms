@@ -12,7 +12,7 @@ typedef struct {
 #define GLMSTOKM(p, t)                                                         \
   (GLMSTokenMap) { .pattern = p, .type = t }
 
-#define GLMS_LEXER_TOKEN_MAP_LEN 28
+#define GLMS_LEXER_TOKEN_MAP_LEN 29
 
 const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("import", GLMS_TOKEN_TYPE_SPECIAL_IMPORT),
@@ -30,6 +30,7 @@ const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("while", GLMS_TOKEN_TYPE_SPECIAL_WHILE),
     GLMSTOKM("string", GLMS_TOKEN_TYPE_SPECIAL_STRING),
     GLMSTOKM("number", GLMS_TOKEN_TYPE_SPECIAL_NUMBER),
+    GLMSTOKM("null", GLMS_TOKEN_TYPE_SPECIAL_NULL),
     GLMSTOKM("array", GLMS_TOKEN_TYPE_SPECIAL_ARRAY),
     GLMSTOKM("object", GLMS_TOKEN_TYPE_SPECIAL_OBJECT),
     GLMSTOKM("struct", GLMS_TOKEN_TYPE_SPECIAL_STRUCT),
@@ -206,6 +207,9 @@ int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out) {
 
 
   switch (lexer->c) {
+  case '!': {
+    out->type = GLMS_TOKEN_TYPE_EXCLAM;
+  }; break;
   case '{': {
     out->type = GLMS_TOKEN_TYPE_LBRACE;
   } break;

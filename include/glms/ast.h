@@ -14,6 +14,7 @@
 #include <glms/type.h>
 #include <glms/allocator.h>
 #include <cglm/struct.h>
+#include <glms/iterator.h>
 
 #define GLMS_AST_OPERATOR_OVERLOAD_CAP 24
 
@@ -132,6 +133,11 @@ typedef struct GLMS_AST_STRUCT {
     } stack;
 
     struct {
+      GLMSIterator it;
+      void* state;
+    } iterator;
+
+    struct {
       int idx;
       JAST* ptr;
     } stackptr;
@@ -160,6 +166,7 @@ typedef struct GLMS_AST_STRUCT {
   GLMSASTToString to_string;
   GLMSASTDestructor destructor;
   GLMSASTAtomFunc get_atoms;
+  GLMSIteratorNext iterator_next;
   char* typename;
   JAST* value_type;
   JAST* result;
@@ -178,7 +185,9 @@ GLMS_DEFINE_LIST(GLMSAST);
 GLMSAST* glms_ast_push(GLMSAST* parent, GLMSAST* child);
 GLMSAST* glms_ast_push_flag(GLMSAST* parent, GLMSAST* flag);
 
-bool glms_ast_is_iterable(GLMSAST* ast);
+bool glms_ast_is_iterable(GLMSAST *ast);
+
+int glms_ast_iterate(struct GLMS_ENV_STRUCT* env, GLMSAST* ast, GLMSIterator* it, GLMSAST* out);
 
 const char* glms_ast_get_name(GLMSAST* ast);
 

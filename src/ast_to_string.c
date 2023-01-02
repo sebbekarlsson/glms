@@ -14,6 +14,9 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
   }
 
   switch (ast.type) {
+  case GLMS_AST_TYPE_BOOL: {
+    return alloc.strdup(alloc.user_ptr, ast.as.boolean ? "true" : "false");
+  }; break;
   case GLMS_AST_TYPE_STACK_PTR: {
     GLMSAST *ptr = 0;
     if ((ptr = glms_ast_get_ptr(ast))) {

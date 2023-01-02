@@ -1,5 +1,10 @@
-file f = file.open("test.txt", "w+");
+file f = file.open("/home/ianertson/Downloads/bible.txt", "r+");
 
-f.write("apa");
+iterator it = f.readLines();
+
+
+while (string x = it.next()) {
+  print(x);
+}
 
 f.close();

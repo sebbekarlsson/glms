@@ -1,4 +1,5 @@
 #include "arena/arena.h"
+#include "glms/ast.h"
 #include "hashy/hashy.h"
 #include <glms/macros.h>
 #include <glms/stack.h>
@@ -37,8 +38,8 @@ GLMSAST *glms_stack_push(GLMSStack *stack, const char *name, GLMSAST *ast) {
     stack->names[stack->names_length++] = name;
     glms_GLMSAST_list_push(&stack->list, ast);
   }
-
   hashy_map_set(&stack->locals, name, ast);
+
 
   return ast;
 }

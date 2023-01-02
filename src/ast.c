@@ -117,11 +117,20 @@ const char *glms_ast_get_string_value(GLMSAST *ast) {
 }
 
 bool glms_ast_is_truthy(GLMSAST ast) {
+
+  GLMSAST* ptr = glms_ast_get_ptr(ast);
+
+  if (ptr) return glms_ast_is_truthy(*ptr);
+
+  
   switch (ast.type) {
   case GLMS_AST_TYPE_STACK_PTR: {
     if (ast.as.stackptr.ptr == 0)
       return false;
     return glms_ast_is_truthy(*ast.as.stackptr.ptr);
+  }; break;
+  case GLMS_AST_TYPE_BINOP: {
+    return glms_ast_is_truthy(*ast.as.binop.left);
   }; break;
   case GLMS_AST_TYPE_BOOL: {
     return ast.as.boolean;
@@ -130,8 +139,11 @@ bool glms_ast_is_truthy(GLMSAST ast) {
     return ast.as.number.value > 0;
   }; break;
   case GLMS_AST_TYPE_STRING: {
-    return ast.as.string.value.length > 0 && ast.as.string.value.ptr != 0;
+    return (ast.as.string.value.length > 0 && ast.as.string.value.ptr != 0) || ast.as.string.heap != 0;
   }; break;
+
+  case GLMS_AST_TYPE_VOID:
+  case GLMS_AST_TYPE_NULL:
   case GLMS_AST_TYPE_UNDEFINED: {
     return false;
   }; break;
@@ -195,6 +207,7 @@ GLMSAST *glms_ast_access_by_key_private(GLMSAST *ast, const char *key,
 
   if (!ast || !key)
     return 0;
+
 
   if (ast->type == GLMS_AST_TYPE_STACK && ast->as.stack.env != 0) {
     GLMSEnv* astenv = ast->as.stack.env;
@@ -458,7 +471,14 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
 
-   if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
+  //   if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
+
+   if (src.type == GLMS_AST_TYPE_STRING) {
+     if (src.as.string.heap != 0) {
+       dest->as.string.heap = strdup(src.as.string.heap);
+     }
+     //     glms_ast_assign(dest, src, &env->eval, &env->stack);
+   }
 
   dest->props = (HashyMap){0};
   dest->children = 0;
@@ -468,6 +488,10 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   dest->constructor = src.constructor;
   dest->value_type = src.value_type;
   dest->env_ref = src.env_ref;
+
+  dest->iterator_next = src.iterator_next;
+
+
 
   if (src.type == GLMS_AST_TYPE_MAT4) {
     dest->as.m4 = glms_mat4_copy(src.as.m4);
@@ -867,6 +891,19 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
 
   GLMSASTType type = b.type;
 
+  if (type == GLMS_AST_TYPE_NULL) {
+    if (a->type == GLMS_AST_TYPE_STRING) {
+      if (a->as.string.heap != 0) {
+	free(a->as.string.heap);
+	a->as.string.heap = 0;
+      }
+
+      a->as.string.value.length = 0;
+      a->as.string.value.ptr = 0;
+      return b;
+    }
+  }
+
   if (!same_type) {
     GLMS_WARNING_RETURN(b, stderr,
                         "Cannot assign variable of different type (%s = %s).\n",
@@ -878,6 +915,13 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
     a->as.number.value = b.as.number.value;
   }; break;
   case GLMS_AST_TYPE_STRING: {
+    if (b.as.string.heap != 0) {
+	if (a->as.string.heap != 0) {
+	    free(a->as.string.heap);
+	    a->as.string.heap = 0;
+	}
+	a->as.string.heap = strdup(b.as.string.heap);
+    }
     a->as.string.value = b.as.string.value;
   }; break;
   default: {
@@ -1125,4 +1169,10 @@ int glms_ast_get_atoms(GLMSAST ast, GLMSASTBuffer* out) {
   }
 
   return ast.get_atoms(&ast, out);
+}
+
+int glms_ast_iterate(GLMSEnv* env, GLMSAST* ast, GLMSIterator* it, GLMSAST* out) {
+  if (!ast || !it || !out) return 0;
+  if (!ast->iterator_next) return 0;
+  return ast->iterator_next(env, ast, it, out);
 }

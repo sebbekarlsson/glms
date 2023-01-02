@@ -245,7 +245,11 @@ GLMSAST glms_eval_compound(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   for (int64_t i = 0; i < ast.children->length; i++) {
     GLMSAST *child = ast.children->items[i];
 
-    glms_eval(eval, *child, stack);
+    GLMSAST evaluated = glms_eval(eval, *child, stack);
+
+    if (evaluated.type == GLMS_AST_TYPE_UNOP && evaluated.as.unop.op == GLMS_TOKEN_TYPE_SPECIAL_BREAK) {
+      return evaluated;
+    }
 
     if (stack->return_flag) {
       stack->return_flag = false;
@@ -374,6 +378,11 @@ GLMSAST glms_eval_unop_right(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     GLMSAST right = glms_eval(eval, *ast.as.unop.right, stack);
     return (GLMSAST){.type = GLMS_AST_TYPE_NUMBER,
                      .as.number = +right.as.number.value};
+  }; break;
+  case GLMS_TOKEN_TYPE_EXCLAM: {
+    GLMSAST right = glms_eval(eval, *ast.as.unop.right, stack);
+    return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+                     .as.boolean = !glms_ast_is_truthy(right)};
   }; break;
   case GLMS_TOKEN_TYPE_ADD_ADD: {
     GLMSAST right = glms_eval(eval, *ast.as.unop.right, stack);
@@ -532,8 +541,21 @@ GLMSAST glms_eval_block_while(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   if (!ast.as.block.body || !ast.as.block.expr)
     return ast;
 
-  while (glms_ast_is_truthy(glms_eval(eval, *ast.as.block.expr, stack))) {
-    glms_eval(eval, *ast.as.block.body, stack);
+  GLMSAST* ptr = glms_ast_get_ptr(*ast.as.block.expr);
+  if (!ptr) ptr = ast.as.block.expr; 
+
+  GLMSAST evaluated = *ptr;
+  //  while (glms_ast_is_truthy((evaluated = glms_eval(eval, evaluated, stack)))) {
+  //  glms_eval(eval, *ast.as.block.body, stack);
+
+  //}
+
+  while (glms_ast_is_truthy((glms_eval(eval, *ast.as.block.expr, stack)))) {
+    GLMSAST result = glms_eval(eval, *ast.as.block.body, stack);
+
+    if (result.type == GLMS_AST_TYPE_UNOP && result.as.unop.op == GLMS_TOKEN_TYPE_SPECIAL_BREAK) {
+      break;
+    }
   }
 
   return ast;

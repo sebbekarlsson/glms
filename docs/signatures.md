@@ -137,6 +137,10 @@ GLMS_AST_TYPE_VEC3 normalize(GLMS_AST_TYPE_VEC3)
 
 ```
 
+### dump
+> No signatures defined.
+
+
 ### distance
 ```
 GLMS_AST_TYPE_NUMBER distance(GLMS_AST_TYPE_VEC3, GLMS_AST_TYPE_VEC3)
@@ -203,11 +207,13 @@ GLMS_AST_TYPE_VEC3 smoothstep(GLMS_AST_TYPE_VEC3 edge0, GLMS_AST_TYPE_VEC3 edge1
 ### image.save
 ```
 GLMS_AST_TYPE_BOOL image.save(GLMS_AST_TYPE_STRING filename)
+GLMS_AST_TYPE_BOOL image.save(GLMS_AST_TYPE_STRING filename)
 
 ```
 
 ### image.setPixel
 ```
+GLMS_AST_TYPE_VOID image.setPixel(GLMS_AST_TYPE_VEC4 pixel)
 GLMS_AST_TYPE_VOID image.setPixel(GLMS_AST_TYPE_VEC4 pixel)
 
 ```
@@ -215,17 +221,20 @@ GLMS_AST_TYPE_VOID image.setPixel(GLMS_AST_TYPE_VEC4 pixel)
 ### image.getPixel
 ```
 GLMS_AST_TYPE_VEC4 image.getPixel(GLMS_AST_TYPE_NUMBER x, GLMS_AST_TYPE_NUMBER y)
+GLMS_AST_TYPE_VEC4 image.getPixel(GLMS_AST_TYPE_NUMBER x, GLMS_AST_TYPE_NUMBER y)
 
 ```
 
 ### image.shade
 ```
 GLMS_AST_TYPE_BOOL image.shade(GLMS_AST_TYPE_FUNC)
+GLMS_AST_TYPE_BOOL image.shade(GLMS_AST_TYPE_FUNC)
 
 ```
 
 ### image.make
 ```
+image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 
 ```
@@ -238,6 +247,17 @@ image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 
 ### vec4 (struct)
 
+### iterator (struct)
+<details><summary>props</summary>
+
+### iterator.next
+> No signatures defined.
+
+
+
+</details>
+
+
 ### mat4 (struct)
 
 ### file (struct)
@@ -246,11 +266,13 @@ image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 ### file.write
 ```
 GLMS_AST_TYPE_BOOL file.write(GLMS_AST_TYPE_STRING text)
+GLMS_AST_TYPE_BOOL file.write(GLMS_AST_TYPE_STRING text)
 
 ```
 
 ### file.open
 ```
+file file.open(GLMS_AST_TYPE_STRING filename, GLMS_AST_TYPE_STRING mode)
 file file.open(GLMS_AST_TYPE_STRING filename, GLMS_AST_TYPE_STRING mode)
 
 ```
@@ -258,6 +280,14 @@ file file.open(GLMS_AST_TYPE_STRING filename, GLMS_AST_TYPE_STRING mode)
 ### file.close
 ```
 GLMS_AST_TYPE_BOOL file.close()
+GLMS_AST_TYPE_BOOL file.close()
+
+```
+
+### file.readLines
+```
+GLMS_AST_TYPE_ITERATOR file.readLines()
+GLMS_AST_TYPE_ITERATOR file.readLines()
 
 ```
 

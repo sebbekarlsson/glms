@@ -30,6 +30,7 @@ GLMSAST* glms_parser_parse(GLMSParser* parser);
 GLMSAST* glms_parser_parse_id(GLMSParser* parser, bool skip_next);
 
 GLMSAST* glms_parser_parse_number(GLMSParser* parser);
+GLMSAST* glms_parser_parse_null(GLMSParser* parser);
 GLMSAST* glms_parser_parse_bool(GLMSParser* parser);
 GLMSAST* glms_parser_parse_string(GLMSParser* parser);
 GLMSAST* glms_parser_parse_array(GLMSParser* parser);

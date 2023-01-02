@@ -120,6 +120,12 @@ GLMSAST *glms_parser_parse_id(GLMSParser *parser, bool skip_next) {
   return id_ast;
 }
 
+GLMSAST *glms_parser_parse_null(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NULL, false);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_NULL);
+  return ast;
+}
+
 GLMSAST *glms_parser_parse_number(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
   ast->as.number.value = atof(glms_string_view_get_value(&parser->token.value));
@@ -296,7 +302,12 @@ GLMSAST *glms_parser_parse_unop(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_UNOP, false);
   ast->as.unop.op = parser->token.type;
   glms_parser_eat(parser, parser->token.type);
+
+  if (parser->token.type != GLMS_TOKEN_TYPE_SEMI) {
   ast->as.unop.right = glms_parser_parse_expr(parser);
+  } else if (parser->token.type == GLMS_TOKEN_TYPE_SEMI) {
+    glms_parser_eat(parser, parser->token.type);
+  }
   return ast;
 }
 
@@ -316,7 +327,8 @@ GLMSAST *glms_parser_parse_import(GLMSParser *parser) {
 
 GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   if (parser->token.type == GLMS_TOKEN_TYPE_SUB ||
-      parser->token.type == GLMS_TOKEN_TYPE_ADD) {
+      parser->token.type == GLMS_TOKEN_TYPE_ADD ||
+      parser->token.type == GLMS_TOKEN_TYPE_EXCLAM) {
     return glms_parser_parse_unop(parser);
   }
 
@@ -354,6 +366,9 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   case GLMS_TOKEN_TYPE_ID: {
     return glms_parser_parse_id(parser, false);
   }; break;
+   case GLMS_TOKEN_TYPE_SPECIAL_NULL: {
+    return glms_parser_parse_null(parser);
+  }; break;
   case GLMS_TOKEN_TYPE_STRING: {
     return glms_parser_parse_string(parser);
   }; break;
@@ -379,6 +394,7 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   case GLMS_TOKEN_TYPE_SPECIAL_FUNCTION: {
     return glms_parser_parse_function(parser);
   }; break;
+  case GLMS_TOKEN_TYPE_SPECIAL_BREAK:
   case GLMS_TOKEN_TYPE_SPECIAL_RETURN: {
     return glms_parser_parse_unop(parser);
   }; break;
