@@ -270,7 +270,10 @@ GLMSAST *glms_env_register_type(GLMSEnv *env, const char *name, GLMSAST *ast,
   ast->to_string = to_string;
   ast->destructor = destructor;
 
-  if (ast->constructor) ast->constructor(&env->eval, &env->stack, 0, ast);
+  if (ast->constructor && ast->constructed == false) {
+    ast->constructor(&env->eval, &env->stack, 0, ast);
+    ast->constructed = true;
+  }
 
   if (!ast->typename) ast->typename = strdup(name);
   

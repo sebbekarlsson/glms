@@ -60,8 +60,9 @@ GLMSAST *glms_eval_lookup(GLMSEval *eval, GLMSStack *stack, const char *key) {
   GLMSAST *t = glms_env_lookup_type(eval->env, key);
 
   if (t) {
-    if (t->constructor) {
+    if (t->constructor && t->constructed == false) {
       t->constructor(eval, stack, 0, t);
+      t->constructed = true;
     }
     return t;
   }
