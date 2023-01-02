@@ -83,6 +83,14 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
   if (self == 0)
     self = func;
 
+
+  if (func->constructor) {
+    GLMSAST *new_ast =
+        glms_env_new_ast(eval->env, GLMS_AST_TYPE_UNDEFINED, true);
+    func->constructor(eval, stack, &args, new_ast);
+    return *new_ast;
+  }
+
   // constructor
   if (func->type == GLMS_AST_TYPE_STRUCT) {
     GLMSAST *copied = glms_ast_copy(*func, eval->env);
@@ -132,14 +140,7 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
       }
       return glms_eval(eval, result, stack);
     }
-  }
-
-  if (func->constructor) {
-    GLMSAST *new_ast =
-        glms_env_new_ast(eval->env, GLMS_AST_TYPE_UNDEFINED, true);
-    func->constructor(eval, stack, &args, new_ast);
-    return *new_ast;
-  }
+  } 
 
   if (func->as.func.body != 0) {
 
@@ -701,10 +702,10 @@ GLMSAST glms_eval_struct(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   if (ast.props.initialized == false)
     return ast;
 
-  HashyIterator it = {0};
 
   GLMSAST *new_ast = glms_ast_copy(ast, eval->env);
 
+  HashyIterator it = {0};
   while (hashy_map_iterate(&ast.props, &it)) {
     if (!it.bucket->key)
       continue;

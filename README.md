@@ -23,6 +23,11 @@ cmake .. && make -j8
 ./glms_e <input_file.gs>
 ```
 
+## Extensions :electric_plug:
+> It's possible to create extensions for `GLMS`,  
+> [here](https://github.com/sebbekarlsson/glms-canvas) is an example.  
+> This specific extension let's you draw on a "canvas" using OpenGL.
+
 ## Documentation :open_book:
 > To see documentation, built-in functions etc,  
 > Have a look at [this](docs/signatures.md)

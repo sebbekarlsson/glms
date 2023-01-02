@@ -3,6 +3,7 @@
 #include "glms/allocator.h"
 #include "glms/ast_type.h"
 #include "glms/eval.h"
+#include "glms/io.h"
 #include "glms/stack.h"
 #include "glms/string_view.h"
 #include "glms/token.h"
@@ -21,6 +22,7 @@
 #include <glms/modules/string.h>
 #include <glms/modules/mat4.h>
 #include <glms/math.h>
+#include <glms/dl.h>
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
@@ -70,6 +72,44 @@ int glms_fptr_print(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   for (int64_t i = 0; i < args->length; i++) {
     GLMSAST arg = glms_eval(eval, args->items[i], stack);
     print_ast(arg, eval->env->string_alloc);
+  }
+
+  return 0;
+}
+
+static void glms_dump_ast(GLMSAST ast, GLMSAllocator alloc) {
+
+
+  GLMSAST *ptr = glms_ast_get_ptr(ast);
+
+  if (ptr) return glms_dump_ast(*ptr, alloc);
+
+  if (ast.props.initialized) {
+       HashyIterator it = {0};
+	while (hashy_map_iterate(&ast.props, &it)) {
+	    if (!it.bucket->key)
+		continue;
+	    if (!it.bucket->value)
+		continue;
+
+	    const char *key = it.bucket->key;
+	    GLMSAST *value = (GLMSAST *)it.bucket->value;
+
+
+	    printf("%s\n", key);
+	}
+  }
+
+}
+
+int glms_fptr_dump(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+  if (!args)
+    return 0;
+
+  for (int64_t i = 0; i < args->length; i++) {
+    GLMSAST arg = glms_eval(eval, args->items[i], stack);
+    glms_dump_ast(arg, eval->env->string_alloc);
   }
 
   return 0;
@@ -515,6 +555,35 @@ int glms_fptr_smoothstep(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 0;
 }
 
+int glms_fptr_load_extension(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+
+  const char* path = glms_ast_get_string_value(&args->items[0]);
+  if (!path) return 0;
+
+  if (!glms_file_exists(path)) GLMS_WARNING_RETURN(0, stderr, "No such file `%s`\n", path);
+  
+  GLMSExtensionEntryFunc  func = glms_load_symbol_function(path, "glms_extension_entry");
+
+  if (!func) GLMS_WARNING_RETURN(0, stderr, "Could not load `%s`\n", path);
+
+  // GLMSEnv* import_env = NEW(GLMSEnv);
+  //  glms_env_init(import_env, 0, path, eval->env->config);
+  func(eval->env);
+
+
+
+  // GLMSAST* result_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STACK, false);
+  //result_ast->as.stack.env = import_env;
+
+  //*out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = result_ast };
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = true };
+  
+  return 1;
+}
+
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
 
@@ -522,6 +591,8 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_any(env, "TAU",
                         glms_env_new_ast_number(env, M_PI * 2.0f, true));
   glms_env_register_function(env, "print", glms_fptr_print);
+  glms_env_register_function(env, "dump", glms_fptr_dump);
+  glms_env_register_function(env, "loadExtension", glms_fptr_load_extension);
 
   glms_env_register_function(env, "smoothstep", glms_fptr_smoothstep);
   glms_env_register_function_signature(

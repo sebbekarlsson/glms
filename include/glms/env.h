@@ -44,6 +44,7 @@ typedef struct GLMS_ENV_STRUCT {
   char* last_joined_path;
 } GLMSEnv;
 
+typedef void (*GLMSExtensionEntryFunc)(GLMSEnv* env);
 
 int glms_env_init(
   GLMSEnv* env,

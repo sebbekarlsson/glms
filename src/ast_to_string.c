@@ -2,6 +2,7 @@
 #include "glms/string_view.h"
 #include <glms/ast.h>
 #include <glms/macros.h>
+#include <glms/env.h>
 #include <string.h>
 #include <text/text.h>
 
@@ -18,6 +19,54 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
 	if ((ptr = glms_ast_get_ptr(ast))) {
 	return glms_ast_to_string(*ptr, alloc);
 	}
+    }; break;
+    case GLMS_AST_TYPE_STACK: {
+      char* s = 0;
+
+
+     HashyIterator it = {0};
+    while (hashy_map_iterate(&ast.as.stack.env->types, &it)) {
+	if (!it.bucket->key)
+	  continue;
+	if (!it.bucket->value)
+	  continue;
+
+	const char *key = it.bucket->key;
+	GLMSAST *value = (GLMSAST *)it.bucket->value;
+
+	char *strval = glms_ast_to_string(*value, alloc);
+
+	if (!strval) continue;
+	alloc.strcat(alloc.user_ptr, &s, key);
+	alloc.strcat(alloc.user_ptr, &s, " => ");
+	alloc.strcat(alloc.user_ptr, &s, strval);
+	alloc.strcat(alloc.user_ptr, &s, "\n");
+    }
+
+     HashyIterator it2 = {0};
+    while (hashy_map_iterate(&ast.as.stack.env->globals, &it2)) {
+	if (!it2.bucket->key)
+	  continue;
+	if (!it2.bucket->value)
+	  continue;
+
+	const char *key = it2.bucket->key;
+	GLMSAST *value = (GLMSAST *)it2.bucket->value;
+
+	char *strval = glms_ast_to_string(*value, alloc);
+
+	if (!strval) continue;
+	alloc.strcat(alloc.user_ptr, &s, key);
+	alloc.strcat(alloc.user_ptr, &s, " => ");
+	alloc.strcat(alloc.user_ptr, &s, strval);
+	alloc.strcat(alloc.user_ptr, &s, "\n");
+    }
+
+
+    if (!s) return strdup(GLMS_AST_TYPE_STR[ast.type]);
+
+    return s;
+      
     }; break;
     case GLMS_AST_TYPE_STRING: {
 	const char *v = glms_string_view_get_value(&ast.as.string.value);
