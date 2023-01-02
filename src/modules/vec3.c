@@ -70,6 +70,39 @@ int glms_struct_vec3_op_overload_mul(GLMSEval *eval, GLMSStack *stack,
   *out = (GLMSAST){.type = GLMS_AST_TYPE_VEC3, .as.v3 = v};
   return 1;
 }
+
+int glms_struct_vec3_op_overload_add(GLMSEval *eval, GLMSStack *stack,
+                                     GLMSAST *left, GLMSAST *right,
+                                     GLMSAST *out) {
+
+
+  
+  if (!glms_ast_is_vector(left) && !glms_ast_is_vector(right))
+    return 0;
+
+  Vector3 v = VEC31(0);
+
+
+  if (left->type == GLMS_AST_TYPE_VEC3 && right->type == GLMS_AST_TYPE_NUMBER) {
+    v = left->as.v3;
+    v.x += glms_ast_number(*right);
+    v.y += glms_ast_number(*right);
+    v.z += glms_ast_number(*right);
+  } else if (left->type == GLMS_AST_TYPE_NUMBER &&
+             right->type == GLMS_AST_TYPE_VEC3) {
+    v = right->as.v3;
+    v.x += glms_ast_number(*left);
+    v.y += glms_ast_number(*left);
+    v.z += glms_ast_number(*left);
+  } else if (left->type == GLMS_AST_TYPE_VEC3 &&
+             right->type == GLMS_AST_TYPE_VEC3) {
+    v = vector3_add(left->as.v3, right->as.v3);
+  }
+
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_VEC3, .as.v3 = v};
+  return 1;
+}
+
 int glms_struct_vec3_op_overload_div(GLMSEval *eval, GLMSStack *stack,
                                      GLMSAST *left, GLMSAST *right,
                                      GLMSAST *out) {
@@ -174,6 +207,9 @@ void glms_struct_vec3_constructor(GLMSEval *eval, GLMSStack *stack,
                                       glms_struct_vec3_op_overload_div);
   glms_ast_register_operator_overload(eval->env, ast, GLMS_TOKEN_TYPE_SUB,
                                       glms_struct_vec3_op_overload_sub);
+
+    glms_ast_register_operator_overload(eval->env, ast, GLMS_TOKEN_TYPE_ADD,
+                                      glms_struct_vec3_op_overload_add);
 
   glms_ast_register_func_overload(eval->env, ast, "mix", glms_struct_vec3_func_overload_mix);
   glms_ast_register_func_overload(eval->env, ast, "lerp", glms_struct_vec3_func_overload_mix);
