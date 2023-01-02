@@ -41,6 +41,28 @@ int glms_string_type_op_overload_add(GLMSEval *eval, GLMSStack *stack,
   return 1;
 }
 
+int glms_string_fptr_replace(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                        GLMSStack *stack, GLMSAST *out) {
+
+  if (!glms_eval_expect(eval, stack, (GLMSASTType[]){ GLMS_AST_TYPE_STRING, GLMS_AST_TYPE_STRING }, 2, args)) return 0;
+
+  const char* needle = glms_ast_get_string_value(&args->items[0]);
+  const char* repl = glms_ast_get_string_value(&args->items[1]);
+  const char* value = glms_ast_get_string_value(ast);
+  char* new_str = text_replace(value, needle, repl);
+  if (!new_str) return 0;
+
+
+  GLMSAST* new_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STRING, true);
+  new_ast->as.string.heap = new_str;
+
+  
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
+
+  return 1;
+ 
+}
+
 void glms_string_constructor(GLMSEval *eval, GLMSStack *stack,
                                   GLMSASTBuffer *args, GLMSAST *self) {
 
@@ -50,6 +72,18 @@ void glms_string_constructor(GLMSEval *eval, GLMSStack *stack,
   self->to_string = 0;
 
   glms_ast_register_operator_overload(eval->env, self, GLMS_TOKEN_TYPE_ADD, glms_string_type_op_overload_add);
+  glms_ast_register_function(eval->env, self, "replace", glms_string_fptr_replace);
+
+  glms_env_register_function_signature(
+    eval->env,
+    self,
+    "replace",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){ GLMS_AST_TYPE_STRING },
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_STRING, .valuename = "pattern" }, (GLMSType){ GLMS_AST_TYPE_STRING, .valuename = "replacement" }},
+      .args_length = 2
+    }
+  );
 }
 
 void glms_string_type(GLMSEnv *env) {
