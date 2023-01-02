@@ -41,6 +41,19 @@ f.write("hello!");
 f.close();
 ```
 
+### Reading a file
+```glsl
+file f = file.open("bible.txt", "r+");
+
+iterator it = f.readLines();
+
+while (string x = it.next()) {
+  print(x);
+}
+
+f.close();
+```
+
 ### Struct with function
 ```glsl
 typedef struct {
