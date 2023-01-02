@@ -133,6 +133,19 @@ GLMSAST *glms_parser_parse_number(GLMSParser *parser) {
   return ast;
 }
 
+GLMSAST *glms_parser_parse_int(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
+  ast->as.number.value = atoi(glms_string_view_get_value(&parser->token.value));
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_INT);
+  return ast;
+}
+GLMSAST *glms_parser_parse_float(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
+  ast->as.number.value = atof(glms_string_view_get_value(&parser->token.value));
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_FLOAT);
+  return ast;
+}
+
 GLMSAST *glms_parser_parse_bool(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BOOL, false);
   ast->as.boolean =
@@ -359,6 +372,8 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   case GLMS_TOKEN_TYPE_SPECIAL_CONST:
   case GLMS_TOKEN_TYPE_SPECIAL_STRING:
   case GLMS_TOKEN_TYPE_SPECIAL_NUMBER:
+  case GLMS_TOKEN_TYPE_SPECIAL_INT:
+  case GLMS_TOKEN_TYPE_SPECIAL_FLOAT:
   case GLMS_TOKEN_TYPE_SPECIAL_ARRAY:
   case GLMS_TOKEN_TYPE_SPECIAL_OBJECT:
   case GLMS_TOKEN_TYPE_SPECIAL_BOOL:
@@ -381,6 +396,12 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   }; break;
   case GLMS_TOKEN_TYPE_NUMBER: {
     return glms_parser_parse_number(parser);
+  }; break;
+  case GLMS_TOKEN_TYPE_INT: {
+    return glms_parser_parse_int(parser);
+  }; break;
+  case GLMS_TOKEN_TYPE_FLOAT: {
+    return glms_parser_parse_float(parser);
   }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF: {
     return glms_parser_parse_typedef(parser);

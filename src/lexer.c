@@ -12,7 +12,7 @@ typedef struct {
 #define GLMSTOKM(p, t)                                                         \
   (GLMSTokenMap) { .pattern = p, .type = t }
 
-#define GLMS_LEXER_TOKEN_MAP_LEN 29
+#define GLMS_LEXER_TOKEN_MAP_LEN 31
 
 const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("import", GLMS_TOKEN_TYPE_SPECIAL_IMPORT),
@@ -30,6 +30,8 @@ const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("while", GLMS_TOKEN_TYPE_SPECIAL_WHILE),
     GLMSTOKM("string", GLMS_TOKEN_TYPE_SPECIAL_STRING),
     GLMSTOKM("number", GLMS_TOKEN_TYPE_SPECIAL_NUMBER),
+    GLMSTOKM("int", GLMS_TOKEN_TYPE_SPECIAL_INT),
+    GLMSTOKM("float", GLMS_TOKEN_TYPE_SPECIAL_FLOAT),
     GLMSTOKM("null", GLMS_TOKEN_TYPE_SPECIAL_NULL),
     GLMSTOKM("array", GLMS_TOKEN_TYPE_SPECIAL_ARRAY),
     GLMSTOKM("object", GLMS_TOKEN_TYPE_SPECIAL_OBJECT),
@@ -158,6 +160,9 @@ static int glms_lexer_parse_number(GLMSLexer *lexer, GLMSToken *out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
 
+  out->type = GLMS_TOKEN_TYPE_INT;
+ 
+
   while (isdigit(lexer->c) && lexer->c != 0) {
     glms_lexer_advance(lexer);
     out->value.length++;
@@ -171,9 +176,10 @@ static int glms_lexer_parse_number(GLMSLexer *lexer, GLMSToken *out) {
       glms_lexer_advance(lexer);
       out->value.length++;
     }
+
+    out->type = GLMS_TOKEN_TYPE_FLOAT;
   }
 
-  out->type = GLMS_TOKEN_TYPE_NUMBER;
 
   return 1;
 }
