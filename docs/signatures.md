@@ -189,6 +189,18 @@ GLMS_AST_TYPE_VEC3 smoothstep(GLMS_AST_TYPE_VEC3 edge0, GLMS_AST_TYPE_VEC3 edge1
 ## Types & structures
 
 ### string (struct)
+<details><summary>props</summary>
+
+### string.replace
+```
+GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_STRING replacement)
+GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_STRING replacement)
+
+```
+
+
+</details>
+
 
 ### array (struct)
 <details><summary>props</summary>
