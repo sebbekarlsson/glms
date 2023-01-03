@@ -26,6 +26,7 @@ int glms_env_init(GLMSEnv *env, const char *source, const char* entry_path, GLMS
   env->initialized = true;
   env->config = cfg;
   env->source = source;
+  env->root = 0;
   env->entry_path = entry_path;
   env->last_joined_path = 0;
   glms_allocator_string_allocator(&env->string_alloc);
@@ -157,12 +158,42 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
 
   env->use_arena = false;
   
-  GLMSAST *root = glms_parser_parse(&env->parser);
+  GLMSAST *root = env->root ? env->root : glms_parser_parse(&env->parser);
 
+  env->root = root;
   env->use_arena = true;
 
   glms_eval(&env->eval, *root, &env->stack);
   return root;
+}
+
+int glms_env_call_function(GLMSEnv* env, const char* name, GLMSASTBuffer args, GLMSAST* out) {
+  if (!env)
+    return 0;
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+  if (!name) return 0;
+
+  if (env->root == 0) {
+    glms_env_exec(env);
+  }
+
+  GLMSAST* func = glms_eval_lookup(&env->eval, &env->stack, name);
+
+  if (!func) {
+    if (out != 0) {
+      GLMS_WARNING_RETURN(0, stderr, "No such function: `%s`.\n", name);
+    } else {
+      return 0;
+    }
+  }
+
+  GLMSAST result = glms_eval_call_func(&env->eval, &env->stack, func, args);
+
+  if (out) *out = result;
+
+  return 1;
 }
 
 int glms_env_register_function_signature(GLMSEnv *env, GLMSAST* ast, const char *name,

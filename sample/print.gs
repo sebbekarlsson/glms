@@ -1,1 +1,1 @@
-print((234 * 2));
+print("hello");

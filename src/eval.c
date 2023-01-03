@@ -140,6 +140,11 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
     if (fptr(eval, self, &args, stack, &result)) {
       if (result.type == GLMS_AST_TYPE_STACK_PTR) {
         glms_env_apply_type(eval->env, eval, stack, result.as.stackptr.ptr);
+      } else {
+	GLMSAST* new_ast = glms_ast_copy(result, eval->env);
+	glms_env_apply_type(eval->env, eval, stack, new_ast);
+	GLMSAST stackptr = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
+	result = stackptr;
       }
       return glms_eval(eval, result, stack);
     }
@@ -827,7 +832,9 @@ GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
                    .as.stackptr.ptr = result_ast};
 }
 
+
 GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
+
 
   switch (ast.type) {
   case GLMS_AST_TYPE_IMPORT: {
