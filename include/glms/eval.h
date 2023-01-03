@@ -21,8 +21,10 @@ GLMSAST *glms_eval_lookup(GLMSEval *eval, GLMSStack *stack, const char *key);
 bool glms_eval_expect(GLMSEval *eval, GLMSStack *stack, GLMSASTType *types,
                       int nr_types, GLMSASTBuffer *args);
 
-GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST* func,
+GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
                             GLMSASTBuffer args);
+
+
 
 GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
                          GLMSStack *stack);

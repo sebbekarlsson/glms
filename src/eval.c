@@ -277,15 +277,15 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
               //}
 
   GLMSAST *existing = glms_ast_get_ptr(left);
+  GLMSAST *ptr = glms_ast_get_ptr(right);
 
   if (existing == 0 && name != 0) {
     existing = glms_eval_lookup(eval, stack, name);
   }
 
   if (existing) {
-    glms_ast_assign(existing, right, eval, stack);
+    glms_ast_assign(existing, ptr ? (*ptr) : right, eval, stack);
   } else if (name) {
-    GLMSAST *ptr = glms_ast_get_ptr(right);
     GLMSAST *copy = ptr ? ptr : glms_ast_copy(right, eval->env);
 
     GLMSAST t = {0};

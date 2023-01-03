@@ -471,7 +471,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   GLMSAST *dest = glms_env_new_ast(env, src.type, true);
   *dest = src;
 
-  //   if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
+  // if (src.type == GLMS_AST_TYPE_STACK_PTR) return dest;
 
    if (src.type == GLMS_AST_TYPE_STRING) {
      if (src.as.string.heap != 0) {
@@ -495,7 +495,11 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
 
   if (src.type == GLMS_AST_TYPE_MAT4) {
     dest->as.m4 = glms_mat4_copy(src.as.m4);
+  } else if (src.type == GLMS_AST_TYPE_VEC3) {
+    dest->as.v3 = src.as.v3;
   }
+
+  
 
   if (src.typename)
     dest->typename = strdup(src.typename);
@@ -884,7 +888,12 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
   if (!a)
     return b;
 
+
   GLMSAST *ptr_a = glms_ast_get_ptr(*a);
+
+  if (ptr_a) {
+    return glms_ast_assign(ptr_a, b, eval, stack);
+  }
   GLMSAST *ptr_b = glms_ast_get_ptr(b);
 
   // if (ptr_a && ptr_b) {
@@ -926,6 +935,9 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
   case GLMS_AST_TYPE_NUMBER: {
     a->as.number.value = b.as.number.value;
   }; break;
+  case GLMS_AST_TYPE_VEC3: {
+    a->as.v3 = b.as.v3;
+  }; break;
   case GLMS_AST_TYPE_STRING: {
     if (b.as.string.heap != 0) {
 	if (a->as.string.heap != 0) {
@@ -940,7 +952,7 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
   }; break;
   }
 
-  return (GLMSAST){0};
+  return b;
 }
 
 GLMSAST *glms_ast_get_ptr(GLMSAST a) {
