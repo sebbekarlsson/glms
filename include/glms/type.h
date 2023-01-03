@@ -26,6 +26,11 @@ GLMSFunctionSignature glms_make_signature(GLMSType ret_type, GLMSType *args,
                                           int args_length);
 
 
-char* glms_function_signature_to_string(GLMSFunctionSignature signa, const char* func_name);
+char *glms_function_signature_to_string(GLMSFunctionSignature signa,
+                                        const char *func_name);
+
+
+int glms_type_destroy(GLMSType *type);
+int glms_signature_destroy(GLMSFunctionSignature* signa);
 
 #endif

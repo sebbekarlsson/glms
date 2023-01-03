@@ -47,3 +47,37 @@ char* glms_function_signature_to_string(GLMSFunctionSignature signa, const char*
 
   return s;
 }
+int glms_type_destroy(GLMSType *type) {
+  if (!type) return 0;
+  if (type->typename) {
+    free(type->typename);
+    type->typename = 0;
+  }
+
+  if (type->valuename) {
+    free(type->valuename);
+    type->valuename = 0;
+  }
+
+  return 1;
+}
+int glms_signature_destroy(GLMSFunctionSignature *signa) {
+  if (!signa) return 0;
+
+  if (signa->description) {
+    free(signa->description);
+    signa->description = 0;
+  }
+
+  if (signa->args != 0) {
+    for (int i = 0; i < signa->args_length; i++) {
+      glms_type_destroy(&signa->args[i]);
+    }
+
+    free(signa->args);
+    signa->args = 0;
+    signa->args_length = 0;
+  }
+
+  return 1;
+}

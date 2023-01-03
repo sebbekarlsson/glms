@@ -651,6 +651,22 @@ void glms_ast_destructor(GLMSAST *ast) {
   if (!ast)
     return;
 
+  if (ast->type == GLMS_AST_TYPE_FUNC) {
+    if (ast->as.func.name != 0) {
+      free(ast->as.func.name);
+      ast->as.func.name = 0;
+    }
+
+    if (ast->as.func.signatures.length > 0) {
+	for (int64_t i = 0; i < ast->as.func.signatures.length; i++) {
+	    GLMSFunctionSignature* signa = &ast->as.func.signatures.items[i];
+	    glms_signature_destroy(signa);
+	}
+
+	glms_GLMSFunctionSignature_buffer_clear(&ast->as.func.signatures);
+    }
+  }
+
   if (ast->destructor) {
     ast->destructor(ast);
   }
