@@ -71,7 +71,12 @@ void glms_struct_vec4_constructor(GLMSEval *eval, GLMSStack *stack,
 }
 
 void glms_struct_vec4(GLMSEnv *env) {
-  glms_env_register_type(env, "vec4", glms_env_new_ast(env, GLMS_AST_TYPE_VEC4, false),
+  GLMSAST* typeast = glms_env_new_ast(env, GLMS_AST_TYPE_VEC4, false);
+  glms_env_register_type(env, "vec4", typeast,
+                         glms_struct_vec4_constructor, glms_struct_vec4_swizzle,
+                         glms_struct_vec4_to_string, 0);
+
+  glms_env_register_type(env, GLMS_AST_TYPE_STR[GLMS_AST_TYPE_VEC4], typeast,
                          glms_struct_vec4_constructor, glms_struct_vec4_swizzle,
                          glms_struct_vec4_to_string, 0);
 }

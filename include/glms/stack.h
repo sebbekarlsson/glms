@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <glms/ast.h>
 
+struct GLMS_ENV_STRUCT;
+
 #define GLMS_STACK_CAPACITY 256
 
 typedef struct GLMS_STACK_STRUCT {
@@ -28,7 +30,7 @@ GLMSAST* glms_stack_get(GLMSStack* stack, const char* name);
 int glms_stack_save(GLMSStack* stack);
 int glms_stack_restore(GLMSStack* stack);
 
-void glms_stack_dump(GLMSStack* stack);
+void glms_stack_dump(GLMSStack* stack, struct GLMS_ENV_STRUCT* env);
 
 int glms_stack_copy(GLMSStack src, GLMSStack* dest);
 

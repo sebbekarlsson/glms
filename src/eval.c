@@ -82,8 +82,10 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
   GLMSAST *self = glms_stack_get(stack, "self");
   const char *fname = glms_ast_get_name(func);
 
-  if (self == 0)
+  if (self == 0) {
     self = func;
+    glms_stack_push(stack, "self", self);
+  }
 
   if (func->constructor) {
     GLMSAST *new_ast =
@@ -315,7 +317,7 @@ GLMSAST glms_eval_id(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   const char *name = glms_string_view_get_value(&ast.as.id.value);
   GLMSAST *value = 0;
 
-  value = ast.env_ref ? glms_env_lookup(ast.env_ref, name) : 0;
+   value = ast.env_ref ? glms_env_lookup(ast.env_ref, name) : 0;
   value = value ? value : glms_eval_lookup(eval, stack, name);
 
   if (value != 0) {
@@ -323,8 +325,8 @@ GLMSAST glms_eval_id(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
                         value);
     return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = value};
   } else if (value == 0 && ((ast.flags == 0) || (ast.flags->length <= 0))) {
-    GLMS_WARNING_RETURN((GLMSAST){.type = GLMS_AST_TYPE_UNDEFINED}, stderr,
-                        "`%s` is not defined.", name);
+     GLMS_WARNING_RETURN((GLMSAST){.type = GLMS_AST_TYPE_UNDEFINED}, stderr,
+                      "`%s` is not defined.", name);
   }
 
   return ast;
@@ -651,7 +653,10 @@ GLMSAST glms_eval_access_by_key(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   if (value) {
     if (value->type == GLMS_AST_TYPE_FUNC && right.type == GLMS_AST_TYPE_CALL) {
       right.as.call.func = value;
-      glms_stack_push(stack, "self", ptr);
+
+      if (ptr != 0) {
+        glms_stack_push(stack, "self", ptr);
+      }
       return glms_eval(eval, right, stack);
     }
 

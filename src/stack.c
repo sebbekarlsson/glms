@@ -3,6 +3,7 @@
 #include "hashy/hashy.h"
 #include <glms/macros.h>
 #include <glms/stack.h>
+#include <glms/env.h>
 
 int glms_stack_init(GLMSStack *stack) {
   if (!stack)
@@ -28,7 +29,7 @@ GLMSAST *glms_stack_push(GLMSStack *stack, const char *name, GLMSAST *ast) {
 
   if (stack->names_length >= GLMS_STACK_CAPACITY) {
     GLMS_WARNING(stderr, "Stack Stackoverflow: %d\n", stack->names_length);
-    glms_stack_dump(stack);
+    // glms_stack_dump(stack);
     return 0;
   }
 
@@ -71,16 +72,17 @@ GLMSAST *glms_stack_pop(GLMSStack *stack, const char *name) {
   return ast;
 }
 
-void glms_stack_dump(GLMSStack *stack) {
+void glms_stack_dump(GLMSStack *stack, GLMSEnv* env) {
   if (!stack)
     return;
   if (!stack->initialized)
     GLMS_WARNING_RETURN(, stderr, "stack not initialized.\n");
 
+  
   for (int i = 0; i < stack->names_length; i++) {
-    //    GLMSAST *ast = glms_stack_get(stack, stack->names[i]);
+     GLMSAST *ast = glms_stack_get(stack, stack->names[i]);
 
-    printf("%d (%s) => %s\n", i, stack->names[i], stack->names[i]);
+     printf("%d (%s) => %s\n", i, stack->names[i], ast ? glms_ast_to_string(*ast, env->string_alloc) : stack->names[i]);
   }
 }
 
@@ -90,6 +92,23 @@ int glms_stack_copy(GLMSStack src, GLMSStack *dest) {
   if (!dest->initialized)
     glms_stack_init(dest);
 
+
+  HashyIterator it = {0};
+
+  while (hashy_map_iterate(&src.locals, &it)) {
+    if (!it.bucket->key)
+      continue;
+    if (!it.bucket->value)
+      continue;
+
+    const char *key = it.bucket->key;
+    GLMSAST *value = (GLMSAST *)it.bucket->value;
+
+
+    glms_stack_push(dest, key, value);
+  }
+
+  #if 0
   for (int i = 0; i < src.names_length; i++) {
     GLMSAST *ast = glms_stack_get(&src, src.names[i]);
     if (!ast)
@@ -97,7 +116,9 @@ int glms_stack_copy(GLMSStack src, GLMSStack *dest) {
 
     glms_stack_push(dest, src.names[i], ast);
   }
+  #endif
 
+  
   if (src.names_length > 0) {
     dest->names_length = src.names_length;
     memcpy(&dest->names[0], &src.names[0], GLMS_STACK_CAPACITY * sizeof(char));

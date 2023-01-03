@@ -5,6 +5,7 @@
 #include "glms/string_view.h"
 #include <gimg/gimg.h>
 #include <glms/ast.h>
+#include <glms/modules/image.h>
 #include <glms/env.h>
 #include <glms/eval.h>
 #include <text/text.h>
@@ -24,7 +25,10 @@ int glms_struct_image_fptr_get_pixel(GLMSEval *eval, GLMSAST *ast,
 
   Vector4 pixel = gimg_get_pixel_vec4(gimg, x, y);
 
-  *out = (GLMSAST){ .type = GLMS_AST_TYPE_VEC4, .as.v4 = pixel };
+
+  GLMSAST* new_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_VEC4, true);
+  new_ast->as.v4 = pixel;
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
   return 1;
 }
 
@@ -99,6 +103,34 @@ int glms_struct_image_fptr_save(GLMSEval *eval, GLMSAST *ast,
   return 1;
 }
 
+
+int glms_struct_image_fptr_load(GLMSEval *eval, GLMSAST *ast,
+                                     GLMSASTBuffer *args, GLMSStack *stack, GLMSAST* out) {
+  if (!args || args->length <= 0)
+    return 0;
+
+
+  GIMG* gimg = NEW(GIMG);
+  if (args != 0 && args->length > 0) {
+     ast->ptr = ast->ptr ? ast->ptr : NEW(GIMG);
+    GLMSAST arg0 = glms_eval(eval, args->items[0], stack);
+
+    if (arg0.type == GLMS_AST_TYPE_STRING) {
+      gimg_read_from_path(gimg, glms_string_view_get_value(&arg0.as.string.value));
+    }
+  }
+
+  GLMSAST* new_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STRUCT, true);
+  new_ast->ptr = gimg;
+  new_ast->constructor = glms_struct_image_constructor;
+  glms_struct_image_constructor(eval, stack, 0, new_ast);
+
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
+
+  return 1;
+}
+
+
 int glms_struct_image_fptr_shade(GLMSEval *eval, GLMSAST *ast,
                                       GLMSASTBuffer *args, GLMSStack *stack, GLMSAST* out) {
 
@@ -170,29 +202,33 @@ void glms_struct_image_constructor(GLMSEval *eval, GLMSStack *stack,
   GLMSAST *ast = self;
   ast->value_type = ast;
   ast->constructor = glms_struct_image_constructor;
-
-
-
-  if (args != 0 && args->length > 0) {
-     ast->ptr = ast->ptr ? ast->ptr : NEW(GIMG);
-    GIMG *gimg = (GIMG *)ast->ptr;
-    GLMSAST arg0 = glms_eval(eval, args->items[0], stack);
-
-    if (arg0.type == GLMS_AST_TYPE_STRING) {
-      gimg_read_from_path(gimg, glms_string_view_get_value(&arg0.as.string.value));
-    }
-  }
+ 
 
   glms_ast_register_function(eval->env, ast, "getPixel",
                              glms_struct_image_fptr_get_pixel);
   glms_ast_register_function(eval->env, ast, "setPixel",
                              glms_struct_image_fptr_set_pixel);
+
+  glms_ast_register_function(eval->env, ast, "load",
+                             glms_struct_image_fptr_load);
+  
   glms_ast_register_function(eval->env, ast, "make",
                              glms_struct_image_fptr_make);
   glms_ast_register_function(eval->env, ast, "save",
                              glms_struct_image_fptr_save);
   glms_ast_register_function(eval->env, ast, "shade",
                              glms_struct_image_fptr_shade);
+
+  glms_env_register_function_signature(
+    eval->env,
+    ast,
+    "load",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_STRUCT},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_STRING } },
+      .args_length = 1
+    }
+  );
 
   glms_env_register_function_signature(
     eval->env,

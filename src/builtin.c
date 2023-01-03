@@ -556,6 +556,14 @@ int glms_fptr_smoothstep(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 0;
 }
 
+int glms_fptr_trace(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+  glms_stack_dump(stack, eval->env);
+
+  return 0;
+}
 
 
 void glms_builtin_init(GLMSEnv *env) {
@@ -566,6 +574,7 @@ void glms_builtin_init(GLMSEnv *env) {
                         glms_env_new_ast_number(env, M_PI * 2.0f, true));
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dump", glms_fptr_dump);
+  glms_env_register_function(env, "trace", glms_fptr_trace);
 
   glms_env_register_function(env, "smoothstep", glms_fptr_smoothstep);
   glms_env_register_function_signature(
