@@ -438,7 +438,7 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
 }
 
 GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
-  GLMSAST *left = glms_parser_parse_factor(parser);
+  GLMSAST *left = glms_parser_parse_factor(parser); 
 
   while (left && parser->token.type == GLMS_TOKEN_TYPE_DOT) {
     GLMSAST *access =
@@ -471,12 +471,26 @@ GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
     binop->as.binop.right = glms_parser_parse_term(parser);
     left = binop;
   }
+
+  while (parser->token.type == GLMS_TOKEN_TYPE_GT ||
+         parser->token.type == GLMS_TOKEN_TYPE_LT ||
+         parser->token.type == GLMS_TOKEN_TYPE_GTE ||
+         parser->token.type == GLMS_TOKEN_TYPE_LTE ||
+         parser->token.type == GLMS_TOKEN_TYPE_EQUALS_EQUALS) {
+    GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP, false);
+    binop->as.binop.left = left;
+    binop->as.binop.op = parser->token.type;
+    glms_parser_eat(parser, parser->token.type);
+    binop->as.binop.right = glms_parser_parse_term(parser);
+    left = binop;
+  }
+  
   return left;
 }
 
 GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
   GLMSAST *left = glms_parser_parse_term(parser);
-
+  
   while (parser->token.type == GLMS_TOKEN_TYPE_LBRACKET) {
     GLMSAST *access =
         glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS, false);
@@ -496,30 +510,13 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
     glms_parser_eat(parser, parser->token.type);
     binop->as.binop.right = glms_parser_parse_term(parser);
     left = binop;
-  }
-
-  while (parser->token.type == GLMS_TOKEN_TYPE_GT ||
-         parser->token.type == GLMS_TOKEN_TYPE_LT ||
-         parser->token.type == GLMS_TOKEN_TYPE_GTE ||
-         parser->token.type == GLMS_TOKEN_TYPE_LTE ||
-         parser->token.type == GLMS_TOKEN_TYPE_EQUALS_EQUALS) {
-    GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP, false);
-    binop->as.binop.left = left;
-    binop->as.binop.op = parser->token.type;
-    glms_parser_eat(parser, parser->token.type);
-    binop->as.binop.right = glms_parser_parse_expr(parser);
-    left = binop;
-  }
+  } 
 
   while (left && parser->token.type == GLMS_TOKEN_TYPE_DOT) {
     GLMSAST *access =
         glms_env_new_ast(parser->env, GLMS_AST_TYPE_ACCESS, false);
     access->as.access.left = left;
-
-    if (parser->token.type == GLMS_TOKEN_TYPE_DOT) {
-      glms_parser_eat(parser, parser->token.type);
-    }
-
+     glms_parser_eat(parser, parser->token.type);
     access->as.access.right = glms_parser_parse_term(parser);
     left = access;
   }
@@ -535,6 +532,18 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
       right->as.func.id = glms_ast_copy(*left, parser->env);
     }
 
+    left = binop;
+  }
+
+  while (
+    parser->token.type == GLMS_TOKEN_TYPE_AND_AND ||
+    parser->token.type == GLMS_TOKEN_TYPE_PIPE_PIPE
+  ) {
+    GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP, false);
+    binop->as.binop.left = left;
+    binop->as.binop.op = parser->token.type;
+    glms_parser_eat(parser, parser->token.type);
+    binop->as.binop.right = glms_parser_parse_expr(parser);
     left = binop;
   }
 

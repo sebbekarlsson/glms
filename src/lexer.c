@@ -1,3 +1,4 @@
+#include "glms/token.h"
 #include <ctype.h>
 #include <glms/lexer.h>
 #include <glms/macros.h>
@@ -276,6 +277,18 @@ int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out) {
   } break;
   case '%': {
     out->type = GLMS_TOKEN_TYPE_PERCENT;
+  } break;
+  case '|': {
+    if (glms_lexer_peek(lexer, 1) == '|') {
+      out->type = GLMS_TOKEN_TYPE_PIPE_PIPE;
+      glms_lexer_advance(lexer);
+    }
+  } break;
+  case '&': {
+    if (glms_lexer_peek(lexer, 1) == '&') {
+      out->type = GLMS_TOKEN_TYPE_AND_AND;
+      glms_lexer_advance(lexer);
+    }
   } break;
   case '=': {
     out->type = GLMS_TOKEN_TYPE_EQUALS;

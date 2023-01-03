@@ -452,9 +452,16 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     }
   }
 
+  
   switch (ast.as.binop.op) {
   case GLMS_TOKEN_TYPE_EQUALS_EQUALS: {
     return glms_ast_op_eq(left, right);
+  }; break;
+  case GLMS_TOKEN_TYPE_AND_AND: {
+    return glms_ast_op_and_and(left, right);
+  }; break;
+  case GLMS_TOKEN_TYPE_PIPE_PIPE: {
+    return glms_ast_op_pipe_pipe(left, right);
   }; break;
   case GLMS_TOKEN_TYPE_LT: {
     return glms_ast_op_lt(left, right);

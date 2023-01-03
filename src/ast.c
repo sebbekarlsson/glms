@@ -823,6 +823,18 @@ GLMSAST glms_ast_op_eq(GLMSAST a, GLMSAST b) {
   return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
                    .as.boolean = glms_ast_compare_equals_equals(a, b)};
 }
+
+GLMSAST glms_ast_op_and_and(GLMSAST a, GLMSAST b) {
+  return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+		   .as.boolean = (glms_ast_is_truthy(a) && glms_ast_is_truthy(b))};
+}
+
+GLMSAST glms_ast_op_pipe_pipe(GLMSAST a, GLMSAST b) {
+  return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,
+		   .as.boolean = (glms_ast_is_truthy(a) || glms_ast_is_truthy(b))};
+}
+
+
 GLMSAST glms_ast_op_lt(GLMSAST a, GLMSAST b) {
 
   return (GLMSAST){.type = GLMS_AST_TYPE_BOOL,

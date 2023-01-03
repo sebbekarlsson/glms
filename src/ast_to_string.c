@@ -124,8 +124,9 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
 char *glms_ast_to_string_debug_binop(GLMSAST ast) {
   char *s = 0;
   text_append(&s, glms_ast_to_string_debug(*ast.as.binop.left));
-  text_append(&s, glms_ast_to_string_debug(*ast.as.binop.left));
+  text_append(&s, " ");
   text_append(&s, GLMS_TOKEN_TYPE_STR[ast.as.binop.op]);
+  text_append(&s, " ");
   text_append(&s, glms_ast_to_string_debug(*ast.as.binop.right));
   return s;
 }
@@ -182,9 +183,9 @@ char *glms_ast_to_string_debug(GLMSAST ast) {
 
   char *s = 0;
   text_append(&s, GLMS_AST_TYPE_STR[ast.type]);
-  text_append(&s, "(");
+  text_append(&s, "(\n");
   text_append(&s, ast_str ? ast_str : "?");
-  text_append(&s, ")");
+  text_append(&s, "\n)");
 
   return s;
 }
