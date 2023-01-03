@@ -1,5 +1,7 @@
 #include "cglm/cam.h"
 #include "cglm/mat4.h"
+#include "cglm/struct/quat.h"
+#include "cglm/types-struct.h"
 #include "glms/allocator.h"
 #include "glms/ast_type.h"
 #include "glms/eval.h"
@@ -566,6 +568,22 @@ int glms_fptr_trace(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
 }
 
 
+int glms_fptr_quat_for(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                    GLMSStack *stack, GLMSAST *out) {
+
+
+
+  Vector3 dir = args->items[0].as.v3;
+  Vector3 up = args->items[1].as.v3;
+  versors q = glms_quat_for((vec3s){ dir.x, dir.y, dir.z }, (vec3s){ up.x, up.y, up.z });
+  
+  GLMSAST result = (GLMSAST){ .type = GLMS_AST_TYPE_VEC4, .as.v4 = VEC4(q.raw[0], q.raw[1], q.raw[2], q.raw[3]) };
+  *out = result;
+
+  glms_env_apply_type(eval->env, eval, stack, out);
+  return 1;
+}
+
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
 
@@ -575,6 +593,18 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dump", glms_fptr_dump);
   glms_env_register_function(env, "trace", glms_fptr_trace);
+  glms_env_register_function(env, "quatFor", glms_fptr_quat_for);
+
+  glms_env_register_function_signature(
+    env,
+    0,
+    "quatFor",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_VEC4},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_VEC4, .valuename = "dir" }, (GLMSType){ GLMS_AST_TYPE_VEC4, .valuename = "up" }  },
+      .args_length = 2
+    }
+  );
 
   glms_env_register_function(env, "smoothstep", glms_fptr_smoothstep);
   glms_env_register_function_signature(

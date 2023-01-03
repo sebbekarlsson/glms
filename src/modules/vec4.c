@@ -38,6 +38,43 @@ int glms_struct_vec4_swizzle(GLMSEval *eval, GLMSStack *stack, GLMSAST *ast,
   return 1;
 }
 
+int glms_struct_vec4_op_overload_mul(GLMSEval *eval, GLMSStack *stack,
+                                     GLMSAST *left, GLMSAST *right,
+                                     GLMSAST *out) {
+
+
+  
+  if (!glms_ast_is_vector(left) && !glms_ast_is_vector(right))
+    return 0;
+
+  Vector4 v = VEC41(0);
+
+
+  if (left->type == GLMS_AST_TYPE_VEC4 && right->type == GLMS_AST_TYPE_NUMBER) {
+    v = left->as.v4;
+    v.x *=  glms_ast_number(*right); 
+    v.y *=  glms_ast_number(*right); 
+    v.z *=  glms_ast_number(*right); 
+    v.w *=  glms_ast_number(*right); 
+  } else if (left->type == GLMS_AST_TYPE_NUMBER &&
+             right->type == GLMS_AST_TYPE_VEC4) {
+    v = right->as.v4;
+    v.x *=  glms_ast_number(*left); 
+    v.y *=  glms_ast_number(*left); 
+    v.z *=  glms_ast_number(*left); 
+    v.w *=  glms_ast_number(*left); 
+  } else if (left->type == GLMS_AST_TYPE_VEC4 &&
+             right->type == GLMS_AST_TYPE_VEC4) {
+    v.x = left->as.v4.x * right->as.v4.x; 
+    v.y = left->as.v4.y * right->as.v4.y; 
+    v.z = left->as.v4.z * right->as.v4.z; 
+    v.w = left->as.v4.w * right->as.v4.w; 
+  }
+
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_VEC4, .as.v4 = v};
+  return 1;
+}
+
 
 void glms_struct_vec4_constructor(GLMSEval *eval, GLMSStack *stack,
                                       GLMSASTBuffer *args, GLMSAST* self) {
@@ -48,6 +85,9 @@ void glms_struct_vec4_constructor(GLMSEval *eval, GLMSStack *stack,
   ast->swizzle = glms_struct_vec4_swizzle;
   ast->constructor = glms_struct_vec4_constructor;
   ast->to_string = glms_struct_vec4_to_string;
+
+  glms_ast_register_operator_overload(eval->env, ast, GLMS_TOKEN_TYPE_MUL,
+                                      glms_struct_vec4_op_overload_mul);
 
   if (!args)
     return;
