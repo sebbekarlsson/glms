@@ -505,6 +505,9 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   case GLMS_TOKEN_TYPE_MUL_EQUALS: {
     return glms_ast_op_mul_eq(&left, right);
   }; break;
+  case GLMS_TOKEN_TYPE_DIV_EQUALS: {
+    return glms_ast_op_div_eq(&left, right);
+  }; break;
   case GLMS_TOKEN_TYPE_AND_AND: {
     return glms_ast_op_and_and(left, right);
   }; break;

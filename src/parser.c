@@ -505,6 +505,7 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
 
   while (parser->token.type == GLMS_TOKEN_TYPE_ADD ||
          parser->token.type == GLMS_TOKEN_TYPE_SUB ||
+         parser->token.type == GLMS_TOKEN_TYPE_DIV_EQUALS ||
          parser->token.type == GLMS_TOKEN_TYPE_ADD_EQUALS ||
          parser->token.type == GLMS_TOKEN_TYPE_MUL_EQUALS ||
          parser->token.type == GLMS_TOKEN_TYPE_SUB_EQUALS) {

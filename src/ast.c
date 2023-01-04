@@ -862,6 +862,25 @@ GLMSAST glms_ast_op_mul_eq(GLMSAST* a, GLMSAST b) {
   return *a;
 }
 
+GLMSAST glms_ast_op_div_eq(GLMSAST *a, GLMSAST b) {
+    if (!a) return b;
+
+
+  GLMSAST* ptr_a = glms_ast_get_ptr(*a);
+  if (ptr_a) return glms_ast_op_div_eq(ptr_a, b);
+
+  GLMSAST* ptr_b = glms_ast_get_ptr(b);
+  if (ptr_b) return glms_ast_op_div_eq(a, *ptr_b);
+
+  switch (a->type) {
+  case GLMS_AST_TYPE_NUMBER: { a->as.number.value /= glms_ast_number(b); }; break;
+  default: { return *a; }; break;
+  }
+
+  return *a;
+  
+}
+
 GLMSAST glms_ast_op_add_add(GLMSAST *a) {
   if (!a)
     return (GLMSAST){0};

@@ -280,6 +280,11 @@ int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out) {
   } break;
   case '/': {
     out->type = GLMS_TOKEN_TYPE_DIV;
+
+    if (glms_lexer_peek(lexer, 1) == '=') {
+      out->type = GLMS_TOKEN_TYPE_DIV_EQUALS;
+      glms_lexer_advance(lexer);
+    }
   } break;
   case '%': {
     out->type = GLMS_TOKEN_TYPE_PERCENT;
