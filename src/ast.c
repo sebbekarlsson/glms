@@ -24,6 +24,10 @@ GLMSAST *glms_ast_push(GLMSAST *parent, GLMSAST *child) {
   if (!parent || !child)
     return 0;
 
+  GLMSAST* ptr = glms_ast_get_ptr(*parent);
+
+  if (ptr) return glms_ast_push(ptr, child);
+
   if (!parent->children) {
     parent->children = NEW(GLMSASTList);
   }
@@ -237,8 +241,10 @@ GLMSAST *glms_ast_access_by_key(GLMSAST *ast, const char *key, GLMSEnv *env) {
   if (v)
     return v;
 
-  if (ast->value_type != 0 && ast->value_type != ast) {
-    return glms_ast_access_by_key(ast->value_type, key, env);
+  GLMSAST* t = glms_env_get_type_for(env, ast);
+
+  if (t != 0 && t != ast) {
+    return glms_ast_access_by_key(t, key, env);
   }
 
   return 0;
@@ -488,6 +494,7 @@ GLMSAST *glms_ast_copy(GLMSAST src, GLMSEnv *env) {
   dest->constructor = src.constructor;
   dest->value_type = src.value_type;
   dest->env_ref = src.env_ref;
+
 
   dest->iterator_next = src.iterator_next;
 
@@ -985,7 +992,7 @@ GLMSAST *glms_ast_get_ptr(GLMSAST a) {
 }
 
 GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast,
-                                                 GLMSTokenType op) {
+                                                 GLMSTokenType op, GLMSEnv* env) {
   GLMSASTOperatorOverload oload =
       ast.op_overloads[op % GLMS_AST_OPERATOR_OVERLOAD_CAP];
   if (oload != 0)
@@ -994,7 +1001,16 @@ GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast,
   GLMSAST *ptr = glms_ast_get_ptr(ast);
 
   if (ptr != 0)
-    return glms_ast_get_op_overload(*ptr, op);
+    return glms_ast_get_op_overload(*ptr, op, env);
+
+  GLMSAST* t = glms_env_get_type_for(env, &ast);
+
+  if (t) {
+     GLMSASTOperatorOverload oload =
+       t->op_overloads[op % GLMS_AST_OPERATOR_OVERLOAD_CAP];
+
+     if (oload) return oload;
+  }
 
   return 0;
 }

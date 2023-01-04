@@ -31,10 +31,21 @@
 #include <stdlib.h>
 #include <vec3/vec3.h>
 
-static void print_ast(GLMSAST ast, GLMSAllocator alloc) {
+static void print_ast(GLMSAST ast, GLMSAllocator alloc, GLMSEnv* env) {
+
+  GLMSAST* t = glms_env_get_type_for(env, &ast);
+
+  if (t && t->to_string) {
+    char* buff = t->to_string(&ast, alloc, env);
+
+    if (buff) {
+      printf("%s\n", buff);
+      return;
+    }
+  }
 
   if (ast.to_string) {
-    char* s = ast.to_string(&ast, alloc);
+    char* s = ast.to_string(&ast, alloc, env);
 
     if (s) {
       printf("%s\n", s);
@@ -55,10 +66,10 @@ static void print_ast(GLMSAST ast, GLMSAllocator alloc) {
   case GLMS_AST_TYPE_STACK_PTR: {
     GLMSAST* ptr = glms_ast_get_ptr(ast);
 
-    if (ptr) return print_ast(*ptr, alloc);
+    if (ptr) return print_ast(*ptr, alloc, env);
   break;
   default: {
-    char *v = glms_ast_to_string(ast, alloc);
+    char *v = glms_ast_to_string(ast, alloc, env);
     if (v != 0) {
       printf("%s\n", v);
     }
@@ -74,7 +85,7 @@ int glms_fptr_print(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
 
   for (int64_t i = 0; i < args->length; i++) {
     GLMSAST arg = glms_eval(eval, args->items[i], stack);
-    print_ast(arg, eval->env->string_alloc);
+    print_ast(arg, eval->env->string_alloc, eval->env);
   }
 
   return 0;

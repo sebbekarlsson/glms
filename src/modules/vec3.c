@@ -181,7 +181,7 @@ int glms_struct_vec3_func_overload_mix(struct GLMS_EVAL_STRUCT* eval, struct GLM
   return 1;
 }
 
-char *glms_struct_vec3_to_string(GLMSAST *ast, GLMSAllocator alloc) {
+char *glms_struct_vec3_to_string(GLMSAST *ast, GLMSAllocator alloc, GLMSEnv* env) {
   Vector3 v = ast->as.v3;
 
   char tmp[256];

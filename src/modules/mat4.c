@@ -14,7 +14,7 @@
 
 // typedef char* (*GLMSASTToMat4)(struct GLMS_AST_STRUCT *ast, GLMSAllocator alloc);
 
-char *glms_mat4_to_string(GLMSAST *ast, GLMSAllocator alloc) {
+char *glms_mat4_to_string(GLMSAST *ast, GLMSAllocator alloc, GLMSEnv* env) {
   char* s = 0;
 
   alloc.strcat(alloc.user_ptr, &s, "{\n");

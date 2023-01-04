@@ -5,7 +5,7 @@
 #include <glms/eval.h>
 
 
-char *glms_struct_vec4_to_string(GLMSAST *ast, GLMSAllocator alloc) {
+char *glms_struct_vec4_to_string(GLMSAST *ast, GLMSAllocator alloc, GLMSEnv* env) {
   Vector3 v = ast->as.v3;
 
   char tmp[256];

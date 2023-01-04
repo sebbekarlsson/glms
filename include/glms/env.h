@@ -104,6 +104,9 @@ GLMSAST *glms_env_lookup(GLMSEnv *env, const char *name);
 
 GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name);
 
+GLMSAST *glms_env_get_type_for(GLMSEnv *env, GLMSAST* ast);
+
+
 GLMSAST *glms_env_apply_type(GLMSEnv *env, GLMSEval *eval, GLMSStack *stack,
                              GLMSAST *ast);
 

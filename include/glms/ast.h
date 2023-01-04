@@ -41,7 +41,7 @@ typedef int(*GLMSASTSwizzle)(
     struct GLMS_EVAL_STRUCT *eval, struct GLMS_STACK_STRUCT *stack,
     struct GLMS_AST_STRUCT *ast, struct GLMS_AST_STRUCT *accessor, struct GLMS_AST_STRUCT *out);
 
-typedef char* (*GLMSASTToString)(struct GLMS_AST_STRUCT *ast, GLMSAllocator alloc);
+typedef char* (*GLMSASTToString)(struct GLMS_AST_STRUCT *ast, GLMSAllocator alloc, struct GLMS_ENV_STRUCT* env);
 
 typedef void (*GLMSASTDestructor)(struct GLMS_AST_STRUCT *ast);
 
@@ -193,7 +193,7 @@ const char* glms_ast_get_name(GLMSAST* ast);
 
 const char* glms_ast_get_string_value(GLMSAST* ast);
 
-char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc);
+char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc, struct GLMS_ENV_STRUCT* env);
 
 bool glms_ast_is_truthy(GLMSAST ast);
 
@@ -257,7 +257,7 @@ GLMSAST *glms_ast_register_operator_overload(struct GLMS_ENV_STRUCT *env,
 
 
 
-GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast, GLMSTokenType op);
+GLMSASTOperatorOverload glms_ast_get_op_overload(GLMSAST ast, GLMSTokenType op, struct GLMS_ENV_STRUCT *env);
 
 GLMSAST *glms_ast_register_func_overload(struct GLMS_ENV_STRUCT *env,
                                              GLMSAST *ast, const char* name,

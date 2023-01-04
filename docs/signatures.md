@@ -43,6 +43,10 @@ GLMS_AST_TYPE_NUMBER log(GLMS_AST_TYPE_NUMBER)
 
 ```
 
+### trace
+> No signatures defined.
+
+
 ### fract
 ```
 GLMS_AST_TYPE_NUMBER fract(GLMS_AST_TYPE_NUMBER)
@@ -125,6 +129,12 @@ GLMS_AST_TYPE_NUMBER cos(GLMS_AST_TYPE_NUMBER)
 
 ```
 
+### quatFor
+```
+GLMS_AST_TYPE_VEC4 quatFor(GLMS_AST_TYPE_VEC4 dir, GLMS_AST_TYPE_VEC4 up)
+
+```
+
 ### tan
 ```
 GLMS_AST_TYPE_NUMBER tan(GLMS_AST_TYPE_NUMBER)
@@ -194,6 +204,7 @@ GLMS_AST_TYPE_VEC3 smoothstep(GLMS_AST_TYPE_VEC3 edge0, GLMS_AST_TYPE_VEC3 edge1
 ### string.replace
 ```
 GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_STRING replacement)
+GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_STRING replacement)
 
 ```
 
@@ -204,7 +215,19 @@ GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_
 ### array (struct)
 <details><summary>props</summary>
 
+### array.push
+> No signatures defined.
+
+
 ### array.map
+> No signatures defined.
+
+
+### array.sort
+> No signatures defined.
+
+
+### array.filter
 > No signatures defined.
 
 
@@ -218,11 +241,13 @@ GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_
 ### image.save
 ```
 GLMS_AST_TYPE_BOOL image.save(GLMS_AST_TYPE_STRING filename)
+GLMS_AST_TYPE_BOOL image.save(GLMS_AST_TYPE_STRING filename)
 
 ```
 
 ### image.setPixel
 ```
+GLMS_AST_TYPE_VOID image.setPixel(GLMS_AST_TYPE_VEC4 pixel)
 GLMS_AST_TYPE_VOID image.setPixel(GLMS_AST_TYPE_VEC4 pixel)
 
 ```
@@ -230,17 +255,27 @@ GLMS_AST_TYPE_VOID image.setPixel(GLMS_AST_TYPE_VEC4 pixel)
 ### image.getPixel
 ```
 GLMS_AST_TYPE_VEC4 image.getPixel(GLMS_AST_TYPE_NUMBER x, GLMS_AST_TYPE_NUMBER y)
+GLMS_AST_TYPE_VEC4 image.getPixel(GLMS_AST_TYPE_NUMBER x, GLMS_AST_TYPE_NUMBER y)
+
+```
+
+### image.load
+```
+GLMS_AST_TYPE_STRUCT image.load(GLMS_AST_TYPE_STRING)
+GLMS_AST_TYPE_STRUCT image.load(GLMS_AST_TYPE_STRING)
 
 ```
 
 ### image.shade
 ```
 GLMS_AST_TYPE_BOOL image.shade(GLMS_AST_TYPE_FUNC)
+GLMS_AST_TYPE_BOOL image.shade(GLMS_AST_TYPE_FUNC)
 
 ```
 
 ### image.make
 ```
+image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 
 ```
@@ -272,11 +307,13 @@ image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 ### file.write
 ```
 GLMS_AST_TYPE_BOOL file.write(GLMS_AST_TYPE_STRING text)
+GLMS_AST_TYPE_BOOL file.write(GLMS_AST_TYPE_STRING text)
 
 ```
 
 ### file.open
 ```
+file file.open(GLMS_AST_TYPE_STRING filename, GLMS_AST_TYPE_STRING mode)
 file file.open(GLMS_AST_TYPE_STRING filename, GLMS_AST_TYPE_STRING mode)
 
 ```
@@ -284,11 +321,13 @@ file file.open(GLMS_AST_TYPE_STRING filename, GLMS_AST_TYPE_STRING mode)
 ### file.close
 ```
 GLMS_AST_TYPE_BOOL file.close()
+GLMS_AST_TYPE_BOOL file.close()
 
 ```
 
 ### file.readLines
 ```
+GLMS_AST_TYPE_ITERATOR file.readLines()
 GLMS_AST_TYPE_ITERATOR file.readLines()
 
 ```

@@ -12,6 +12,7 @@
 #include <glms/eval.h>
 #include <glms/io.h>
 #include <glms/macros.h>
+#include <string.h>
 
 #define GLMS_AST_DEBUG_PRINT(ast)                                              \
   { printf("%s\n", glms_ast_to_string(ast, eval->env->string_alloc)); }
@@ -19,6 +20,11 @@
 GLMSAST *glms_eval_get_type(GLMSEval *eval, GLMSStack *stack, GLMSAST *ast) {
   if (!eval || !ast)
     return 0;
+
+
+  GLMSAST* ptr = glms_ast_get_ptr(*ast);
+
+  if (ptr) return glms_eval_get_type(eval, stack, ptr);
 
   GLMSAST *t = ast->value_type;
   GLMSAST *t2 = 0;
@@ -40,7 +46,7 @@ GLMSAST *glms_eval_get_type(GLMSEval *eval, GLMSStack *stack, GLMSAST *ast) {
   if (t3 != 0 && t3->constructor)
     return t3;
 
-  return 0;
+  return t ? t : t2 ? t2 : t3 ? t3 : 0;
 }
 
 int glms_eval_init(GLMSEval *eval, struct GLMS_ENV_STRUCT *env) {
@@ -443,11 +449,12 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
     r = *ptr_right;
   }
 
+
   GLMSASTOperatorOverload overload =
-      glms_ast_get_op_overload(l, ast.as.binop.op);
+    glms_ast_get_op_overload(l, ast.as.binop.op, eval->env);
 
   if (!overload)
-    overload = glms_ast_get_op_overload(r, ast.as.binop.op);
+    overload = glms_ast_get_op_overload(r, ast.as.binop.op, eval->env);
 
   if (overload != 0) {
     GLMSAST result = {0};
@@ -835,6 +842,14 @@ GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
 GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
+  GLMSAST* t = glms_eval_get_type(eval, stack, &ast);
+
+  if (t) {
+    ast.to_string = t->to_string;
+    ast.swizzle = t->swizzle;
+    memcpy(&ast.op_overloads[0], &t->op_overloads[0], sizeof(GLMSASTOperatorOverload) * GLMS_AST_OPERATOR_OVERLOAD_CAP);
+  }
+  
 
   switch (ast.type) {
   case GLMS_AST_TYPE_IMPORT: {

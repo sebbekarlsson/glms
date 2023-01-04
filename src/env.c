@@ -352,6 +352,45 @@ GLMSAST *glms_env_lookup_function(GLMSEnv *env, const char *name) {
   return (GLMSAST *)hashy_map_get(&env->globals, name);
 }
 
+static GLMSAST *glms_env_get_type_for_private(GLMSEnv *env, GLMSAST* ast) {
+  if (!env)
+    return 0;
+
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+
+  const char* name = glms_ast_get_name(ast);
+
+  if (!name) name = GLMS_AST_TYPE_STR[ast->type];
+
+  GLMSAST* a = ast->value_type;
+
+  if (a && a->constructor) return a;
+
+  GLMSAST* b = name ? glms_env_lookup_type(env, name) : 0;
+  GLMSAST* c = glms_env_lookup_type(env, GLMS_AST_TYPE_STR[ast->type]);
+
+  if (b && b->constructor) return b;
+  if (c && c->constructor) return c;
+
+
+  if (a) return a;
+  if (b) return b;
+  if (c) return c;
+
+  return 0;
+}
+
+GLMSAST *glms_env_get_type_for(GLMSEnv *env, GLMSAST *ast) {
+  GLMSAST* t = glms_env_get_type_for_private(env, ast);
+  if (!t) return 0;
+
+  glms_env_apply_type(env, &env->eval, &env->stack, t);
+
+  return t;
+}
+
 GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name) {
   if (!env || !name)
     return 0;
@@ -359,7 +398,19 @@ GLMSAST *glms_env_lookup_type(GLMSEnv *env, const char *name) {
   if (!env->initialized)
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
-  return (GLMSAST *)hashy_map_get(&env->types, name);
+  GLMSAST* a = (GLMSAST *)hashy_map_get(&env->types, name);
+  GLMSAST* b = (GLMSAST *)hashy_map_get(&env->globals, name);
+  GLMSAST* c = glms_stack_get(&env->stack, name);
+
+  if (a && a->constructor) return a;
+  if (b && b->constructor) return b;
+  if (c && c->constructor) return c;
+
+  if (a) return a;
+  if (b) return b;
+  if (c) return c;
+
+  return 0;
 }
 
 GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLMSAST* ast) {

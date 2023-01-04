@@ -6,11 +6,18 @@
 #include <string.h>
 #include <text/text.h>
 
-char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
+char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc, struct GLMS_ENV_STRUCT* env) {
+
+  GLMSAST* t = glms_env_get_type_for(env, &ast);
+
+  if (t && t->to_string) {
+    return t->to_string(&ast, alloc, env);
+  }
+  
   if (!alloc.strdup)
     GLMS_WARNING_RETURN(0, stderr, "No allocator provided.\n");
   if (ast.to_string) {
-    return ast.to_string(&ast, alloc);
+    return ast.to_string(&ast, alloc, env);
   }
 
   switch (ast.type) {
@@ -20,7 +27,7 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
   case GLMS_AST_TYPE_STACK_PTR: {
     GLMSAST *ptr = 0;
     if ((ptr = glms_ast_get_ptr(ast))) {
-      return glms_ast_to_string(*ptr, alloc);
+      return glms_ast_to_string(*ptr, alloc, env);
     }
   }; break;
   case GLMS_AST_TYPE_STACK: {
@@ -36,7 +43,7 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
       const char *key = it.bucket->key;
       GLMSAST *value = (GLMSAST *)it.bucket->value;
 
-      char *strval = glms_ast_to_string(*value, alloc);
+      char *strval = glms_ast_to_string(*value, alloc, env);
 
       if (!strval)
         continue;
@@ -56,7 +63,7 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
       const char *key = it2.bucket->key;
       GLMSAST *value = (GLMSAST *)it2.bucket->value;
 
-      char *strval = glms_ast_to_string(*value, alloc);
+      char *strval = glms_ast_to_string(*value, alloc, env);
 
       if (!strval)
         continue;
@@ -86,7 +93,7 @@ char *glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc) {
         const char *key = it.bucket->key;
         GLMSAST *value = (GLMSAST *)it.bucket->value;
 
-        char *strval = glms_ast_to_string(*value, alloc);
+        char *strval = glms_ast_to_string(*value, alloc, env);
 
         if (!strval)
           continue;

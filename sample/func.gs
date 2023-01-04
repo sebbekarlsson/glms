@@ -1,5 +1,1 @@
-function apa() {
-  print("hello");
-}
-
-apa();
+print((vec3(1, 2, 3) * 2) + 3 * 5);
