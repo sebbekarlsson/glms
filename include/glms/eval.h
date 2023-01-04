@@ -28,4 +28,7 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
 
 GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
                          GLMSStack *stack);
+
+void glms_eval_push_args(GLMSEval *eval, GLMSStack *stack,
+			 GLMSAST* func, GLMSASTBuffer args);
 #endif

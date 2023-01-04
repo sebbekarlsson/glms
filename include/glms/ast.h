@@ -234,6 +234,10 @@ GLMSAST glms_ast_op_add_add(GLMSAST* a);
 GLMSAST glms_ast_op_sub_sub(GLMSAST* a);
 
 GLMSAST glms_ast_op_add(GLMSAST a, GLMSAST b);
+GLMSAST glms_ast_op_add_eq(GLMSAST *a, GLMSAST b);
+GLMSAST glms_ast_op_sub_eq(GLMSAST* a, GLMSAST b);
+GLMSAST glms_ast_op_mul_eq(GLMSAST* a, GLMSAST b);
+
 GLMSAST glms_ast_op_sub(GLMSAST a, GLMSAST b);
 GLMSAST glms_ast_op_mul(GLMSAST a, GLMSAST b);
 GLMSAST glms_ast_op_mod(GLMSAST a, GLMSAST b);

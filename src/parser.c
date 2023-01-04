@@ -14,7 +14,10 @@ int glms_parser_init(GLMSParser *parser, GLMSEnv *env) {
   parser->initialized = true;
   parser->env = env;
   glms_lexer_next(&parser->env->lexer, &parser->token);
-  hashy_map_init(&parser->symbols, 256);
+
+  if (!parser->symbols.initialized) {
+    hashy_map_init(&parser->symbols, 256);
+  }
 
   const char *tokname = glms_string_view_get_value(&parser->token.value);
   GLMSAST *known = glms_parser_lookup(parser, tokname);
@@ -503,6 +506,7 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
   while (parser->token.type == GLMS_TOKEN_TYPE_ADD ||
          parser->token.type == GLMS_TOKEN_TYPE_SUB ||
          parser->token.type == GLMS_TOKEN_TYPE_ADD_EQUALS ||
+         parser->token.type == GLMS_TOKEN_TYPE_MUL_EQUALS ||
          parser->token.type == GLMS_TOKEN_TYPE_SUB_EQUALS) {
     GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP, false);
     binop->as.binop.left = left;

@@ -80,6 +80,25 @@ GLMSAST *glms_eval_lookup(GLMSEval *eval, GLMSStack *stack, const char *key) {
   return glms_stack_get(stack, key);
 }
 
+void glms_eval_push_args(GLMSEval *eval, GLMSStack *stack,
+                                GLMSAST* func, GLMSASTBuffer args) {
+
+
+  if (args.length <= 0 || args.items == 0) return;
+
+  if (!func->children || func->children->length <= 0) return;
+
+  int64_t n = MIN(func->children->length, args.length);
+
+  for (int64_t i = 0; i < n; i++) {
+    GLMSAST* arg = func->children->items[i];
+    const char* name = glms_ast_get_name(arg);
+    if (!name) name = glms_ast_get_name(&args.items[i]);
+
+    glms_stack_push(stack, name, glms_ast_copy(args.items[i], eval->env));
+  }
+}
+
 GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
                             GLMSASTBuffer args) {
 
@@ -142,8 +161,15 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
   }
 
   if (fptr) {
+
+    GLMSStack tmp_stack = {0};
+    glms_stack_init(&tmp_stack);
+    glms_stack_copy(*stack, &tmp_stack);
+
+    glms_eval_push_args(eval, &tmp_stack, func, args);
+    
     GLMSAST result = {0};
-    if (fptr(eval, self, &args, stack, &result)) {
+    if (fptr(eval, self, &args, &tmp_stack, &result)) {
       if (result.type == GLMS_AST_TYPE_STACK_PTR) {
         glms_env_apply_type(eval->env, eval, stack, result.as.stackptr.ptr);
       } else {
@@ -152,8 +178,10 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
 	GLMSAST stackptr = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
 	result = stackptr;
       }
+      glms_stack_clear(&tmp_stack);
       return glms_eval(eval, result, stack);
     }
+      glms_stack_clear(&tmp_stack);
   }
 
   if (func->as.func.body != 0) {
@@ -467,6 +495,15 @@ GLMSAST glms_eval_binop(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   switch (ast.as.binop.op) {
   case GLMS_TOKEN_TYPE_EQUALS_EQUALS: {
     return glms_ast_op_eq(left, right);
+  }; break;
+  case GLMS_TOKEN_TYPE_ADD_EQUALS: {
+    return glms_ast_op_add_eq(&left, right);
+  }; break;
+  case GLMS_TOKEN_TYPE_SUB_EQUALS: {
+    return glms_ast_op_sub_eq(&left, right);
+  }; break;
+  case GLMS_TOKEN_TYPE_MUL_EQUALS: {
+    return glms_ast_op_mul_eq(&left, right);
   }; break;
   case GLMS_TOKEN_TYPE_AND_AND: {
     return glms_ast_op_and_and(left, right);

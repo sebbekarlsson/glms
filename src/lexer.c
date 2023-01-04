@@ -260,6 +260,12 @@ int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out) {
   } break;
   case '*': {
     out->type = GLMS_TOKEN_TYPE_MUL;
+
+    if (glms_lexer_peek(lexer, 1) == '=') {
+      out->type = GLMS_TOKEN_TYPE_MUL_EQUALS;
+      glms_lexer_advance(lexer);
+    }
+    
   } break;
   case '-': {
     out->type = GLMS_TOKEN_TYPE_SUB;

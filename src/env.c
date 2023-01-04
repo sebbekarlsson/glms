@@ -182,16 +182,19 @@ int glms_env_call_function(GLMSEnv* env, const char* name, GLMSASTBuffer args, G
   GLMSAST* func = glms_eval_lookup(&env->eval, &env->stack, name);
 
   if (!func) {
-    if (out != 0) {
-      GLMS_WARNING_RETURN(0, stderr, "No such function: `%s`.\n", name);
-    } else {
-      return 0;
-    }
+   GLMS_WARNING_RETURN(0, stderr, "No such function: `%s`.\n", name);
   }
 
-  GLMSAST result = glms_eval_call_func(&env->eval, &env->stack, func, args);
 
-  if (out) *out = result;
+  GLMSStack tmp_stack = {0};
+  glms_stack_init(&tmp_stack);
+  glms_stack_copy(env->stack, &tmp_stack);
+  glms_eval_push_args(&env->eval, &tmp_stack, func, args);
+  GLMSAST result = glms_eval_call_func(&env->eval, &tmp_stack, func, args);
+
+  if (out != 0) *out = result;
+
+  glms_stack_clear(&tmp_stack);
 
   return 1;
 }
@@ -314,6 +317,12 @@ GLMSAST *glms_env_register_type(GLMSEnv *env, const char *name, GLMSAST *ast,
 
   //hashy_map_set(&env->types, typename, ast);
   hashy_map_set(&env->types, name, ast);
+
+
+  if (!env->parser.symbols.initialized) {
+    hashy_map_init(&env->parser.symbols, 256);
+  }
+  hashy_map_set(&env->parser.symbols, name, ast);
 
   return ast;
 }
