@@ -595,6 +595,45 @@ int glms_fptr_quat_for(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
+int glms_fptr_cantor(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
+  if (args->length <= 0)
+    return 0;
+
+  float x = glms_ast_number(args->items[0]);
+  float y = glms_ast_number(args->items[1]);
+
+
+  int c = mif_cantor((int)x, (int)y);
+
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = (float)c};
+
+  return 1;
+}
+
+int glms_fptr_decant(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
+  if (args->length <= 0)
+    return 0;
+
+  float x = glms_ast_number(args->items[0]);
+
+
+  GLMSAST* new_array = glms_env_new_ast(eval->env, GLMS_AST_TYPE_ARRAY, true);
+
+  int a = 0;
+  int b = 0;
+
+  mif_decant((int)x, &a, &b);
+
+  glms_ast_push(new_array, glms_env_new_ast_number(eval->env, a, true));
+  glms_ast_push(new_array, glms_env_new_ast_number(eval->env, b, true));
+
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_array};
+
+  return 1;
+}
+
 void glms_builtin_init(GLMSEnv *env) {
   srand(time(0));
 
@@ -605,6 +644,29 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "dump", glms_fptr_dump);
   glms_env_register_function(env, "trace", glms_fptr_trace);
   glms_env_register_function(env, "quatFor", glms_fptr_quat_for);
+  glms_env_register_function(env, "cantor", glms_fptr_cantor);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "cantor",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER }, (GLMSType){ GLMS_AST_TYPE_NUMBER }  },
+      .args_length = 2
+    }
+  );
+
+  glms_env_register_function(env, "decant", glms_fptr_decant);
+  glms_env_register_function_signature(
+    env,
+    0,
+    "decant",
+    (GLMSFunctionSignature){
+      .return_type = (GLMSType){GLMS_AST_TYPE_ARRAY},
+      .args = (GLMSType[]){ (GLMSType){ GLMS_AST_TYPE_NUMBER }  },
+      .args_length = 1
+    }
+  );
 
   glms_env_register_function_signature(
     env,
