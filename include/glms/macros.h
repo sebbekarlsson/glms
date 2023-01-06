@@ -23,7 +23,6 @@
 #define ABS(a) (a < 0 ? (a * -1) : a)
 #endif
 
-
 #define GLMS_CLI_RED "\x1B[31m"
 #define GLMS_CLI_GREEN "\x1B[32m"
 #define GLMS_CLI_YELLLOW "\x1B[33m"
@@ -33,18 +32,18 @@
 #define GLMS_CLI_WHITE "\x1B[37m"
 #define GLMS_CLI_RESET "\x1B[0m"
 
-#define GLMS_WARNING(...)                                                      \
-  {                                                                            \
-    printf(GLMS_CLI_RED "(GLMS)(Warning)(%s): \n" GLMS_CLI_RESET, __func__);   \
-    fprintf(__VA_ARGS__);                                                      \
+#define GLMS_WARNING(...)                                                    \
+  {                                                                          \
+    printf(GLMS_CLI_RED "(GLMS)(Warning)(%s): \n" GLMS_CLI_RESET, __func__); \
+    fprintf(__VA_ARGS__);                                                    \
   }
-#define GLMS_WARNING_RETURN(ret, ...)                                          \
-  {                                                                            \
-    printf("\n****\n");                                                        \
-    printf(GLMS_CLI_RED "(GLMS)(Warning)(%s): \n" GLMS_CLI_RESET, __func__);   \
-    fprintf(__VA_ARGS__);                                                      \
-    printf("\n****\n");                                                        \
-    return ret;                                                                \
+#define GLMS_WARNING_RETURN(ret, ...)                                        \
+  {                                                                          \
+    printf("\n****\n");                                                      \
+    printf(GLMS_CLI_RED "(GLMS)(Warning)(%s): \n" GLMS_CLI_RESET, __func__); \
+    fprintf(__VA_ARGS__);                                                    \
+    printf("\n****\n");                                                      \
+    return ret;                                                              \
   }
 
 #define GLMS_GENERATE_ENUM(ENUM) ENUM,

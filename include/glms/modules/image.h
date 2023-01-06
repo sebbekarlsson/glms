@@ -3,6 +3,6 @@
 #include <glms/env.h>
 
 void glms_struct_image_constructor(GLMSEval *eval, GLMSStack *stack,
-				   GLMSASTBuffer *args, GLMSAST *self);
+                                   GLMSASTBuffer *args, GLMSAST *self);
 void glms_struct_image(GLMSEnv *env);
 #endif

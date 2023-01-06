@@ -1,16 +1,17 @@
-#include "glms/token.h"
 #include <ctype.h>
 #include <glms/lexer.h>
 #include <glms/macros.h>
 #include <stddef.h>
 #include <string.h>
 
+#include "glms/token.h"
+
 typedef struct {
-  const char *pattern;
+  const char* pattern;
   GLMSTokenType type;
 } GLMSTokenMap;
 
-#define GLMSTOKM(p, t)                                                         \
+#define GLMSTOKM(p, t) \
   (GLMSTokenMap) { .pattern = p, .type = t }
 
 #define GLMS_LEXER_TOKEN_MAP_LEN 31
@@ -46,14 +47,11 @@ const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
     GLMSTOKM("mat3", GLMS_TOKEN_TYPE_SPECIAL_MAT3),
     GLMSTOKM("mat4", GLMS_TOKEN_TYPE_SPECIAL_MAT4),
     GLMSTOKM("bool", GLMS_TOKEN_TYPE_SPECIAL_BOOL),
-    GLMSTOKM("enum", GLMS_TOKEN_TYPE_SPECIAL_ENUM)
-};
+    GLMSTOKM("enum", GLMS_TOKEN_TYPE_SPECIAL_ENUM)};
 
-int glms_lexer_init(GLMSLexer *lexer, const char *source) {
-  if (!lexer || !source)
-    return 0;
-  if (lexer->initialized)
-    return 1;
+int glms_lexer_init(GLMSLexer* lexer, const char* source) {
+  if (!lexer || !source) return 0;
+  if (lexer->initialized) return 1;
   lexer->initialized = true;
 
   lexer->source = source;
@@ -64,52 +62,48 @@ int glms_lexer_init(GLMSLexer *lexer, const char *source) {
   return 1;
 }
 
-static char glms_lexer_peek(GLMSLexer *lexer, int i) {
-  if ((lexer->i + i) >= lexer->length)
-    return 0;
+static char glms_lexer_peek(GLMSLexer* lexer, int i) {
+  if ((lexer->i + i) >= lexer->length) return 0;
 
   return lexer->source[lexer->i + i];
 }
 
-#define GLMS_LEXER_HAS_WHITESPACE                                              \
-  (lexer->c == ' ' || lexer->c == '\t' || lexer->c == '\n' ||                  \
+#define GLMS_LEXER_HAS_WHITESPACE                             \
+  (lexer->c == ' ' || lexer->c == '\t' || lexer->c == '\n' || \
    lexer->c == 10 || lexer->c == 13)
 
-#define GLMS_LEXER_HAS_COMMENT (lexer->c == '/' && glms_lexer_peek(lexer, 1) == '/')
+#define GLMS_LEXER_HAS_COMMENT \
+  (lexer->c == '/' && glms_lexer_peek(lexer, 1) == '/')
 
-static int glms_lexer_advance(GLMSLexer *lexer) {
-  if (lexer->i >= lexer->length)
-    return 0;
-  if (lexer->c == 0)
-    return 0;
+static int glms_lexer_advance(GLMSLexer* lexer) {
+  if (lexer->i >= lexer->length) return 0;
+  if (lexer->c == 0) return 0;
   lexer->i += 1;
   lexer->c = lexer->source[lexer->i];
   return lexer->c != 0;
 }
 
-static int glms_lexer_skip_whitespace(GLMSLexer *lexer) {
+static int glms_lexer_skip_whitespace(GLMSLexer* lexer) {
   while (lexer->c != 0 && GLMS_LEXER_HAS_WHITESPACE) {
-    if (!glms_lexer_advance(lexer))
-      return 0;
+    if (!glms_lexer_advance(lexer)) return 0;
   }
 
   return lexer->c != 0 && lexer->i < lexer->length;
 }
 
-static int glms_lexer_skip_line_comment(GLMSLexer *lexer) {
+static int glms_lexer_skip_line_comment(GLMSLexer* lexer) {
   while (lexer->c == '/') {
     glms_lexer_advance(lexer);
   }
   while (lexer->c != 0 && lexer->c != '\n' && lexer->c != '\r') {
-    if (!glms_lexer_advance(lexer))
-      return 0;
+    if (!glms_lexer_advance(lexer)) return 0;
   }
 
   return lexer->c != 0 && lexer->i < lexer->length;
 }
 
-static void glms_lexer_parse_special_id(GLMSLexer *lexer, GLMSToken *out) {
-  const char *value = glms_string_view_get_value(&out->value);
+static void glms_lexer_parse_special_id(GLMSLexer* lexer, GLMSToken* out) {
+  const char* value = glms_string_view_get_value(&out->value);
 
   GLMSTokenType type = out->type;
 
@@ -125,7 +119,7 @@ static void glms_lexer_parse_special_id(GLMSLexer *lexer, GLMSToken *out) {
   out->type = type;
 }
 
-static int glms_lexer_parse_id(GLMSLexer *lexer, GLMSToken *out) {
+static int glms_lexer_parse_id(GLMSLexer* lexer, GLMSToken* out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
 
@@ -141,7 +135,7 @@ static int glms_lexer_parse_id(GLMSLexer *lexer, GLMSToken *out) {
   return 1;
 }
 
-static int glms_lexer_parse_string(GLMSLexer *lexer, GLMSToken *out) {
+static int glms_lexer_parse_string(GLMSLexer* lexer, GLMSToken* out) {
   out->value.length = 0;
   glms_lexer_advance(lexer);
   out->value.ptr = &lexer->source[lexer->i];
@@ -163,12 +157,11 @@ static int glms_lexer_parse_string(GLMSLexer *lexer, GLMSToken *out) {
   return 1;
 }
 
-static int glms_lexer_parse_number(GLMSLexer *lexer, GLMSToken *out) {
+static int glms_lexer_parse_number(GLMSLexer* lexer, GLMSToken* out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
 
   out->type = GLMS_TOKEN_TYPE_INT;
- 
 
   while (isdigit(lexer->c) && lexer->c != 0) {
     glms_lexer_advance(lexer);
@@ -187,162 +180,155 @@ static int glms_lexer_parse_number(GLMSLexer *lexer, GLMSToken *out) {
     out->type = GLMS_TOKEN_TYPE_FLOAT;
   }
 
-
   return 1;
 }
 
-int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out) {
-  if (!lexer || !out)
-    return 0;
+int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
+  if (!lexer || !out) return 0;
   if (!lexer->initialized)
     GLMS_WARNING_RETURN(0, stderr, "Lexer not initialized.\n");
-  if (lexer->i >= lexer->length)
-    return 0;
-  if (lexer->c == 0)
-    return 0;
+  if (lexer->i >= lexer->length) return 0;
+  if (lexer->c == 0) return 0;
 
   out->c = 0;
   out->value.ptr = 0;
   out->value.length = 0;
   out->type = GLMS_TOKEN_TYPE_EOF;
 
-
   while (GLMS_LEXER_HAS_COMMENT || GLMS_LEXER_HAS_WHITESPACE) {
     while (GLMS_LEXER_HAS_COMMENT) {
-	if (!glms_lexer_skip_line_comment(lexer)) return 0;
+      if (!glms_lexer_skip_line_comment(lexer)) return 0;
     }
 
     while (GLMS_LEXER_HAS_WHITESPACE) {
-	if (!glms_lexer_skip_whitespace(lexer))
-	return 0;
+      if (!glms_lexer_skip_whitespace(lexer)) return 0;
     }
   }
 
-
   switch (lexer->c) {
-  case '!': {
-    out->type = GLMS_TOKEN_TYPE_EXCLAM;
-  }; break;
-  case '{': {
-    out->type = GLMS_TOKEN_TYPE_LBRACE;
-  } break;
-  case '}': {
-    out->type = GLMS_TOKEN_TYPE_RBRACE;
-  } break;
-  case '[': {
-    out->type = GLMS_TOKEN_TYPE_LBRACKET;
-  } break;
-  case ']': {
-    out->type = GLMS_TOKEN_TYPE_RBRACKET;
-  } break;
-  case '(': {
-    out->type = GLMS_TOKEN_TYPE_LPAREN;
-  } break;
-  case ')': {
-    out->type = GLMS_TOKEN_TYPE_RPAREN;
-  } break;
-  case ';': {
-    out->type = GLMS_TOKEN_TYPE_SEMI;
-  } break;
-  case ',': {
-    out->type = GLMS_TOKEN_TYPE_COMMA;
-  } break;
-  case '.': {
-    out->type = GLMS_TOKEN_TYPE_DOT;
-  } break;
-  case ':': {
-    out->type = GLMS_TOKEN_TYPE_COLON;
-  } break;
-  case '+': {
-    out->type = GLMS_TOKEN_TYPE_ADD;
+    case '!': {
+      out->type = GLMS_TOKEN_TYPE_EXCLAM;
+    }; break;
+    case '{': {
+      out->type = GLMS_TOKEN_TYPE_LBRACE;
+    } break;
+    case '}': {
+      out->type = GLMS_TOKEN_TYPE_RBRACE;
+    } break;
+    case '[': {
+      out->type = GLMS_TOKEN_TYPE_LBRACKET;
+    } break;
+    case ']': {
+      out->type = GLMS_TOKEN_TYPE_RBRACKET;
+    } break;
+    case '(': {
+      out->type = GLMS_TOKEN_TYPE_LPAREN;
+    } break;
+    case ')': {
+      out->type = GLMS_TOKEN_TYPE_RPAREN;
+    } break;
+    case ';': {
+      out->type = GLMS_TOKEN_TYPE_SEMI;
+    } break;
+    case ',': {
+      out->type = GLMS_TOKEN_TYPE_COMMA;
+    } break;
+    case '.': {
+      out->type = GLMS_TOKEN_TYPE_DOT;
+    } break;
+    case ':': {
+      out->type = GLMS_TOKEN_TYPE_COLON;
+    } break;
+    case '+': {
+      out->type = GLMS_TOKEN_TYPE_ADD;
 
-    if (glms_lexer_peek(lexer, 1) == '=') {
-      out->type = GLMS_TOKEN_TYPE_ADD_EQUALS;
-      glms_lexer_advance(lexer);
-    } else if (glms_lexer_peek(lexer, 1) == '+') {
-      out->type = GLMS_TOKEN_TYPE_ADD_ADD;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  case '*': {
-    out->type = GLMS_TOKEN_TYPE_MUL;
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_ADD_EQUALS;
+        glms_lexer_advance(lexer);
+      } else if (glms_lexer_peek(lexer, 1) == '+') {
+        out->type = GLMS_TOKEN_TYPE_ADD_ADD;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    case '*': {
+      out->type = GLMS_TOKEN_TYPE_MUL;
 
-    if (glms_lexer_peek(lexer, 1) == '=') {
-      out->type = GLMS_TOKEN_TYPE_MUL_EQUALS;
-      glms_lexer_advance(lexer);
-    }
-    
-  } break;
-  case '-': {
-    out->type = GLMS_TOKEN_TYPE_SUB;
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_MUL_EQUALS;
+        glms_lexer_advance(lexer);
+      }
 
-    if (glms_lexer_peek(lexer, 1) == '=') {
-      out->type = GLMS_TOKEN_TYPE_SUB_EQUALS;
-      glms_lexer_advance(lexer);
-    } else if (glms_lexer_peek(lexer, 1) == '-') {
-      out->type = GLMS_TOKEN_TYPE_SUB_SUB;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  case '/': {
-    out->type = GLMS_TOKEN_TYPE_DIV;
+    } break;
+    case '-': {
+      out->type = GLMS_TOKEN_TYPE_SUB;
 
-    if (glms_lexer_peek(lexer, 1) == '=') {
-      out->type = GLMS_TOKEN_TYPE_DIV_EQUALS;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  case '%': {
-    out->type = GLMS_TOKEN_TYPE_PERCENT;
-  } break;
-  case '|': {
-    if (glms_lexer_peek(lexer, 1) == '|') {
-      out->type = GLMS_TOKEN_TYPE_PIPE_PIPE;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  case '&': {
-    if (glms_lexer_peek(lexer, 1) == '&') {
-      out->type = GLMS_TOKEN_TYPE_AND_AND;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  case '=': {
-    out->type = GLMS_TOKEN_TYPE_EQUALS;
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_SUB_EQUALS;
+        glms_lexer_advance(lexer);
+      } else if (glms_lexer_peek(lexer, 1) == '-') {
+        out->type = GLMS_TOKEN_TYPE_SUB_SUB;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    case '/': {
+      out->type = GLMS_TOKEN_TYPE_DIV;
 
-    if (glms_lexer_peek(lexer, 1) == '=') {
-      out->type = GLMS_TOKEN_TYPE_EQUALS_EQUALS;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  case '>': {
-    out->type = GLMS_TOKEN_TYPE_GT;
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_DIV_EQUALS;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    case '%': {
+      out->type = GLMS_TOKEN_TYPE_PERCENT;
+    } break;
+    case '|': {
+      if (glms_lexer_peek(lexer, 1) == '|') {
+        out->type = GLMS_TOKEN_TYPE_PIPE_PIPE;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    case '&': {
+      if (glms_lexer_peek(lexer, 1) == '&') {
+        out->type = GLMS_TOKEN_TYPE_AND_AND;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    case '=': {
+      out->type = GLMS_TOKEN_TYPE_EQUALS;
 
-    if (glms_lexer_peek(lexer, 1) == '=') {
-      out->type = GLMS_TOKEN_TYPE_GTE;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  case '<': {
-    out->type = GLMS_TOKEN_TYPE_LT;
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_EQUALS_EQUALS;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    case '>': {
+      out->type = GLMS_TOKEN_TYPE_GT;
 
-    if (glms_lexer_peek(lexer, 1) == '=') {
-      out->type = GLMS_TOKEN_TYPE_LTE;
-      glms_lexer_advance(lexer);
-    }
-  } break;
-  default: {
-    if (lexer->c == '"') {
-      return glms_lexer_parse_string(lexer, out);
-    }
-    if (isdigit(lexer->c)) {
-      return glms_lexer_parse_number(lexer, out);
-    }
-    if (isalpha(lexer->c)) {
-      return glms_lexer_parse_id(lexer, out);
-    }
-    GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%c`.\n", lexer->c);
-  }; break;
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_GTE;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    case '<': {
+      out->type = GLMS_TOKEN_TYPE_LT;
+
+      if (glms_lexer_peek(lexer, 1) == '=') {
+        out->type = GLMS_TOKEN_TYPE_LTE;
+        glms_lexer_advance(lexer);
+      }
+    } break;
+    default: {
+      if (lexer->c == '"') {
+        return glms_lexer_parse_string(lexer, out);
+      }
+      if (isdigit(lexer->c)) {
+        return glms_lexer_parse_number(lexer, out);
+      }
+      if (isalpha(lexer->c)) {
+        return glms_lexer_parse_id(lexer, out);
+      }
+      GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%c`.\n", lexer->c);
+    }; break;
   }
 
   out->c = lexer->c;

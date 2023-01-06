@@ -1,14 +1,15 @@
-#include "glms/env.h"
-#include <glms/dl.h>
 #include <dlfcn.h>
+#include <glms/dl.h>
 #include <glms/macros.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-void *glms_load_symbol(const char *filename, const char *funcname) {
-  void *handle;
-  char *error;
-  void *fptr = 0;
+#include "glms/env.h"
+
+void* glms_load_symbol(const char* filename, const char* funcname) {
+  void* handle;
+  char* error;
+  void* fptr = 0;
 
   // /lib/x86_64-linux-gnu/libc.so.6"
 
@@ -20,7 +21,7 @@ void *glms_load_symbol(const char *filename, const char *funcname) {
 
   dlerror();
 
-  void *ptr = dlsym(handle, funcname);
+  void* ptr = dlsym(handle, funcname);
 
   if ((error = dlerror()) != NULL) {
     GLMS_WARNING_RETURN(0, stderr, "%s\n", error);
@@ -29,12 +30,10 @@ void *glms_load_symbol(const char *filename, const char *funcname) {
   return ptr;
 }
 
-
-GLMSExtensionEntryFunc glms_load_symbol_function(const char *filename,
-                                                 const char *funcname) {
-
-    void *handle;
-  char *error;
+GLMSExtensionEntryFunc glms_load_symbol_function(const char* filename,
+                                                 const char* funcname) {
+  void* handle;
+  char* error;
   GLMSExtensionEntryFunc fptr = 0;
 
   // /lib/x86_64-linux-gnu/libc.so.6"
@@ -47,7 +46,7 @@ GLMSExtensionEntryFunc glms_load_symbol_function(const char *filename,
 
   dlerror();
 
-  *(void **) (&fptr) = dlsym(handle, funcname);
+  *(void**)(&fptr) = dlsym(handle, funcname);
 
   if ((error = dlerror()) != NULL) {
     GLMS_WARNING_RETURN(0, stderr, "%s\n", error);

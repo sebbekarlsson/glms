@@ -10,7 +10,6 @@ typedef struct {
   char tmp_buffer[GLMS_STRING_VIEW_CAPACITY];
 } GLMSStringView;
 
-
 const char* glms_string_view_get_value(GLMSStringView* view);
 
 #endif

@@ -6,7 +6,6 @@
 #define GLMS_GC_SWEEP_THRESHOLD 64
 #define GLMS_GC_SWEEP_ITER (GLMS_GC_SWEEP_THRESHOLD / 2)
 
-
 #define GLMS_FUNC_OVERLOAD_TEMPLATE "__func_overload__%s"
 
 #endif

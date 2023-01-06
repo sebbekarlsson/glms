@@ -1,8 +1,8 @@
 #ifndef GLMS_STACK_H
 #define GLMS_STACK_H
+#include <glms/ast.h>
 #include <hashy/hashy.h>
 #include <stdbool.h>
-#include <glms/ast.h>
 
 struct GLMS_ENV_STRUCT;
 
@@ -34,7 +34,7 @@ void glms_stack_dump(GLMSStack* stack, struct GLMS_ENV_STRUCT* env);
 
 int glms_stack_copy(GLMSStack src, GLMSStack* dest);
 
-int glms_stack_clear(GLMSStack *stack);
+int glms_stack_clear(GLMSStack* stack);
 
-int glms_stack_clear_trash(GLMSStack *stack);
+int glms_stack_clear_trash(GLMSStack* stack);
 #endif

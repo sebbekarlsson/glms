@@ -9,6 +9,8 @@ typedef struct {
   struct GLMS_AST_STRUCT* ast;
 } GLMSIterator;
 
-typedef int (*GLMSIteratorNext)(struct GLMS_ENV_STRUCT* env, struct GLMS_AST_STRUCT* self, GLMSIterator* it, struct GLMS_AST_STRUCT* out);
+typedef int (*GLMSIteratorNext)(struct GLMS_ENV_STRUCT* env,
+                                struct GLMS_AST_STRUCT* self, GLMSIterator* it,
+                                struct GLMS_AST_STRUCT* out);
 
 #endif

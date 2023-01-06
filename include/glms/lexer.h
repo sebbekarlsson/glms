@@ -1,8 +1,8 @@
 #ifndef GLMS_LEXER_H
 #define GLMS_LEXER_H
 #include <glms/token.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
   int64_t i;
@@ -12,12 +12,7 @@ typedef struct {
   bool initialized;
 } GLMSLexer;
 
-
-int glms_lexer_init(
-  GLMSLexer* lexer,
-  const char* source
-);
-
+int glms_lexer_init(GLMSLexer* lexer, const char* source);
 
 int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out);
 
