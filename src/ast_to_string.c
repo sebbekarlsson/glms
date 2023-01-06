@@ -121,6 +121,10 @@ char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc, struct GLMS_ENV_STRUC
     return alloc.strdup(alloc.user_ptr, tmp);
   }; break;
   default: {
+    if (ast.json != 0) {
+      char* jsonstr = json_stringify(ast.json);
+      if (jsonstr) return jsonstr;
+    }
     return alloc.strdup(alloc.user_ptr, GLMS_AST_TYPE_STR[ast.type]);
   }; break;
   }

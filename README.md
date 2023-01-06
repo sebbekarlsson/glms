@@ -136,6 +136,15 @@ response r = fetch("https://example.org")
 
 print(r.status()) // 200
 print(r.text()) // prints the whole response text
+
+// we can also request json API's
+response r = fetch("https://jsonplaceholder.typicode.com/posts");
+
+array p = r.json();
+
+object firstPost = p[0];
+
+print(firstPost.title);
 ```
 
 ### Reading JSON

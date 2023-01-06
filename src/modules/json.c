@@ -23,8 +23,7 @@ int glms_json_fptr_parse(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   if (!(j = json_parse(contents, &options))) GLMS_WARNING_RETURN(0, stderr, "Failed to parse json.\n");
 
 
-  GLMSAST* new_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_OBJECT, true);
-  new_ast->json = j;
+  GLMSAST* new_ast = glms_ast_from_json(eval->env, j); 
 
   *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
 

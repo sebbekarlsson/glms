@@ -283,7 +283,10 @@ typedef struct {
 
 char* glms_ast_generate_docstring(GLMSAST ast, const char* name, const char* suffix, int depth, GLMSDocstringGenerator* gen);
 
-int glms_ast_get_atoms(GLMSAST ast, GLMSASTBuffer* out);
+int glms_ast_get_atoms(GLMSAST ast, GLMSASTBuffer *out);
+
+GLMSAST *glms_ast_from_json(struct GLMS_ENV_STRUCT *env, JSON *v);
+
 
 #define GLMSAST_VALUE(ast) (ast->as.number.value)
 

@@ -310,7 +310,15 @@ image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 ### response (struct)
 <details><summary>props</summary>
 
+### response.data
+> No signatures defined.
+
+
 ### response.text
+> No signatures defined.
+
+
+### response.json
 > No signatures defined.
 
 

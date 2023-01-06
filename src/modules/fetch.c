@@ -1,3 +1,5 @@
+#include "fastjson/json.h"
+#include "fastjson/options.h"
 #include "glms/ast.h"
 #include "glms/ast_type.h"
 #include "glms/env.h"
@@ -115,6 +117,31 @@ int glms_response_fptr_text(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
+int glms_response_fptr_json(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                            GLMSStack *stack, GLMSAST *out) {
+  if (!ast->ptr) GLMS_WARNING_RETURN(0, stderr, "ptr == null.\n");
+
+  
+  GLMSFetchResponse* response = (GLMSFetchResponse*)ast->ptr;
+
+  const char* text = response->data;
+
+  if (!text) GLMS_WARNING_RETURN(0, stderr, "cannot parse null.\n");
+
+
+  JSONOptions joptions = {0};
+  joptions.optimized_strings = true;
+  JSON* j = json_parse(text, &joptions);
+
+  if (!j) GLMS_WARNING_RETURN(0, stderr, "failed to parse json.\n");
+
+  GLMSAST* obj_ast = glms_ast_from_json(eval->env, j);
+  
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = obj_ast };
+
+  return 1;
+}
+
 int glms_response_fptr_status(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
                             GLMSStack *stack, GLMSAST *out) {
   if (!ast->ptr) GLMS_WARNING_RETURN(0, stderr, "ptr == null.\n");
@@ -133,6 +160,8 @@ void glms_response_constructor(GLMSEval *eval, GLMSStack *stack,
 
   self->constructor = glms_response_constructor;
   glms_ast_register_function(eval->env, self, "text", glms_response_fptr_text);
+  glms_ast_register_function(eval->env, self, "json", glms_response_fptr_json);
+  glms_ast_register_function(eval->env, self, "data", glms_response_fptr_json);
   glms_ast_register_function(eval->env, self, "status", glms_response_fptr_status);
   
 }
