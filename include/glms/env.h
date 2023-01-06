@@ -44,6 +44,8 @@ typedef struct GLMS_ENV_STRUCT {
   char* last_joined_path;
 
   GLMSAST* root;
+
+  bool has_builtins;
 } GLMSEnv;
 
 typedef void (*GLMSExtensionEntryFunc)(GLMSEnv* env);
@@ -70,6 +72,10 @@ GLMSAST* glms_env_new_ast_string(GLMSEnv* env, const char* value, bool arena);
 GLMSAST* glms_env_new_ast_field(GLMSEnv* env, GLMSTokenType data_type, const char* name, bool arena);
 
 GLMSAST *glms_env_exec(GLMSEnv *env);
+
+GLMSAST *glms_env_exec_source(GLMSEnv *env, const char *source);
+
+int glms_env_reset(GLMSEnv* env);
 
 int glms_env_call_function(GLMSEnv* env, const char* name, GLMSASTBuffer args, GLMSAST* out);
 

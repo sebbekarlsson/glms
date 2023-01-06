@@ -634,7 +634,19 @@ int glms_fptr_decant(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
+int glms_fptr_exit(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                  GLMSStack *stack, GLMSAST *out) {
+
+  int x = args != 0 && args->length > 0 ? glms_ast_number(args->items[0]) : 0;
+
+  exit(x);
+
+  return 1;
+}
+
 void glms_builtin_init(GLMSEnv *env) {
+  if (env->has_builtins) return;
+  env->has_builtins = true;
   srand(time(0));
 
   glms_env_register_any(env, "PI", glms_env_new_ast_number(env, M_PI, true));
@@ -643,6 +655,8 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_env_register_function(env, "print", glms_fptr_print);
   glms_env_register_function(env, "dump", glms_fptr_dump);
   glms_env_register_function(env, "trace", glms_fptr_trace);
+  glms_env_register_function(env, "exit", glms_fptr_exit);
+  glms_env_register_function(env, "quit", glms_fptr_exit);
   glms_env_register_function(env, "quatFor", glms_fptr_quat_for);
   glms_env_register_function(env, "cantor", glms_fptr_cantor);
   glms_env_register_function_signature(

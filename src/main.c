@@ -3,6 +3,8 @@
 #include <glms/io.h>
 #include <glms/macros.h>
 #include <hashy/hashy.h>
+#include <stdio.h>
+#include <string.h>
 
 typedef struct {
   union {
@@ -43,9 +45,28 @@ int cli_args_destroy(CLIArgs *args) {
   return 1;
 }
 
+static int glms_interactive() {
+  GLMSEnv env = {0};
+  glms_env_init(&env, 0, 0, (GLMSConfig){});
+  while (true) {
+    char input_source[1024];
+    memset(&input_source[0], 0, 1024 * sizeof(char));
+
+    printf("> ");
+    fgets(input_source, 1024, stdin);
+    fflush(stdin);
+
+    GLMSAST *result = glms_env_exec_source(&env, input_source);
+    glms_env_reset(&env);
+  }
+
+  glms_env_clear(&env);
+  return 0;
+}
+
 int main(int argc, char *argv[]) {
   if (argc < 2)
-    return 0;
+    return glms_interactive();
 
   CLIArgs cli = {0};
   cli_args_init(&cli, argc, argv);
@@ -67,9 +88,7 @@ int main(int argc, char *argv[]) {
 
   GLMSEnv env = {0};
   glms_env_init(&env, source, argv[1], (GLMSConfig){});
-
   glms_env_exec(&env);
-
   glms_env_clear(&env);
 
   free(source);

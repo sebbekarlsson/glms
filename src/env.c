@@ -32,24 +32,37 @@ int glms_env_init(GLMSEnv *env, const char *source, const char* entry_path, GLMS
   glms_allocator_string_allocator(&env->string_alloc);
   hashy_map_init(&env->globals, 256);
   hashy_map_init(&env->types, 256);
-  memo_init(
-      &env->memo_ast,
-      (MemoConfig){.item_size = sizeof(GLMSAST),
-		   .page_capacity = GLMS_MEMO_AST_PAGE_CAPACITY,
-		   .destructor = (MemoDestructorFunc)glms_ast_destructor});
 
-  arena_init(
+  if (!env->memo_ast.initialized) { 
+    memo_init(
+	&env->memo_ast,
+	(MemoConfig){.item_size = sizeof(GLMSAST),
+		    .page_capacity = GLMS_MEMO_AST_PAGE_CAPACITY,
+		    .destructor = (MemoDestructorFunc)glms_ast_destructor});
+  }
+
+  if (!env->arena_ast.initialized) {
+    arena_init(
       &env->arena_ast,
       (ArenaConfig){.items_per_page = GLMS_ARENA_AST_CAPACITY,
 		    .item_size = sizeof(GLMSAST),
 		    .free_function = (ArenaFreeFunction)glms_ast_destructor});
+  }
 
-  env->undefined = glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED, false);
-  env->stackptr = glms_env_new_ast(env, GLMS_AST_TYPE_STACK_PTR, false);
+  if (env->undefined == 0) {
+    env->undefined = glms_env_new_ast(env, GLMS_AST_TYPE_UNDEFINED, false);
+  }
+
+  if (env->stackptr == 0) {
+    env->stackptr = glms_env_new_ast(env, GLMS_AST_TYPE_STACK_PTR, false);
+  }
 
   glms_eval_init(&env->eval, env);
   glms_stack_init(&env->stack);
-  glms_builtin_init(env);
+
+  if (!env->has_builtins) {
+    glms_builtin_init(env);
+  }
 
   if (env->source != 0) {
     glms_lexer_init(&env->lexer, env->source);
@@ -77,6 +90,8 @@ int glms_env_clear(GLMSEnv *env) {
   //arena_reset(&env->arena_ast);
   //arena_clear(&env->arena_ast);
 
+
+  
   env->initialized = false;
 
   return 1;
@@ -166,6 +181,44 @@ GLMSAST *glms_env_exec(GLMSEnv *env) {
   glms_eval(&env->eval, *root, &env->stack);
   return root;
 }
+
+GLMSAST *glms_env_exec_source(GLMSEnv *env, const char *source) {
+  if (!env)
+    return 0;
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+  
+  env->use_arena = false;
+  glms_lexer_init(&env->lexer, source);
+  glms_parser_init(&env->parser, env);
+
+  GLMSAST* root = glms_parser_parse(&env->parser);
+  env->use_arena = true;
+  glms_eval(&env->eval, *root, &env->stack);
+
+  return root;
+}
+
+int glms_env_reset(GLMSEnv *env) {
+  if (!env)
+    return 0;
+  if (!env->initialized)
+    GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+
+  env->lexer.c = 0;
+  env->lexer.i = 0;
+  env->lexer.initialized = false;
+  env->lexer.length = 0;
+  env->lexer.source = 0;
+
+  env->parser.error = false;
+  env->parser.initialized = false;
+  env->parser.finished = false;
+
+  // env->initialized = false;
+  return 1;
+}
+
 
 int glms_env_call_function(GLMSEnv* env, const char* name, GLMSASTBuffer args, GLMSAST* out) {
   if (!env)
