@@ -44,6 +44,10 @@ c.shade((vec3 uv, vec3 fragCoord, vec3 resolution, number time) => {
 > To see documentation, built-in functions etc,  
 > Have a look at [this](docs/signatures.md)
 
+## Integration
+> Want to integrate `GLMS` for scripting in an existing project?  
+> Have a look at [this](docs/integration.md)
+
 ## Some examples :mag:
 
 ### Shader-like image manipulation
