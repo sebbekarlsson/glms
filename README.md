@@ -117,13 +117,6 @@ value = clamp(value, 0.0, 1.0);
 print(value); // 1.000000
 ```
 
-### Arrow functions
-```
-const greeting = (msg) => print(msg);
-
-greeting("hello world!"); // hello world!
-```
-
 ### Structs
 ```glsl
 typedef struct {
