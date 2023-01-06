@@ -116,6 +116,13 @@ void some_place_in_your_project_where_setting_up_the_scripting_environment_is_ap
 }
 ```
 
+> Now, in `GLMS`; you will be able to do something like this:
+```glsl
+vec3 pos = myobj.getPosition();
+print(pos);
+myobj.setPosition(vec3(3, 1.13, 1.6));
+```
+
 ## More examples of integration
 > For a better understanding, or for more examples; have a look [here](https://github.com/sebbekarlsson/glms/tree/master/src/modules).  
 > In these files you can see how types, functions, globals, etc are currently implemented into the language.  
