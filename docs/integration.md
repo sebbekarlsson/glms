@@ -125,5 +125,6 @@ myobj.setPosition(vec3(3, 1.13, 1.6));
 
 ## More examples of integration
 > For a better understanding, or for more examples; have a look [here](https://github.com/sebbekarlsson/glms/tree/master/src/modules).  
+> [this](https://github.com/sebbekarlsson/glms/blob/d4dcf3039fd4a0f4154ee04ee69653f5966f194e/src/builtin.c#L596) might also be of interest.  
 > In these files you can see how types, functions, globals, etc are currently implemented into the language.  
 > The same principles can be applied when integrating this language in any other project.
