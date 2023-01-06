@@ -130,6 +130,14 @@ print(p.age); // 33.000000
 print(p.name); // John Doe
 ```
 
+### HTTP Requests
+```glsl
+response r = fetch("https://example.org")
+
+print(r.status()) // 200
+print(r.text()) // prints the whole response text
+```
+
 ### More examples
 > For more examples, see [examples](EXAMPLES.md)
 

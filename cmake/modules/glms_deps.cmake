@@ -40,9 +40,23 @@ function (glms_deps TARGET_NAME)
   endif()
 
 
+  if (NOT TARGET curl)
+    
+   find_library(CURL_LIB curl)
+
+   if (NOT CURL_LIB)
+     FetchContent_Declare(
+       curl
+       GIT_REPOSITORY https://github.com/curl/curl.git
+       GIT_TAG "curl-7_87_0"
+     )
+    FetchContent_MakeAvailable(curl)
+   endif()
+  endif()
 
 
-  set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static spath_static cglm dl)
+
+  set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static spath_static cglm curl dl)
 
   target_link_libraries(${TARGET_NAME} ${GLMS_DEPS})
 endfunction()

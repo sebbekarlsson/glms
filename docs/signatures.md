@@ -30,6 +30,10 @@ GLMS_AST_TYPE_MAT4 perspective(GLMS_AST_TYPE_NUMBER fov, GLMS_AST_TYPE_NUMBER as
 
 ```
 
+### exit
+> No signatures defined.
+
+
 ### cross
 ```
 GLMS_AST_TYPE_VEC3 cross(GLMS_AST_TYPE_VEC3, GLMS_AST_TYPE_VEC3)
@@ -126,6 +130,10 @@ GLMS_AST_TYPE_MAT4 identity()
 
 ```
 
+### quit
+> No signatures defined.
+
+
 ### random
 ```
 GLMS_AST_TYPE_NUMBER random() // Returns a random value between 0 and 1.
@@ -205,6 +213,12 @@ GLMS_AST_TYPE_MAT4 ortho(GLMS_AST_TYPE_NUMBER left, GLMS_AST_TYPE_NUMBER right, 
 GLMS_AST_TYPE_NUMBER smoothstep(GLMS_AST_TYPE_NUMBER edge0, GLMS_AST_TYPE_NUMBER edge1, GLMS_AST_TYPE_NUMBER value)
 GLMS_AST_TYPE_VEC3 smoothstep(GLMS_AST_TYPE_VEC3 edge0, GLMS_AST_TYPE_VEC3 edge1, GLMS_AST_TYPE_NUMBER value)
 GLMS_AST_TYPE_VEC3 smoothstep(GLMS_AST_TYPE_VEC3 edge0, GLMS_AST_TYPE_VEC3 edge1, GLMS_AST_TYPE_VEC3 value)
+
+```
+
+### fetch
+```
+response fetch(GLMS_AST_TYPE_STRING URL)
 
 ```
 
@@ -299,6 +313,21 @@ image image.make(GLMS_AST_TYPE_NUMBER width, GLMS_AST_TYPE_NUMBER height)
 ### vec3 (struct)
 
 ### vec4 (struct)
+
+### response (struct)
+<details><summary>props</summary>
+
+### response.text
+> No signatures defined.
+
+
+### response.status
+> No signatures defined.
+
+
+
+</details>
+
 
 ### iterator (struct)
 <details><summary>props</summary>

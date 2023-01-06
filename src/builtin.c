@@ -1,4 +1,3 @@
-#include "cglm/cam.h"
 #include "cglm/mat4.h"
 #include "cglm/struct/quat.h"
 #include "cglm/types-struct.h"
@@ -24,6 +23,7 @@
 #include <glms/modules/string.h>
 #include <glms/modules/iterator.h>
 #include <glms/modules/mat4.h>
+#include <glms/modules/fetch.h>
 #include <glms/math.h>
 #include <glms/dl.h>
 #include <math.h>
@@ -1114,4 +1114,5 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_mat4_type(env);
   glms_struct_image(env);
   glms_file_type(env);
+  glms_fetch(env);
 }
