@@ -149,6 +149,12 @@ static int glms_lexer_parse_string(GLMSLexer *lexer, GLMSToken *out) {
   while (lexer->c != '"' && lexer->c != 0) {
     glms_lexer_advance(lexer);
     out->value.length++;
+
+    if (lexer->c == '\\') {
+      glms_lexer_advance(lexer);
+      glms_lexer_advance(lexer);
+      out->value.length += 2;
+    }
   }
 
   glms_lexer_advance(lexer);

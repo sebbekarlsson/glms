@@ -7,13 +7,11 @@
 #include "glms/macros.h"
 #include "glms/string_view.h"
 #include <glms/modules/file.h>
+#include <glms/io.h>
 #include <stdio.h>
 
 // typedef char* (*GLMSASTToString)(struct GLMS_AST_STRUCT *ast, GLMSAllocator alloc);
 
-char *glms_file_to_string(GLMSAST *ast, GLMSAllocator alloc) {
-  return 0;
-}
 
 int glms_file_fptr_open(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
                         GLMSStack *stack, GLMSAST *out) {
@@ -23,6 +21,13 @@ int glms_file_fptr_open(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
 
 
   const char* filepath = glms_string_view_get_value(&args->items[0].as.string.value);
+
+  if (!glms_file_exists(filepath)) {
+    const char* nextpath = glms_env_get_path_for(eval->env, filepath);
+    if (nextpath != 0) filepath = nextpath;
+  }
+  
+  
   const char* mode = glms_string_view_get_value(&args->items[1].as.string.value);
 
   FILE* fp = fopen(filepath, mode);
@@ -137,17 +142,44 @@ int glms_file_fptr_read_lines(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
+int glms_file_fptr_read(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                        GLMSStack *stack, GLMSAST *out) {
+
+  if (!ast->ptr) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
+
+  GLMSFile* f = (GLMSFile*)ast->ptr;
+  if (!f->fp) GLMS_WARNING_RETURN(0, stderr, "file handle not open.\n");
+
+
+  FILE* fp = f->fp;
+
+
+   char *buffer = NULL;
+  size_t len;
+  ssize_t bytes_read = getdelim(&buffer, &len, '\0', fp);
+  if (bytes_read == -1) {
+    return 0;
+  }
+
+
+  GLMSAST* new_ast = glms_env_new_ast_string(eval->env, buffer, true);
+
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = new_ast };
+  return 1;
+}
+
 void glms_file_constructor(GLMSEval *eval, GLMSStack *stack,
                                   GLMSASTBuffer *args, GLMSAST *self) {
 
   if (!self) return;
   self->type = GLMS_AST_TYPE_STRUCT;
   self->constructor = glms_file_constructor;
-  self->to_string = glms_file_to_string;
+  //self->to_string = glms_file_to_string;
   glms_ast_register_function(eval->env, self, "open", glms_file_fptr_open);
   glms_ast_register_function(eval->env, self, "close", glms_file_fptr_close);
   glms_ast_register_function(eval->env, self, "write", glms_file_fptr_write);
   glms_ast_register_function(eval->env, self, "readLines", glms_file_fptr_read_lines);
+  glms_ast_register_function(eval->env, self, "read", glms_file_fptr_read);
 
   glms_env_register_function_signature(
     eval->env,

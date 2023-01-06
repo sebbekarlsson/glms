@@ -1,4 +1,6 @@
 #include "cglm/struct/mat4.h"
+#include "fastjson/json.h"
+#include "fastjson/node.h"
 #include "glms/ast_type.h"
 #include "glms/stack.h"
 #include "glms/string_view.h"
@@ -219,6 +221,32 @@ GLMSAST *glms_ast_access_by_key_private(GLMSAST *ast, const char *key,
     if (!v) return 0;
     v->env_ref = astenv;
     return v;
+  }
+
+  if (ast->json != 0) {
+    JSON* v = json_get(ast->json, key);
+
+    if (v != 0) {
+      
+      GLMSAST* new_ast = 0;
+
+      if (v->type == FJ_NODE_STRING) {
+        new_ast = glms_env_new_ast_string(env, v->value_str, true);
+      } else if (
+		 v->type == FJ_NODE_FLOAT ||
+		 v->type == FJ_NODE_INT ||
+		 v->type == FJ_NODE_UINT32 ||
+		 v->type == FJ_NODE_INT32 ||
+		 v->type == FJ_NODE_UINT64 ||
+		 v->type == FJ_NODE_UINT64) {
+        new_ast = glms_env_new_ast_number(env, json_get_value_number(v), true);
+      } else {
+        new_ast = glms_env_new_ast(env, GLMS_AST_TYPE_OBJECT, true);
+        new_ast->json = v;
+      }
+      return new_ast;
+    }
+
   }
 
   if (ast->type == GLMS_AST_TYPE_UNDEFINED)

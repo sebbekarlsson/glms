@@ -138,6 +138,18 @@ print(r.status()) // 200
 print(r.text()) // prints the whole response text
 ```
 
+### Reading JSON
+```glsl
+file f = file.open("assets/somefile.json", "r");
+string contents = f.read();
+f.close();
+
+object data = json.parse(contents);
+  
+print(data.firstName);
+print(data.age);
+```
+
 ### More examples
 > For more examples, see [examples](EXAMPLES.md)
 

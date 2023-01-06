@@ -24,6 +24,7 @@
 #include <glms/modules/iterator.h>
 #include <glms/modules/mat4.h>
 #include <glms/modules/fetch.h>
+#include <glms/modules/json.h>
 #include <glms/math.h>
 #include <glms/dl.h>
 #include <math.h>
@@ -1115,4 +1116,5 @@ void glms_builtin_init(GLMSEnv *env) {
   glms_struct_image(env);
   glms_file_type(env);
   glms_fetch(env);
+  glms_json(env);
 }

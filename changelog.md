@@ -1,1 +1,1 @@
-> eedef1159d572785cd0bf19802e0512c10072d08 (HEAD -> master, origin/master, origin/HEAD) adds release script
+> 7c3aa1a3c508fd3e60f0e15110d85543565b3a0f (HEAD -> master, origin/master, origin/HEAD) adds fetch() for making HTTP requests

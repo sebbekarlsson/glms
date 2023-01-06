@@ -116,6 +116,7 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
     GLMSAST *new_ast =
         glms_env_new_ast(eval->env, GLMS_AST_TYPE_UNDEFINED, true);
     func->constructor(eval, stack, &args, new_ast);
+    new_ast->constructed = true;
     return *new_ast;
   }
 

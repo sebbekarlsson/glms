@@ -490,7 +490,7 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack, GLM
 
   if (ast->type == GLMS_AST_TYPE_BINOP) return ast;
   //  if (ast->value_type != 0 && ast->constructor != 0) return ast;
-  //  if (ast->constructed) return ast;
+  if (ast->constructed) return ast;
 
   GLMSAST *type = ast->value_type;
 

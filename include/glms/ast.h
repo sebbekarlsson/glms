@@ -15,6 +15,7 @@
 #include <glms/allocator.h>
 #include <cglm/struct.h>
 #include <glms/iterator.h>
+#include <fastjson/json.h>
 
 #define GLMS_AST_OPERATOR_OVERLOAD_CAP 24
 
@@ -159,6 +160,7 @@ typedef struct GLMS_AST_STRUCT {
   struct GLMS_GLMSAST_LIST_STRUCT* flags;
   GLMSASTOperatorOverload op_overloads[GLMS_AST_OPERATOR_OVERLOAD_CAP];
   GLMSFPTR fptr;
+  JSON* json;
   void* ptr;
   char* string_rep;
   GLMSASTContructor constructor;
