@@ -84,6 +84,8 @@ const char *glms_ast_get_name(GLMSAST *ast) {
     return value;
   }; break;
   case GLMS_AST_TYPE_STRING: {
+    if (ast->as.string.heap != 0)
+      return ast->as.string.heap;
     return glms_string_view_get_value(&ast->as.string.value);
   }; break;
   case GLMS_AST_TYPE_FUNC: {
@@ -105,6 +107,8 @@ const char *glms_ast_get_name(GLMSAST *ast) {
     return 0;
   }; break;
   }
+
+  return 0;
 }
 
 const char *glms_ast_get_string_value(GLMSAST *ast) {
@@ -171,9 +175,11 @@ bool glms_ast_is_truthy(GLMSAST ast) {
   return true;
 }
 
-GLMSAST *glms_ast_access_child_by_index(GLMSAST *ast, int64_t index) {
+GLMSAST *glms_ast_access_child_by_index(GLMSEnv *env, GLMSAST *ast,
+                                        int64_t index) {
   if (!ast)
     return 0;
+
   if (ast->children == 0 || ast->children->length <= 0)
     return 0;
 
@@ -187,12 +193,25 @@ GLMSAST *glms_ast_access_by_index(GLMSAST *ast, int64_t index, GLMSEnv *env) {
   if (!ast)
     return 0;
 
+  GLMSAST *ptr = glms_ast_get_ptr(*ast);
+
+  if (ptr)
+    return glms_ast_access_by_index(ptr, index, env);
+
+  if (ast->json && ast->json->children != 0) {
+    if (index < ast->json->children_length) {
+      GLMSAST *json_ast = glms_ast_from_json(env, ast->json->children[index]);
+      if (json_ast)
+        return json_ast;
+    }
+  }
+
   switch (ast->type) {
   case GLMS_AST_TYPE_STACK_PTR: {
     return glms_ast_access_by_index(ast->as.stackptr.ptr, index, env);
   }; break;
   case GLMS_AST_TYPE_ARRAY: {
-    return glms_ast_access_child_by_index(ast, index);
+    return glms_ast_access_child_by_index(env, ast, index);
   }; break;
   case GLMS_AST_TYPE_STRING: {
     const char *strval = glms_string_view_get_value(&ast->as.string.value);
@@ -222,15 +241,15 @@ GLMSAST *glms_ast_from_json(GLMSEnv *env, JSON *v) {
     return glms_env_new_ast_string(env, v->value_str, true);
   }; break;
   case FJ_NODE_ARRAY: {
-    GLMSAST* new_ast = glms_env_new_ast(env, GLMS_AST_TYPE_ARRAY, true);
+    GLMSAST *new_ast = glms_env_new_ast(env, GLMS_AST_TYPE_ARRAY, true);
 
     JSONIterator it = json_iterate(v);
-    JSON* child = 0;
+    JSON *child = 0;
 
     while ((child = json_iterator_next(&it))) {
-      GLMSAST* glms_child = glms_ast_from_json(env, child);
+      GLMSAST *glms_child = glms_ast_from_json(env, child);
       if (glms_child != 0) {
-	glms_ast_push(new_ast, glms_child);
+        glms_ast_push(new_ast, glms_child);
       }
     }
 
@@ -809,9 +828,23 @@ void glms_ast_destructor(GLMSAST *ast) {
 int64_t glms_ast_array_get_length(GLMSAST *ast) {
   if (!ast)
     return 0;
-  if (!ast->children)
-    return 0;
-  return ast->children->length;
+  GLMSAST *ptr = glms_ast_get_ptr(*ast);
+
+  if (ptr)
+    return glms_ast_array_get_length(ptr);
+
+  if (ast->json && ast->json->children_length > 0) {
+    return ast->json->children_length;
+  }
+
+  if (ast->type == GLMS_AST_TYPE_ARRAY) {
+    return ast->children ? ast->children->length : 0;
+  }
+
+  if (ast->props.initialized && ast->props.used > 0)
+    return ast->props.used;
+
+  return 0;
 }
 
 bool glms_ast_is_vector(GLMSAST *ast) {
@@ -1124,6 +1157,8 @@ GLMSAST glms_ast_assign(GLMSAST *a, GLMSAST b, struct GLMS_EVAL_STRUCT *eval,
     a->as.string.value = b.as.string.value;
   }; break;
   default: {
+    // TODO: This is possibly a memory leak. Test and see.
+    *a = b;
   }; break;
   }
 

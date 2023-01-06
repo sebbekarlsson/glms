@@ -173,6 +173,14 @@ int glms_array_fptr_push(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
+int glms_array_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                         GLMSStack *stack, GLMSAST *out) {
+
+  int64_t len = ast->children ? ast->children->length : 0;
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_NUMBER, .as.number.value = (float)len };
+  return 1;
+}
+
 void glms_array_constructor(GLMSEval *eval, GLMSStack *stack,
                                   GLMSASTBuffer *args, GLMSAST *self) {
 
@@ -184,6 +192,8 @@ void glms_array_constructor(GLMSEval *eval, GLMSStack *stack,
   glms_ast_register_function(eval->env, self, "filter", glms_array_fptr_filter);
   glms_ast_register_function(eval->env, self, "sort", glms_array_fptr_sort);
   glms_ast_register_function(eval->env, self, "push", glms_array_fptr_push);
+  glms_ast_register_function(eval->env, self, "length", glms_array_fptr_length);
+  glms_ast_register_function(eval->env, self, "count", glms_array_fptr_length);
 }
 
 void glms_array_type(GLMSEnv *env) {

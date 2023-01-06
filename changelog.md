@@ -1,1 +1,1 @@
-> 55ab00429633993e7345e2848ef30d648d42019c (HEAD -> master, origin/master, origin/HEAD) adds .json() for fetch response
+> 65bf9adb0d907514f731350631cc05f5fa9e546c (HEAD -> master, origin/master, origin/HEAD) adds version constant

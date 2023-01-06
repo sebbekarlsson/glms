@@ -209,7 +209,11 @@ int glms_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   if (args->length <= 0)
     return 0;
 
-  GLMSAST value = glms_eval(eval, args->items[0], stack);
+  GLMSAST value = args->items[0];
+
+  GLMSAST* ptr = glms_ast_get_ptr(value);
+
+  // if (ptr) value = *ptr;
 
   if (glms_ast_is_vector(&value)) {
 

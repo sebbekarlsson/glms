@@ -2,7 +2,11 @@ response r = fetch("https://jsonplaceholder.typicode.com/posts");
 
 array p = r.json();
 
-object firstPost = p[0];
+int len = p.length();
+for (int i = 0; i < len; i++) {
+  object post = p[i];
+  print(post.title);
+}
 
-print(firstPost.title);
+
 

@@ -169,13 +169,15 @@ GLMSAST *glms_parser_parse_array(GLMSParser *parser) {
 
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ARRAY, false);
 
-  GLMSAST *arg = glms_parser_parse_expr(parser);
-  glms_ast_push(ast, arg);
-
-  while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
-    glms_parser_eat(parser, GLMS_TOKEN_TYPE_COMMA);
+  if (parser->token.type != GLMS_TOKEN_TYPE_RBRACKET) {
     GLMSAST *arg = glms_parser_parse_expr(parser);
     glms_ast_push(ast, arg);
+
+    while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
+	glms_parser_eat(parser, GLMS_TOKEN_TYPE_COMMA);
+	GLMSAST *arg = glms_parser_parse_expr(parser);
+	glms_ast_push(ast, arg);
+    }
   }
 
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_RBRACKET);
