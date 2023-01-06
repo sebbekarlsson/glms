@@ -115,3 +115,8 @@ void some_place_in_your_project_where_setting_up_the_scripting_environment_is_ap
   // don't call this until you're `truly` done.
 }
 ```
+
+## More examples of integration
+> For a better understanding, or for more examples; have a look [here](https://github.com/sebbekarlsson/glms/tree/master/src/modules).  
+> In these files you can see how types, functions, globals, etc are currently implemented into the language.  
+> The same principles can be applied when integrating this language in any other project.
