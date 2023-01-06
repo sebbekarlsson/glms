@@ -174,5 +174,37 @@ print(data.age);
 ### More examples
 > For more examples, see [examples](EXAMPLES.md)
 
+## FAQ
+
+### Q: Why did you create this language?
+> I was looking for a scripting-language to be used in a game I was developing,
+> and I wanted something that came with vector operatons right out of the box (just like GLSL), but I also
+> wanted it to be expressive like Javascript.
+
+### Q: How do I integrate it into my application / game ?
+> Have a look at [this](docs/integration.md)  
+> If it's still not clear, feel free to create an issue or something with your question.
+
+### Q: What operating systems / platforms can this language run on?
+> It will most likely only work on Linux right now (maybe MacOS as well), but
+> you're always welcome to contribute to support more platforms!
+
+### Q: Any other plans for this language?
+> It would be cool to add some frontends to the language, here's some I've had in mind:
+
+* GLSL - Would be cool to use this as a transpiler for GLSL
+* Javascript - Emitting Javascript would allow for web-applications being created with GLMS
+* WASM - Same reason as the Javascript one
+* 64bit assembly - Because it's cool :sunglasses:
+
+> That being said, I'm not sure I'd ever implement any of these ideas.
+> I'm just using this for scripting a game I'm developing at the moment.
+
+### Q: Is there some kind of community?
+> I just threw together a Discord-server for whoever is interested, you can find it [here](https://discord.gg/tUWNHySs)
+
+### Q: Can I contribute?
+> Please do! Simply fork and create pull-requests :fire:
+
 ## Syntax highlighting
 * [glms-mode for emacs](https://github.com/sebbekarlsson/glms-mode)
