@@ -2,6 +2,7 @@
 #include <glms/glms.h>
 #include <glms/io.h>
 #include <glms/macros.h>
+#include <glms/version.h>
 #include <hashy/hashy.h>
 #include <stdio.h>
 #include <string.h>
@@ -56,7 +57,7 @@ static int glms_interactive() {
     fgets(input_source, 1024, stdin);
     fflush(stdin);
 
-    GLMSAST *result = glms_env_exec_source(&env, input_source);
+    glms_env_exec_source(&env, input_source);
     glms_env_reset(&env);
   }
 
@@ -77,6 +78,9 @@ int main(int argc, char *argv[]) {
     glms_env_export_docstrings(&env, "signatures.md");
     glms_env_clear(&env);
     cli_args_destroy(&cli);
+    return 0;
+  } else if (cli_args_has(&cli, "--version")) {
+    printf("GLMS Version %s\n", GLMS_VERSION_STRING);
     return 0;
   }
 
