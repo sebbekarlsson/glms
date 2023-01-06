@@ -1,1 +1,1 @@
-> 9c04d8f820a1d5f06a0f8059be132f961ffff385 (HEAD -> master, origin/master, origin/HEAD) adds json.parse and json.stringify
+> 55ab00429633993e7345e2848ef30d648d42019c (HEAD -> master, origin/master, origin/HEAD) adds .json() for fetch response

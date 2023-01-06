@@ -48,6 +48,18 @@ c.shade((vec3 uv, vec3 fragCoord, vec3 resolution, number time) => {
 > Want to integrate `GLMS` for scripting in an existing project?  
 > Have a look at [this](docs/integration.md)
 
+## Some interesting features :muscle:
+* `fetch` api, similar to the one in Javascript
+* `json` support
+* file IO
+* image manipulation
+* vector math
+* matrix math
+* almost all functions you'd see in `GLSL` exists in `GLMS` as well.
+* extension support (Extend the language by writing extensions)
+* ... and more
+
+
 ## Some examples :mag:
 
 ### Shader-like image manipulation
