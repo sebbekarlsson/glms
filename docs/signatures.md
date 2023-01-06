@@ -227,6 +227,12 @@ response fetch(GLMS_AST_TYPE_STRING URL)
 ### string (struct)
 <details><summary>props</summary>
 
+### string.includes
+```
+GLMS_AST_TYPE_BOOL string.includes(GLMS_AST_TYPE_STRING needle)
+
+```
+
 ### string.replace
 ```
 GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_STRING replacement)
@@ -252,7 +258,19 @@ GLMS_AST_TYPE_STRING string.replace(GLMS_AST_TYPE_STRING pattern, GLMS_AST_TYPE_
 > No signatures defined.
 
 
+### array.includes
+> No signatures defined.
+
+
+### array.count
+> No signatures defined.
+
+
 ### array.filter
+> No signatures defined.
+
+
+### array.length
 > No signatures defined.
 
 

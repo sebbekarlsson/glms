@@ -181,6 +181,33 @@ int glms_array_fptr_length(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
   return 1;
 }
 
+int glms_array_fptr_includes(GLMSEval *eval, GLMSAST *ast, GLMSASTBuffer *args,
+                         GLMSStack *stack, GLMSAST *out) {
+
+  int64_t len = ast->children ? ast->children->length : 0;
+
+  if (len <= 0 || (args == 0 || args->length <= 0 || args->items == 0)) {
+    *out = (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = false };
+    return 1;
+  }
+
+
+  GLMSAST compare = args->items[0];
+
+  for (int64_t i = 0; i < len; i++) {
+    GLMSAST* child = ast->children->items[i];
+
+    if (glms_ast_compare_equals_equals(*child, compare)) {
+      *out = (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = true };
+      return 1;
+    }
+  }
+
+  *out = (GLMSAST){ .type = GLMS_AST_TYPE_BOOL, .as.boolean = false };
+  
+  return 1;
+}
+
 void glms_array_constructor(GLMSEval *eval, GLMSStack *stack,
                                   GLMSASTBuffer *args, GLMSAST *self) {
 
@@ -194,6 +221,7 @@ void glms_array_constructor(GLMSEval *eval, GLMSStack *stack,
   glms_ast_register_function(eval->env, self, "push", glms_array_fptr_push);
   glms_ast_register_function(eval->env, self, "length", glms_array_fptr_length);
   glms_ast_register_function(eval->env, self, "count", glms_array_fptr_length);
+  glms_ast_register_function(eval->env, self, "includes", glms_array_fptr_includes);
 }
 
 void glms_array_type(GLMSEnv *env) {
