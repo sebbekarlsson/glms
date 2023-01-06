@@ -66,7 +66,7 @@ int glms_struct_image_fptr_make(GLMSEval *eval, GLMSAST *ast,
   if (w <= 0 || h <= 0) GLMS_WARNING_RETURN(0, stderr, "Invalid dimensions for image.\n");
 
   GLMSAST *imgast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STRUCT, true);
-  if (!gimg_make(gimg, w, h)) {
+  if (!gimg_make(gimg, w, h, 4)) {
     GLMS_WARNING_RETURN(0, stderr, "Failed to create image.\n");
   }
 
@@ -94,7 +94,7 @@ int glms_struct_image_fptr_save(GLMSEval *eval, GLMSAST *ast,
     const char *strval = glms_string_view_get_value(&arg0.as.string.value);
 
     if (strval) {
-      ok = gimg_save(*gimg, strval);
+      ok = gimg_save(*gimg, strval, true);
     }
   }
 
