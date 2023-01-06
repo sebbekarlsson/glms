@@ -1,5 +1,9 @@
 #!/bin/bash
 
+NOTES=$(git --no-pager log --decorate=short --pretty=oneline -n1 --no-color)
+CHANGELOG="> $NOTES"
+
+echo $CHANGELOG > changelog.md
 
 mkdir -p build
 cd build && cmake .. && make -j8 && \
