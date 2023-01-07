@@ -362,3 +362,15 @@ int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
 
   return lexer->c != 0;
 }
+
+
+int glms_lexer_reset(GLMSLexer *lexer) {
+  if (!lexer) return 0;
+
+  lexer->c = 0;
+  lexer->i = 0;
+  lexer->initialized = false;
+  lexer->length = 0;
+
+  return 1;
+}

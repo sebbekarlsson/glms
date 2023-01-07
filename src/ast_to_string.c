@@ -144,10 +144,12 @@ char* glms_ast_to_string_debug_unop(GLMSAST ast) {
   return s;
 }
 char* glms_ast_to_string_debug_id(GLMSAST ast) {
-  return strdup(glms_string_view_get_value(&ast.as.id.value));
+  const char* strval = glms_string_view_get_value(&ast.as.id.value);
+  return strdup(OR(strval, "(null)"));
 }
 char* glms_ast_to_string_debug_string(GLMSAST ast) {
-  return strdup(glms_string_view_get_value(&ast.as.string.value));
+  const char* strval = glms_string_view_get_value(&ast.as.string.value);
+  return strdup(OR(strval, "(null)"));
 }
 char* glms_ast_to_string_debug_number(GLMSAST ast) {
   char tmp[256];

@@ -14,6 +14,7 @@
 #include "glms/ast.h"
 #include "glms/ast_type.h"
 #include "glms/eval.h"
+#include "glms/lexer.h"
 #include "glms/stack.h"
 #include "glms/type.h"
 #include "hashy/hashy.h"
@@ -101,10 +102,17 @@ GLMSAST* glms_env_new_ast(GLMSEnv* env, GLMSASTType type, bool arena) {
 
   arena = env->use_arena;
 
+  Memo* selected_memo = env->config.memo_ast;
+
   ArenaRef ref = {0};
   GLMSAST* ast = 0;
-  ast = (GLMSAST*)(arena ? arena_malloc(&env->arena_ast, &ref)
-                         : memo_malloc(&env->memo_ast));
+
+  if (selected_memo != 0 && selected_memo->initialized) {
+    ast = (GLMSAST*)memo_malloc(selected_memo);
+  } else {
+    ast = (GLMSAST*)(arena ? arena_malloc(&env->arena_ast, &ref)
+                           : memo_malloc(&env->memo_ast));
+  }
   if (!ast) GLMS_WARNING_RETURN(0, stderr, "Failed to allocate AST.\n");
 
   ast->type = type;
@@ -174,6 +182,17 @@ GLMSAST* glms_env_exec(GLMSEnv* env) {
   env->use_arena = true;
 
   glms_eval(&env->eval, *root, &env->stack);
+  return root;
+}
+
+GLMSAST *glms_env_parse(GLMSEnv *env, const char *source,
+                        GLMSConfig cfg) {
+
+  env->use_arena = false;
+  glms_lexer_init(&env->lexer, source);
+  GLMSAST* root = glms_parser_parse(&env->parser);
+  glms_lexer_reset(&env->lexer);
+
   return root;
 }
 

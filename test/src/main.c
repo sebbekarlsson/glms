@@ -314,6 +314,27 @@ static void test_sample_self() {
   GLMS_TEST_END();
 }
 
+static void test_sample_template_string() {
+  GLMS_TEST_BEGIN();
+  GLMSEnv env = {0};
+  GLMSAST *ast = glms_exec_file(&env, "test/samples/template_string.gs");
+
+  GLMS_ASSERT(ast != 0);
+  GLMSAST *x = glms_eval_lookup(&env.eval, &env.stack, "x");
+
+  GLMS_ASSERT(x != 0);
+  GLMS_ASSERT(x->type == GLMS_AST_TYPE_STRING);
+
+  const char* strval = glms_ast_get_string_value(x);
+
+  GLMS_ASSERT(strval != 0);
+
+  GLMS_ASSERT(strcmp(strval, "hello John") == 0);
+  GLMS_ASSERT(strcmp(strval, "hello David") != 0);
+  
+  GLMS_TEST_END();
+}
+
 int main(int argc, char *argv[]) {
   test_sample_var();
   test_sample_func();
@@ -332,5 +353,6 @@ int main(int argc, char *argv[]) {
   test_sample_minmax();
   test_sample_mix();
   test_sample_self();
+  test_sample_template_string();
   return 0;
 }

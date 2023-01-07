@@ -16,6 +16,8 @@
 
 typedef struct {
   bool debug;
+  bool use_heap_strings;
+  Memo* memo_ast;
 } GLMSConfig;
 
 typedef struct GLMS_ENV_STRUCT {
@@ -54,6 +56,9 @@ int glms_env_init(GLMSEnv *env, const char *source, const char *entry_path,
                   GLMSConfig cfg);
 
 int glms_env_clear(GLMSEnv *env);
+
+GLMSAST* glms_env_parse(GLMSEnv* env, const char *source,
+			GLMSConfig cfg);
 
 GLMSAST *glms_env_new_ast(GLMSEnv *env, GLMSASTType type, bool arena);
 

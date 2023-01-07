@@ -14,6 +14,8 @@ typedef struct {
 
 int glms_lexer_init(GLMSLexer* lexer, const char* source);
 
-int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out);
+int glms_lexer_next(GLMSLexer *lexer, GLMSToken *out);
+
+int glms_lexer_reset(GLMSLexer* lexer);
 
 #endif

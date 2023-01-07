@@ -9,6 +9,6 @@ const char* glms_string_view_get_value(GLMSStringView* view) {
     GLMS_WARNING_RETURN(0, stderr, "string too large.\n");
   memset(&view->tmp_buffer[0], 0, GLMS_STRING_VIEW_CAPACITY * sizeof(char));
   memcpy(&view->tmp_buffer[0], &view->ptr[0],
-         MIN(view->length, (GLMS_STRING_VIEW_CAPACITY - 1)));
+         sizeof(char) * MIN(view->length, (GLMS_STRING_VIEW_CAPACITY - 1)));
   return view->tmp_buffer;
 }

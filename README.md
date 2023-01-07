@@ -171,6 +171,14 @@ print(data.firstName);
 print(data.age);
 ```
 
+### Template strings
+```glsl
+string name = "John";
+string x = `hello ${name}`;
+
+print(x); // hello John
+```
+
 ### More examples
 > For more examples, see [examples](EXAMPLES.md)
 
