@@ -3,8 +3,8 @@
 
 #define GLMS_VERSION_MAJOR 0
 #define GLMS_VERSION_MINOR 0
-#define GLMS_VERSION_PATCH 3
+#define GLMS_VERSION_PATCH 4
 
-#define GLMS_VERSION_STRING "0.0.3"
+#define GLMS_VERSION_STRING "0.0.4"
 
 #endif

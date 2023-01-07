@@ -285,6 +285,39 @@ int glms_fptr_abs(GLMSEval* eval, GLMSAST* ast, GLMSASTBuffer* args,
   return 1;
 }
 
+int glms_fptr_floor(GLMSEval* eval, GLMSAST* ast, GLMSASTBuffer* args,
+                  GLMSStack* stack, GLMSAST* out) {
+  if (args->length <= 0) return 0;
+
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = floorf(glms_ast_number(value))};
+
+  return 1;
+}
+
+int glms_fptr_ceil(GLMSEval* eval, GLMSAST* ast, GLMSASTBuffer* args,
+                  GLMSStack* stack, GLMSAST* out) {
+  if (args->length <= 0) return 0;
+
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = ceilf(glms_ast_number(value))};
+
+  return 1;
+}
+
+int glms_fptr_round(GLMSEval* eval, GLMSAST* ast, GLMSASTBuffer* args,
+                  GLMSStack* stack, GLMSAST* out) {
+  if (args->length <= 0) return 0;
+
+  GLMSAST value = glms_eval(eval, args->items[0], stack);
+
+  *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = roundf(glms_ast_number(value))};
+
+  return 1;
+}
+
 int glms_fptr_sin(GLMSEval* eval, GLMSAST* ast, GLMSASTBuffer* args,
                   GLMSStack* stack, GLMSAST* out) {
   if (args->length <= 0) return 0;
@@ -821,6 +854,30 @@ void glms_builtin_init(GLMSEnv* env) {
   glms_env_register_function(env, "abs", glms_fptr_abs);
   glms_env_register_function_signature(
       env, 0, "abs",
+      (GLMSFunctionSignature){
+          .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+          .args = (GLMSType[]){(GLMSType){GLMS_AST_TYPE_NUMBER}},
+          .args_length = 1});
+
+  glms_env_register_function(env, "floor", glms_fptr_floor);
+  glms_env_register_function_signature(
+      env, 0, "floor",
+      (GLMSFunctionSignature){
+          .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+          .args = (GLMSType[]){(GLMSType){GLMS_AST_TYPE_NUMBER}},
+          .args_length = 1});
+
+  glms_env_register_function(env, "ceil", glms_fptr_ceil);
+  glms_env_register_function_signature(
+      env, 0, "ceil",
+      (GLMSFunctionSignature){
+          .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
+          .args = (GLMSType[]){(GLMSType){GLMS_AST_TYPE_NUMBER}},
+          .args_length = 1});
+
+  glms_env_register_function(env, "round", glms_fptr_round);
+  glms_env_register_function_signature(
+      env, 0, "round",
       (GLMSFunctionSignature){
           .return_type = (GLMSType){GLMS_AST_TYPE_NUMBER},
           .args = (GLMSType[]){(GLMSType){GLMS_AST_TYPE_NUMBER}},
