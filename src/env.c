@@ -110,6 +110,7 @@ GLMSAST* glms_env_new_ast(GLMSEnv* env, GLMSASTType type, bool arena) {
   ast->type = type;
   ast->ref = ref;
   ast->is_heap = true;
+  ast->env_ref = env;
 
 #if 0
   if (env->arena_ast.pages >= GLMS_GC_SWEEP_THRESHOLD) {

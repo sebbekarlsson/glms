@@ -1,9 +1,12 @@
 #include <glms/env.h>
 #include <glms/macros.h>
 #include <glms/parser.h>
+#include <string.h>
+#include <text/text.h>
 
 #include "glms/ast.h"
 #include "glms/ast_type.h"
+#include "glms/lexer.h"
 #include "glms/token.h"
 
 int glms_parser_init(GLMSParser* parser, GLMSEnv* env) {
@@ -157,6 +160,96 @@ GLMSAST* glms_parser_parse_string(GLMSParser* parser) {
   GLMSAST* ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_STRING, false);
   ast->as.string.value = parser->token.value;
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_STRING);
+  return ast;
+}
+
+
+#define GLMS_TEMPLATE_PARTS_CAP 256
+
+static int glms_extract_template_parts(GLMSEnv* env, const char *strval, GLMSAST **out,
+                                       int *out_length) {
+
+  if (!strval || !out || !out_length) return 0;
+
+  *out_length = 0;
+  int64_t len = strlen(strval);
+
+  int i = 0;
+  char c = strval[i++];
+
+
+  int nr_parts = 0;
+  char* parts[GLMS_TEMPLATE_PARTS_CAP];
+
+  char* next_part = 0;
+  bool needs_parsing = false;
+
+  while (c != 0) {
+
+    while (c != '$' && c != 0) {
+      text_append(&next_part, (char[]){ c, 0 });
+      c = strval[i++];
+    }
+
+    if (next_part != 0) {
+      out[(*out_length)] = glms_env_new_ast_string(env, next_part, false);
+      *out_length += 1;
+      free(next_part);
+      next_part = 0;
+      c = strval[i++];
+      c = strval[i++];
+    }
+    
+    while (c != '}' && c != 0) {
+      text_append(&next_part, (char[]){ c, 0 });
+      c = strval[i++];
+    }
+
+    if (c == '}') {
+      c = strval[i++];
+    }
+
+    if (next_part != 0) {
+      GLMSEnv tmp_env = {0};
+      glms_env_init(&tmp_env, next_part, env->entry_path, env->config);
+      GLMSAST* parsed = glms_parser_parse_expr(&tmp_env.parser);
+
+      if (parsed != 0) {
+	parsed->env_ref = env;
+        out[(*out_length)] = parsed; 
+        *out_length += 1;
+      }
+
+      glms_env_clear(&tmp_env);
+      free(next_part);
+      next_part = 0;
+    }
+    c = strval[i++];
+  }
+
+  return *out_length > 0;
+}
+
+GLMSAST* glms_parser_parse_template_string(GLMSParser* parser) {
+  GLMSAST* ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_STRING, false);
+  ast->as.string.value = parser->token.value;
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_TEMPLATE_STRING);
+
+  const char* strval = glms_ast_get_string_value(ast);
+  if (!strval || strchr(strval, '$') == 0) return ast;
+
+
+  GLMSAST* parts[GLMS_TEMPLATE_PARTS_CAP];
+  int len = 0;
+  if (glms_extract_template_parts(parser->env, strval, parts, &len)) {
+
+    for (int i = 0; i < len; i++) {
+      glms_ast_push(ast, parts[i]);
+    }
+
+  }
+
+
   return ast;
 }
 
@@ -383,6 +476,9 @@ GLMSAST* glms_parser_parse_factor(GLMSParser* parser) {
     }; break;
     case GLMS_TOKEN_TYPE_STRING: {
       return glms_parser_parse_string(parser);
+    }; break;
+    case GLMS_TOKEN_TYPE_TEMPLATE_STRING: {
+      return glms_parser_parse_template_string(parser);
     }; break;
     case GLMS_TOKEN_TYPE_SPECIAL_IMPORT: {
       return glms_parser_parse_import(parser);

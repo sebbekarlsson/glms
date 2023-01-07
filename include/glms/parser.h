@@ -31,6 +31,7 @@ GLMSAST* glms_parser_parse_float(GLMSParser* parser);
 GLMSAST* glms_parser_parse_null(GLMSParser* parser);
 GLMSAST* glms_parser_parse_bool(GLMSParser* parser);
 GLMSAST* glms_parser_parse_string(GLMSParser* parser);
+GLMSAST* glms_parser_parse_template_string(GLMSParser* parser);
 GLMSAST* glms_parser_parse_array(GLMSParser* parser);
 GLMSAST* glms_parser_parse_object(GLMSParser* parser);
 

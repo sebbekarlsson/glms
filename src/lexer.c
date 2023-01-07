@@ -157,6 +157,28 @@ static int glms_lexer_parse_string(GLMSLexer* lexer, GLMSToken* out) {
   return 1;
 }
 
+static int glms_lexer_parse_template_string(GLMSLexer* lexer, GLMSToken* out) {
+  out->value.length = 0;
+  glms_lexer_advance(lexer);
+  out->value.ptr = &lexer->source[lexer->i];
+
+  while (lexer->c != '`' && lexer->c != 0) {
+    glms_lexer_advance(lexer);
+    out->value.length++;
+
+    if (lexer->c == '\\') {
+      glms_lexer_advance(lexer);
+      glms_lexer_advance(lexer);
+      out->value.length += 2;
+    }
+  }
+
+  glms_lexer_advance(lexer);
+  out->type = GLMS_TOKEN_TYPE_TEMPLATE_STRING;
+
+  return 1;
+}
+
 static int glms_lexer_parse_number(GLMSLexer* lexer, GLMSToken* out) {
   out->value.length = 0;
   out->value.ptr = &lexer->source[lexer->i];
@@ -320,6 +342,9 @@ int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
     default: {
       if (lexer->c == '"') {
         return glms_lexer_parse_string(lexer, out);
+      }
+      if (lexer->c == '`') {
+        return glms_lexer_parse_template_string(lexer, out);
       }
       if (isdigit(lexer->c)) {
         return glms_lexer_parse_number(lexer, out);

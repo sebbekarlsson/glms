@@ -106,9 +106,12 @@ const char* glms_ast_get_string_value(GLMSAST* ast) {
   if (!ast) return 0;
   GLMSAST* ptr = glms_ast_get_ptr(*ast);
 
-  if (ptr != 0) return glms_ast_get_string_value(ptr);
+  if (ptr != 0) {
+    const char* ptr_str = glms_ast_get_string_value(ptr);
+    if (ptr_str) return ptr_str;
+  }
 
-  if (ast->type == GLMS_AST_TYPE_STRING) {
+  if (ast->type == GLMS_AST_TYPE_STRING) { 
     if (ast->as.string.heap != 0) {
       return ast->as.string.heap;
     } else {
