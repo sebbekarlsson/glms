@@ -1085,7 +1085,7 @@ GLMSAST* glms_ast_get_ptr(GLMSAST a) {
 
   GLMSAST* ptr = a.as.stackptr.ptr;
 
-  if (ptr != 0 && ptr->type == GLMS_AST_TYPE_STACK_PTR) {
+  if (ptr != 0 && ptr->type == GLMS_AST_TYPE_STACK_PTR && ptr->as.stackptr.ptr != 0) {
     return glms_ast_get_ptr(*ptr);
   }
 

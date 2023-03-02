@@ -367,7 +367,6 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
     glms_ast_assign(existing, ptr ? (*ptr) : right, eval, stack);
   } else if (name) {
     GLMSAST *copy = ptr ? ptr : glms_ast_copy(right, eval->env);
-
     GLMSAST t = {0};
     if (copy->constructed == false && glms_ast_get_type(left, &t)) {
       GLMSAST *look =

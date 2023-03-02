@@ -363,6 +363,7 @@ GLMSAST* glms_env_register_type(GLMSEnv* env, const char* name, GLMSAST* ast,
   ast->swizzle = swizzle;
   ast->to_string = to_string;
   ast->destructor = destructor;
+  ast->is_reserved = true;
 
   if (ast->constructor && ast->constructed == false) {
     ast->constructor(&env->eval, &env->stack, 0, ast);
@@ -487,7 +488,8 @@ GLMSAST* glms_env_apply_type(GLMSEnv* env, GLMSEval* eval, GLMSStack* stack,
 
   if (ast->type == GLMS_AST_TYPE_BINOP) return ast;
   //  if (ast->value_type != 0 && ast->constructor != 0) return ast;
-  if (ast->constructed) return ast;
+  if (ast->constructed && ast->constructor != 0 && ast->to_string != 0) return ast;
+  // if (ast->constructed) return ast;
 
   GLMSAST* type = ast->value_type;
 
