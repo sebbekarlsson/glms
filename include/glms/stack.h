@@ -11,10 +11,8 @@ struct GLMS_ENV_STRUCT;
 typedef struct GLMS_STACK_STRUCT {
   HashyMap locals;
   bool initialized;
-  GLMSASTList list;
-
-  const char* names[GLMS_STACK_CAPACITY];
-  int names_length;
+  //const char* names[GLMS_STACK_CAPACITY];
+  //int names_length;
   int depth;
 
   bool return_flag;

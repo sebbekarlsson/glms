@@ -177,6 +177,7 @@ typedef struct GLMS_AST_STRUCT {
   bool is_tmp;
   bool is_heap;
   bool constructed;
+  bool is_reserved;
   struct GLMS_ENV_STRUCT* env_ref;
 } GLMSAST;
 
