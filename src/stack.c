@@ -23,8 +23,6 @@ GLMSAST* glms_stack_push(GLMSStack* stack, const char* name, GLMSAST* ast) {
   if (!stack->initialized)
     GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
-  GLMSAST* existing = glms_stack_get(stack, name);
-
   hashy_map_set(&stack->locals, name, ast);
 
   return ast;

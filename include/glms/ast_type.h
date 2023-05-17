@@ -40,7 +40,7 @@
 
 typedef enum { GLMS_FOREACH_AST_TYPE(GLMS_GENERATE_ENUM) } GLMSASTType;
 
-static const char *GLMS_AST_TYPE_STR[] = {
+static const char * const GLMS_AST_TYPE_STR[] = {
     GLMS_FOREACH_AST_TYPE(GLMS_GENERATE_STRING)};
 
 #endif

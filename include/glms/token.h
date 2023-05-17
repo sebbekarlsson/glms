@@ -78,7 +78,7 @@
 
 typedef enum { GLMS_FOREACH_TOKEN_TYPE(GLMS_GENERATE_ENUM) } GLMSTokenType;
 
-static const char *GLMS_TOKEN_TYPE_STR[] = {
+static const char * const GLMS_TOKEN_TYPE_STR[] = {
     GLMS_FOREACH_TOKEN_TYPE(GLMS_GENERATE_STRING)};
 
 typedef struct {

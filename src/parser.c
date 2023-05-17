@@ -69,10 +69,12 @@ static GLMSAST *glms_parser_error(GLMSParser *parser) {
   return glms_env_new_ast(parser->env, GLMS_AST_TYPE_EOF, false);
 }
 
+#if 0
 static GLMSAST *glms_parser_parse_noop(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NOOP, false);
   return ast;
 }
+#endif
 
 static GLMSAST *glms_parser_parse_eof(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_EOF, false);
@@ -184,7 +186,6 @@ static int glms_extract_template_parts(GLMSEnv *env, const char *strval,
     return 0;
 
   *out_length = 0;
-  int64_t len = strlen(strval);
 
   int i = 0;
   char c = strval[i++];
@@ -192,7 +193,6 @@ static int glms_extract_template_parts(GLMSEnv *env, const char *strval,
   int count = 0;
 
   char *next_part = 0;
-  bool needs_parsing = false;
 
   while (c != 0) {
 
@@ -913,8 +913,6 @@ GLMSAST *glms_parser_parse(GLMSParser *parser) {
 
 bool glms_parser_peek_check_arrow_function(GLMSParser *parser) {
   GLMSLexer *lexer = &parser->env->lexer;
-  int64_t start_i = lexer->i;
-  char start_c = lexer->c;
 
   char c = lexer->source[lexer->i];
   int64_t i = lexer->i;
