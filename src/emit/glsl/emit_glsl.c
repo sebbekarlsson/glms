@@ -232,7 +232,9 @@ static int glms_emit_glsl_access(GLMSEmit *emit, GLMSAST ast, int indent) {
     glms_emit_glsl_(emit, *left, indent);
   }
 
+  
   if (right != 0) {
+    EMIT_APPEND(".");
     glms_emit_glsl_(emit, *right, indent);
   }
 
