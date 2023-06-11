@@ -9,12 +9,16 @@
 
 #include "glms/ast.h"
 #include "glms/ast_type.h"
+#include "glms/emit/emit.h"
 #include "glms/fptr.h"
 #include "glms/stack.h"
 #include "glms/string_view.h"
 #include "glms/token.h"
 #include "hashy/hashy.h"
 #include "hashy/keylist.h"
+
+
+#define GLMS_IS_EMIT() (eval->env->config.emit.mode != GLMS_EMIT_MODE_UNDEFINED)
 
 #define GLMS_AST_DEBUG_PRINT(ast)                                              \
   { printf("%s\n", glms_ast_to_string(ast, eval->env->string_alloc)); }
@@ -58,6 +62,13 @@ int glms_eval_init(GLMSEval *eval, struct GLMS_ENV_STRUCT *env) {
     return 1;
   eval->initialized = true;
   eval->env = env;
+  hashy_map_init(&eval->visited_paths, GLMS_EVAL_VISITED_PATHS_MAP_CAPACITY);
+  return 1;
+}
+
+int glms_eval_clear(GLMSEval *eval) {
+  if (!eval || !eval->initialized) return 0;
+  hashy_map_clear(&eval->visited_paths, false);
   return 1;
 }
 
@@ -256,6 +267,7 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
 }
 
 GLMSAST glms_eval_call(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
+  if (GLMS_IS_EMIT()) return ast;
   GLMSAST *func = ast.as.call.func;
   const char *name = glms_string_view_get_value(&ast.as.func.id->as.id.value);
 
@@ -398,8 +410,10 @@ GLMSAST glms_eval_id(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 			value);
     return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR, .as.stackptr.ptr = value};
   } else if (value == 0 && ((ast.flags == 0) || (ast.flags->length <= 0))) {
-    GLMS_WARNING_RETURN((GLMSAST){.type = GLMS_AST_TYPE_UNDEFINED}, stderr,
+    if (!GLMS_IS_EMIT()) {
+      GLMS_WARNING_RETURN((GLMSAST){.type = GLMS_AST_TYPE_UNDEFINED}, stderr,
 			"`%s` is not defined.", name);
+    }
   }
 
   return ast;
@@ -908,6 +922,18 @@ GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 			"No such file `%s`.\n", path);
   }
 
+  GLMSAST* old_result = hashy_map_get(&eval->visited_paths, abspath);
+
+  if (old_result != 0) {
+    if (GLMS_IS_EMIT()) {
+      return (GLMSAST){ .type = GLMS_AST_TYPE_NOOP };
+    } else {
+      return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR,
+		   .as.stackptr.ptr = old_result};
+    }
+  }
+  
+
   if (strstr(abspath, ".so") != 0)
     return glms_eval_import_extension(eval, ast, stack, abspath);
 
@@ -918,6 +944,8 @@ GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   GLMSAST *result_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STACK, false);
   result_ast->as.stack.env = import_env;
+
+  hashy_map_set(&eval->visited_paths, abspath, result_ast);
 
   const char *id_name =
       glms_string_view_get_value(&ast.as.import.id->as.id.value);

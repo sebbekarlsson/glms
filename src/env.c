@@ -87,6 +87,7 @@ int glms_env_clear(GLMSEnv* env) {
   env->undefined = 0;
   memo_clear(&env->memo_ast);
   glms_emit_destroy(&env->emit);
+  glms_eval_clear(&env->eval);
 
   arena_destroy(&env->arena_ast);
   // arena_reset(&env->arena_ast);

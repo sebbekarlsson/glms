@@ -1,8 +1,14 @@
 import "func2.gs" as helpers;
+import "func2.gs" as helpers;
+import "func2.gs" as helpers;
+import "func2.gs" as helpers;
+import "func2.gs" as helpers;
 
+glsl`
 layout (location = 0) in vec3 attr_vertex;
 layout (location = 1) in vec2 attr_uv;
 layout (location = 2) in vec3 attr_normal;
+`
 
 uniform sampler2D myTexture;
 

@@ -3,15 +3,17 @@
 #include "glms/eval.h"
 #include "glms/macros.h"
 #include "glms/string_builder.h"
+#include "glms/string_view.h"
 #include "glms/token.h"
 #include <endian.h>
 #include <glms/emit/glsl/emit_glsl.h>
+#include <linux/limits.h>
 #include <string.h>
 #include <glms/env.h>
 
 #define INDENT_NUM 2
 
-static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST *ast, int indent);
+static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST ast, int indent);
 
 
 #define EMIT_APPEND(v) glms_string_builder_append(&emit->builder, v)
@@ -26,6 +28,14 @@ static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST *ast, int indent);
     EMIT_APPEND(tmp);\
   }
 
+
+#define EMIT_APPEND_FMT(cap, fmt, ...)              \
+  {\
+    char tmp[cap];\
+    memset(&tmp[0], 0, cap*sizeof(char));\
+    snprintf(tmp, cap, fmt, __VA_ARGS__);  \
+    EMIT_APPEND(tmp);\
+  }
 
 #define EMIT_TOKEN_TYPE(op, indent)                    \
    switch (op) {\
@@ -51,9 +61,9 @@ static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST *ast, int indent);
    default: EMIT_APPEND(" ? "); break;                        \
   }
 
-static int glms_emit_glsl_as_is(GLMSEmit *emit, GLMSAST *ast) {
+static int glms_emit_glsl_as_is(GLMSEmit *emit, GLMSAST ast) {
 
-  EMIT_APPEND_TYPE(ast->type);
+  EMIT_APPEND_TYPE(ast.type);
 
   return 1;
   /* 
@@ -64,32 +74,32 @@ static int glms_emit_glsl_as_is(GLMSEmit *emit, GLMSAST *ast) {
   return 1;*/
 }
 
-static int glms_emit_glsl_stack_ptr(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_stack_ptr(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_func_overload_ptr(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_func_overload_ptr(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_string(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  const char* value = glms_ast_get_string_value(ast);
+static int glms_emit_glsl_string(GLMSEmit *emit, GLMSAST ast, int indent) {
+  const char* value = glms_ast_get_string_value(&ast);
   if (!value) return 0;
   EMIT_APPEND_INDENTED(value, indent);
   return 1;
 }
-static int glms_emit_glsl_raw_glsl(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  if (ast->as.raw_glsl.right == 0) return 0;
-  return glms_emit_glsl_(emit, ast->as.raw_glsl.right, indent);
+static int glms_emit_glsl_raw_glsl(GLMSEmit *emit, GLMSAST ast, int indent) {
+  if (ast.as.raw_glsl.right == 0) return 0;
+  return glms_emit_glsl_(emit, *ast.as.raw_glsl.right, indent);
 }
-static int glms_emit_glsl_char(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_char(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_number(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  float value = glms_ast_number(*ast);
+static int glms_emit_glsl_number(GLMSEmit *emit, GLMSAST ast, int indent) {
+  float value = glms_ast_number(ast);
 
   char tmp[32];
   memset(&tmp[0], 0, 32*sizeof(char));
 
-  switch (ast->as.number.type) {
+  switch (ast.as.number.type) {
   case GLMS_AST_NUMBER_TYPE_INT: {
     sprintf(&tmp[0], "%d", (int)value);
     EMIT_APPEND_INDENTED(tmp, indent);
@@ -104,153 +114,164 @@ static int glms_emit_glsl_number(GLMSEmit *emit, GLMSAST *ast, int indent) {
 
   return 1;
 }
-static int glms_emit_glsl_bool(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_bool(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_array(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_array(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_vec2(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_vec2(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_vec3(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_vec3(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_vec4(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_vec4(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_mat3(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_mat3(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_mat4(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_mat4(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_typedef(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  GLMSAST* id = ast->as.tdef.id;
-  GLMSAST* factor = ast->as.tdef.factor;
+static int glms_emit_glsl_typedef(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST* id = ast.as.tdef.id;
+  GLMSAST* factor = ast.as.tdef.factor;
 
-  EMIT_APPEND_INDENTED("typedef ", indent);
+  // EMIT_APPEND_INDENTED("typedef ", indent);
+
+  EMIT_APPEND_INDENTED("struct ", indent);
+  if (id != 0) {
+    glms_emit_glsl_(emit, *id, indent);
+  }
+  
+  EMIT_APPEND_INDENTED(" {\n", indent);
   
   if (factor != 0) {
-    glms_emit_glsl_(emit, factor, indent);
+    glms_emit_glsl_(emit, *factor, indent);
   }
   
-  if (id != 0) {
-    glms_emit_glsl_(emit, id, indent);
-  }
-
 
   return 1;
 }
-static int glms_emit_glsl_object(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_object(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_struct(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  EMIT_APPEND_INDENTED("struct {\n", indent);
-  if (ast->props.initialized == true) {
-    for (int64_t i = 0; i < ast->props.keys.length; i++) {
-      const char* key = ast->props.keys.items[i];
+static int glms_emit_glsl_struct(GLMSEmit *emit, GLMSAST ast, int indent) {
+  // EMIT_APPEND_INDENTED("struct {\n", indent);
+  if (ast.props.initialized == true) {
+    for (int64_t i = 0; i < ast.props.keys.length; i++) {
+      const char* key = ast.props.keys.items[i];
       if (!key) continue;
-      GLMSAST* child = glms_ast_get_property(ast, key);
+      GLMSAST* child = glms_ast_get_property(&ast, key);
       if (!child) continue;
-      glms_emit_glsl_(emit, child, indent + INDENT_NUM);
+      glms_emit_glsl_(emit, *child, indent + INDENT_NUM);
       EMIT_APPEND_INDENTED(";\n", indent);
     }
   }
   EMIT_APPEND_INDENTED("\n}", indent);
   return 1;
 }
-static int glms_emit_glsl_enum(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_enum(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_binop(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  GLMSAST* left = ast->as.binop.left;
-  GLMSAST* right = ast->as.binop.right;
-  GLMSTokenType op = ast->as.binop.op;
+static int glms_emit_glsl_binop(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST* left = ast.as.binop.left;
+  GLMSAST* right = ast.as.binop.right;
+  GLMSTokenType op = ast.as.binop.op;
 
   if (left != 0) {
-    glms_emit_glsl_(emit, left, indent);
+    glms_emit_glsl_(emit, *left, indent);
   }
 
   EMIT_TOKEN_TYPE(op, indent);
   
   if (right != 0) {
-    glms_emit_glsl_(emit, right, 0);
+    glms_emit_glsl_(emit, *right, 0);
   }
 
   return 1;
 }
-static int glms_emit_glsl_unop(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  GLMSAST* left = ast->as.unop.left;
-  GLMSAST* right = ast->as.unop.right;
-  GLMSTokenType op = ast->as.unop.op;
+static int glms_emit_glsl_unop(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST* left = ast.as.unop.left;
+  GLMSAST* right = ast.as.unop.right;
+  GLMSTokenType op = ast.as.unop.op;
 
   if (left != 0) {
-    glms_emit_glsl_(emit, left, indent);
+    glms_emit_glsl_(emit, *left, indent);
   }
 
   EMIT_TOKEN_TYPE(op, indent);
 
   if (right != 0) {
-    glms_emit_glsl_(emit, right, 0);
+    glms_emit_glsl_(emit, *right, 0);
   }
 
   return 1;
 }
-static int glms_emit_glsl_access(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_access(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_block(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  if (ast->as.block.body != 0) {
-    glms_emit_glsl_(emit, ast->as.block.body, indent);
+static int glms_emit_glsl_block(GLMSEmit *emit, GLMSAST ast, int indent) {
+  if (ast.as.block.body != 0) {
+    glms_emit_glsl_(emit, *ast.as.block.body, indent);
   }
   return 1;
 }
-static int glms_emit_glsl_import(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  GLMSAST result = glms_eval(&emit->env->eval, *ast, &emit->env->stack);
+static int glms_emit_glsl_import(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST result = glms_eval(&emit->env->eval, ast, &emit->env->stack);
   if (result.type != GLMS_AST_TYPE_STACK_PTR) return 0;
   GLMSAST* ptr = result.as.stackptr.ptr;
   if (!ptr) return 0;
   if (ptr->as.stack.env == 0 || ptr->as.stack.env == emit->env) return 0;
   if (ptr->as.stack.env->root != 0) {
-    return glms_emit_glsl_(emit, ptr->as.stack.env->root, indent);
-  }
-  
-  return glms_emit_glsl_as_is(emit, ptr);
-}
-static int glms_emit_glsl_layout(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  EMIT_APPEND("layout(");
-  if (ast->children != 0) {
-    for (int64_t i = 0; i < ast->children->length; i++) {
-      GLMSAST *child = ast->children->items[i];
-      glms_emit_glsl_(emit, child, 0);
 
-      if ((i+1) < ast->children->length) {
+    const char* path = glms_string_view_get_value(&ast.as.import.value);
+
+
+    EMIT_APPEND_FMT(PATH_MAX, "\n/* ------------ %s ------------ */\n\n", path);
+    
+    return glms_emit_glsl_(emit, *ptr->as.stack.env->root, indent);
+  }
+
+  
+  
+  return glms_emit_glsl_as_is(emit, *ptr);
+}
+static int glms_emit_glsl_layout(GLMSEmit *emit, GLMSAST ast, int indent) {
+  EMIT_APPEND("layout(");
+  if (ast.children != 0) {
+    for (int64_t i = 0; i < ast.children->length; i++) {
+      GLMSAST *child = ast.children->items[i];
+      glms_emit_glsl_(emit, *child, 0);
+
+      if ((i+1) < ast.children->length) {
         EMIT_APPEND(", ");
       }
     }
   }
   EMIT_APPEND(")");
-  if (ast->as.layout.right != 0) {
+  if (ast.as.layout.right != 0) {
     EMIT_APPEND(" ");
-    glms_emit_glsl_(emit, ast->as.layout.right, indent);
+    glms_emit_glsl_(emit, *ast.as.layout.right, indent);
   }
 
   return 1;
 }
-static int glms_emit_glsl_stack(GLMSEmit *emit, GLMSAST *ast, int indent) {
+static int glms_emit_glsl_stack(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
-static int glms_emit_glsl_for(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  GLMSAST* body = ast->as.forloop.body;
+static int glms_emit_glsl_for(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST* body = ast.as.forloop.body;
 
   EMIT_APPEND_INDENTED("for(", indent);
-  if (ast->children != 0) {
-    for (int64_t i = 0; i < ast->children->length; i++) {
-      GLMSAST *child = ast->children->items[i];
-      glms_emit_glsl_(emit, child, 0);
+  if (ast.children != 0) {
+    for (int64_t i = 0; i < ast.children->length; i++) {
+      GLMSAST *child = ast.children->items[i];
+      glms_emit_glsl_(emit, *child, 0);
 
-      if ((i+1) < ast->children->length) {
+      if ((i+1) < ast.children->length) {
         EMIT_APPEND(", ");
       }
     }
@@ -259,7 +280,7 @@ static int glms_emit_glsl_for(GLMSEmit *emit, GLMSAST *ast, int indent) {
   EMIT_APPEND(" {\n");
 
   if (body != 0) {
-    glms_emit_glsl_(emit, body, indent + INDENT_NUM);
+    glms_emit_glsl_(emit, *body, indent + INDENT_NUM);
   }
 
   EMIT_APPEND("\n");
@@ -267,25 +288,25 @@ static int glms_emit_glsl_for(GLMSEmit *emit, GLMSAST *ast, int indent) {
 
   return 1;
 }
-static int glms_emit_glsl_call(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  GLMSAST* left = ast->as.call.left;
-  GLMSAST* right = ast->as.call.right;
+static int glms_emit_glsl_call(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST* left = ast.as.call.left;
+  GLMSAST* right = ast.as.call.right;
 
   if (left != 0) {
-    glms_emit_glsl_(emit, left, indent);
+    glms_emit_glsl_(emit, *left, indent);
   }
   
   if (right != 0) {
-    glms_emit_glsl_(emit, right, indent);
+    glms_emit_glsl_(emit, *right, indent);
   }
 
   EMIT_APPEND("(");
-  if (ast->children != 0) {
-    for (int64_t i = 0; i < ast->children->length; i++) {
-      GLMSAST *child = ast->children->items[i];
-      glms_emit_glsl_(emit, child, 0);
+  if (ast.children != 0) {
+    for (int64_t i = 0; i < ast.children->length; i++) {
+      GLMSAST *child = ast.children->items[i];
+      glms_emit_glsl_(emit, *child, 0);
 
-      if ((i+1) < ast->children->length) {
+      if ((i+1) < ast.children->length) {
         EMIT_APPEND(", ");
       }
     }
@@ -294,19 +315,19 @@ static int glms_emit_glsl_call(GLMSEmit *emit, GLMSAST *ast, int indent) {
 
   return 1;
 }
-static int glms_emit_glsl_func(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  const char* name = glms_ast_get_name(ast);
+static int glms_emit_glsl_func(GLMSEmit *emit, GLMSAST ast, int indent) {
+  const char* name = glms_ast_get_name(&ast);
   if (!name) return 0;
 
   EMIT_APPEND_INDENTED(name, indent);
 
   EMIT_APPEND_INDENTED("(", indent);
-  if (ast->children != 0) {
-    for (int64_t i = 0; i < ast->children->length; i++) {
-      GLMSAST *child = ast->children->items[i];
-      glms_emit_glsl_(emit, child, indent);
+  if (ast.children != 0) {
+    for (int64_t i = 0; i < ast.children->length; i++) {
+      GLMSAST *child = ast.children->items[i];
+      glms_emit_glsl_(emit, *child, indent);
 
-      if ((i+1) < ast->children->length) {
+      if ((i+1) < ast.children->length) {
         EMIT_APPEND_INDENTED(", ", indent);
       }
     }
@@ -314,8 +335,8 @@ static int glms_emit_glsl_func(GLMSEmit *emit, GLMSAST *ast, int indent) {
   EMIT_APPEND_INDENTED(") ", indent);
 
   EMIT_APPEND_INDENTED("{\n", indent);
-  if (ast->as.func.body != 0) {
-    glms_emit_glsl_(emit, ast->as.func.body, indent + INDENT_NUM);
+  if (ast.as.func.body != 0) {
+    glms_emit_glsl_(emit, *ast.as.func.body, indent + INDENT_NUM);
   }
   EMIT_APPEND_INDENTED("\n}", indent);
   EMIT_APPEND("\n");
@@ -323,26 +344,28 @@ static int glms_emit_glsl_func(GLMSEmit *emit, GLMSAST *ast, int indent) {
   
   return 1;
 }
-static int glms_emit_glsl_return(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  EMIT_APPEND_TYPE(ast->type);
+static int glms_emit_glsl_return(GLMSEmit *emit, GLMSAST ast, int indent) {
+  EMIT_APPEND_TYPE(ast.type);
   return 1;
 }
 
-static int glms_emit_glsl_id(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  const char *value = glms_ast_get_string_value(ast);
+static int glms_emit_glsl_id(GLMSEmit *emit, GLMSAST ast, int indent) {
+  const char *value = glms_ast_get_string_value(&ast);
   if (!value)
     return 0;
   EMIT_APPEND_INDENTED(value, indent);
   return 1;
 }
 
-static int glms_emit_glsl_compound(GLMSEmit *emit, GLMSAST *ast, int indent) {
-  if (!ast->children)
+static int glms_emit_glsl_compound(GLMSEmit *emit, GLMSAST ast, int indent) {
+  if (!ast.children)
     return 0;
 
-  for (int64_t i = 0; i < ast->children->length; i++) {
-    GLMSAST *child = ast->children->items[i];
-    glms_emit_glsl_(emit, child, indent);
+  for (int64_t i = 0; i < ast.children->length; i++) {
+    GLMSAST *child = ast.children->items[i];
+    if (child->type == GLMS_AST_TYPE_NOOP) continue;
+    
+    glms_emit_glsl_(emit, *child, indent);
 
     if (child->type != GLMS_AST_TYPE_FUNC &&
         child->type != GLMS_AST_TYPE_IMPORT &&
@@ -353,7 +376,7 @@ static int glms_emit_glsl_compound(GLMSEmit *emit, GLMSAST *ast, int indent) {
       EMIT_APPEND(";");
     }
 
-    if ((i + 1) < ast->children->length) {
+    if ((i + 1) < ast.children->length) {
       EMIT_APPEND("\n");
     }
   }
@@ -361,18 +384,20 @@ static int glms_emit_glsl_compound(GLMSEmit *emit, GLMSAST *ast, int indent) {
   return 1;
 }
 
-static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST *ast, int indent) {
-   if (!emit || !ast || emit->initialized == false)
+static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST ast, int indent) {
+  if (!emit || emit->initialized == false || ast.type == GLMS_AST_TYPE_NOOP) {
     return 0;
+  }
 
-  if (ast->flags != 0) {
-    for (int64_t i = 0; i < ast->flags->length; i++) {
-      glms_emit_glsl_(emit, ast->flags->items[i], indent);
+  if (ast.flags != 0) {
+    for (int64_t i = 0; i < ast.flags->length; i++) {
+      GLMSAST* child = ast.flags->items[i];
+      glms_emit_glsl_(emit, *child, indent);
       EMIT_APPEND(" ");
     }
   }
   
-  switch (ast->type) {
+  switch (ast.type) {
   case GLMS_AST_TYPE_COMPOUND:
     return glms_emit_glsl_compound(emit, ast, indent);
     break;
@@ -464,7 +489,7 @@ static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST *ast, int indent) {
     return glms_emit_glsl_return(emit, ast, indent);
     break;
   default: {
-    EMIT_APPEND_TYPE(ast->type);
+    EMIT_APPEND_TYPE(ast.type);
   }; break;
   }
 
@@ -473,6 +498,7 @@ static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST *ast, int indent) {
   
 }
 
-int glms_emit_glsl(GLMSEmit *emit, GLMSAST *ast) {
-  return glms_emit_glsl_(emit, ast, 0);
+int glms_emit_glsl(GLMSEmit *emit, GLMSAST* ast) {
+  if (!ast) return 0;
+  return glms_emit_glsl_(emit, *ast, 0);
 }

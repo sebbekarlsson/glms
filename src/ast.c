@@ -1012,6 +1012,8 @@ GLMSAST glms_ast_assign(GLMSAST* a, GLMSAST b, struct GLMS_EVAL_STRUCT* eval,
                         struct GLMS_STACK_STRUCT* stack) {
   if (!a) return b;
 
+  if (eval->env->config.emit.mode != GLMS_EMIT_MODE_UNDEFINED) return *a;
+
   GLMSAST* ptr_a = glms_ast_get_ptr(*a);
 
   if (ptr_a) {
