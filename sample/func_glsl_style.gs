@@ -46,4 +46,6 @@ for (int i = 0; i < 10; i++) {
 
 void main() {
   vec3 col = texture(myTexture, uv);
+
+  vec3 normal = mat3(transpose(inverse(model))) * attr_normal;
 }

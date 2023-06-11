@@ -12,6 +12,7 @@
 #include <glms/modules/iterator.h>
 #include <glms/modules/json.h>
 #include <glms/modules/mat4.h>
+#include <glms/modules/mat3.h>
 #include <glms/modules/string.h>
 #include <glms/modules/vec2.h>
 #include <glms/modules/vec3.h>
@@ -1032,6 +1033,7 @@ void glms_builtin_init(GLMSEnv* env) {
   glms_struct_vec3(env);
   glms_struct_vec4(env);
   glms_mat4_type(env);
+  glms_mat3_type(env);
   glms_struct_image(env);
   glms_file_type(env);
   glms_fetch(env);
