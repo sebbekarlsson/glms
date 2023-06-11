@@ -56,10 +56,16 @@ typedef int (*GLMSASTOperatorOverload)(struct GLMS_EVAL_STRUCT* eval,
                                        struct GLMS_AST_STRUCT* right,
                                        struct GLMS_AST_STRUCT* out);
 
+typedef enum {
+  GLMS_AST_NUMBER_TYPE_FLOAT,
+  GLMS_AST_NUMBER_TYPE_INT
+} GLMSASTNumberType;
+
 typedef struct GLMS_AST_STRUCT {
   union {
     struct {
       float value;
+      GLMSASTNumberType type;
     } number;
 
     struct {
@@ -74,6 +80,10 @@ typedef struct GLMS_AST_STRUCT {
     } import;
 
     struct {
+      struct GLMS_AST_STRUCT* right;
+    } layout;
+
+    struct {
       JAST* factor;
       JAST* id;
     } tdef;
@@ -82,6 +92,10 @@ typedef struct GLMS_AST_STRUCT {
       GLMSStringView value;
       char* heap;
     } string;
+
+    struct {
+      struct GLMS_AST_STRUCT* right;
+    } raw_glsl;
 
     struct {
       char c;

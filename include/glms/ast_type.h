@@ -2,6 +2,7 @@
 #define GLMS_AST_TYPE_H
 #include <glms/macros.h>
 
+
 #define GLMS_FOREACH_AST_TYPE(TOK)                                             \
   TOK(GLMS_AST_TYPE_EOF)                                                       \
   TOK(GLMS_AST_TYPE_NOOP)                                                      \
@@ -14,6 +15,7 @@
   TOK(GLMS_AST_TYPE_STACK_PTR)                                                 \
   TOK(GLMS_AST_TYPE_FUNC_OVERLOAD_PTR)                                         \
   TOK(GLMS_AST_TYPE_STRING)                                                    \
+  TOK(GLMS_AST_TYPE_RAW_GLSL)                                                  \
   TOK(GLMS_AST_TYPE_CHAR)                                                      \
   TOK(GLMS_AST_TYPE_NUMBER)                                                    \
   TOK(GLMS_AST_TYPE_BOOL)                                                      \
@@ -31,6 +33,7 @@
   TOK(GLMS_AST_TYPE_UNOP)                                                      \
   TOK(GLMS_AST_TYPE_ACCESS)                                                    \
   TOK(GLMS_AST_TYPE_BLOCK)                                                     \
+  TOK(GLMS_AST_TYPE_LAYOUT)                                                    \
   TOK(GLMS_AST_TYPE_IMPORT)                                                    \
   TOK(GLMS_AST_TYPE_STACK)                                                     \
   TOK(GLMS_AST_TYPE_FOR)                                                       \

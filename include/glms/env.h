@@ -8,6 +8,7 @@
 #include <glms/lexer.h>
 #include <glms/parser.h>
 #include <glms/stack.h>
+#include <glms/emit/emit.h>
 #include <hashy/hashy.h>
 #include <memo/memo.h>
 #include <stdbool.h>
@@ -18,6 +19,7 @@ typedef struct {
   bool debug;
   bool use_heap_strings;
   Memo* memo_ast;
+  GLMSEmitConfig emit;
 } GLMSConfig;
 
 typedef struct GLMS_ENV_STRUCT {
@@ -46,6 +48,8 @@ typedef struct GLMS_ENV_STRUCT {
   char *last_joined_path;
 
   GLMSAST *root;
+
+  GLMSEmit emit;
 
   bool has_builtins;
 } GLMSEnv;
@@ -114,5 +118,9 @@ GLMSAST *glms_env_apply_type(GLMSEnv *env, GLMSEval *eval, GLMSStack *stack,
 const char *glms_env_get_path_for(GLMSEnv *env, const char *path);
 
 int glms_env_export_docstrings(GLMSEnv *env, const char *filepath);
+
+int glms_env_emit(GLMSEnv *env);
+
+const char* glms_env_get_emit(GLMSEnv* env);
 
 #endif

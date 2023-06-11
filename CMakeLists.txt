@@ -12,6 +12,8 @@ file(
     GLOB
     sourcefiles
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/emit/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/emit/glsl/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/*.c
 )
 

@@ -13,6 +13,7 @@
 #include "glms/allocator.h"
 #include "glms/ast.h"
 #include "glms/ast_type.h"
+#include "glms/emit/emit.h"
 #include "glms/eval.h"
 #include "glms/lexer.h"
 #include "glms/stack.h"
@@ -85,6 +86,7 @@ int glms_env_clear(GLMSEnv* env) {
   glms_stack_clear(&env->stack);
   env->undefined = 0;
   memo_clear(&env->memo_ast);
+  glms_emit_destroy(&env->emit);
 
   arena_destroy(&env->arena_ast);
   // arena_reset(&env->arena_ast);
@@ -181,7 +183,13 @@ GLMSAST* glms_env_exec(GLMSEnv* env) {
   env->root = root;
   env->use_arena = true;
 
-  glms_eval(&env->eval, *root, &env->stack);
+
+  if (env->config.emit.mode != GLMS_EMIT_MODE_UNDEFINED) {
+    glms_env_emit(env);
+  } else {
+    glms_eval(&env->eval, *root, &env->stack);
+  }
+  
   return root;
 }
 
@@ -637,4 +645,34 @@ int glms_env_export_docstrings(GLMSEnv* env, const char* filepath) {
   fclose(fp);
 
   return 1;
+}
+
+int glms_env_emit(GLMSEnv *env) {
+  if (!env) return 0;
+  if (!env->initialized) GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
+  if (!env->root) GLMS_WARNING_RETURN(0, stderr, "No root!\n");
+  GLMSEmitMode mode = env->config.emit.mode;
+  if (mode == GLMS_EMIT_MODE_UNDEFINED) return 0;
+  
+  glms_emit_destroy(&env->emit); 
+
+  glms_emit_init(&env->emit, env, env->config.emit);
+
+
+  if (!glms_emit(&env->emit, env->root)) {
+    GLMS_WARNING_RETURN(0, stderr, "Failed to emit.\n");
+  }
+
+  if (!env->emit.builder.buffer) {
+    GLMS_WARNING_RETURN(0, stderr, "Failed to emit.\n");
+  }
+
+
+  return 1;
+}
+
+const char *glms_env_get_emit(GLMSEnv *env) {
+  if (!env || !env->initialized) return 0;
+  if (env->emit.builder.length <= 0 || env->emit.builder.buffer == 0) return 0;
+  return env->emit.builder.buffer;
 }

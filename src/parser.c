@@ -139,6 +139,7 @@ GLMSAST *glms_parser_parse_null(GLMSParser *parser) {
 GLMSAST *glms_parser_parse_number(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
   ast->as.number.value = atof(glms_string_view_get_value(&parser->token.value));
+  ast->as.number.type = GLMS_AST_NUMBER_TYPE_FLOAT;
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_NUMBER);
   return ast;
 }
@@ -146,6 +147,7 @@ GLMSAST *glms_parser_parse_number(GLMSParser *parser) {
 GLMSAST *glms_parser_parse_int(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
   ast->as.number.value = atoi(glms_string_view_get_value(&parser->token.value));
+  ast->as.number.type = GLMS_AST_NUMBER_TYPE_INT;
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_INT);
   return ast;
 }
@@ -246,6 +248,13 @@ static int glms_extract_template_parts(GLMSEnv *env, const char *strval,
   *out_length = count;
 
   return *out_length > 0;
+}
+
+GLMSAST *glms_parser_parse_glsl_string(GLMSParser *parser) {
+  GLMSAST* ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_RAW_GLSL, false);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_GLSL);
+  ast->as.raw_glsl.right = glms_parser_parse_template_string(parser);
+  return ast;
 }
 
 GLMSAST *glms_parser_parse_template_string(GLMSParser *parser) {
@@ -455,7 +464,60 @@ GLMSAST *glms_parser_parse_import(GLMSParser *parser) {
   return ast;
 }
 
+// layout (location = 0) in vec3 attr_vertex;
+
+
+GLMSAST *glms_parser_parse_layout(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_LAYOUT, false);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_LAYOUT);
+
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_LPAREN);
+
+  if (parser->token.type != GLMS_TOKEN_TYPE_RPAREN) {
+    GLMSAST* child = glms_parser_parse_expr(parser);
+    if (child != 0) {
+        glms_ast_push(ast, child);
+    }
+
+    while (parser->token.type == GLMS_TOKEN_TYPE_COMMA) {
+        GLMSAST* child = glms_parser_parse_expr(parser);
+        if (child != 0) {
+        glms_ast_push(ast, child);
+      }
+    }
+  }
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
+
+  GLMSASTList *flags = 0;
+
+  flags = NEW(GLMSASTList);
+  glms_GLMSAST_list_init(flags);
+
+  while (glms_token_type_is_flag(parser->token.type)) {
+    GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID, false);
+    ast->as.id.op = parser->token.type;
+    ast->as.id.value = parser->token.value;
+    glms_parser_eat(parser, parser->token.type);
+    glms_GLMSAST_list_push(flags, ast);
+  }
+
+  ast->flags = flags;
+
+  if (parser->token.type == GLMS_TOKEN_TYPE_SEMI) return ast;
+
+  if (parser->token.type == GLMS_TOKEN_TYPE_LBRACE) {
+    ast->as.layout.right = glms_parser_parse_block(parser);
+  } else {
+    ast->as.layout.right = glms_parser_parse_expr(parser);
+  }
+
+  return ast;
+}
+
 GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
+
+ 
+  
   if (parser->token.type == GLMS_TOKEN_TYPE_SUB ||
       parser->token.type == GLMS_TOKEN_TYPE_ADD ||
       parser->token.type == GLMS_TOKEN_TYPE_EXCLAM) {
@@ -476,7 +538,8 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
     glms_parser_eat(parser, GLMS_TOKEN_TYPE_RPAREN);
 
     return next ? next : glms_parser_error(parser);
-  }
+  } 
+  
   switch (parser->token.type) {
   case GLMS_TOKEN_TYPE_LBRACKET: {
     return glms_parser_parse_array(parser);
@@ -484,17 +547,34 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   case GLMS_TOKEN_TYPE_LBRACE: {
     return glms_parser_parse_object(parser);
   }; break;
+
+  case GLMS_TOKEN_TYPE_SPECIAL_GLSL: {
+    return glms_parser_parse_glsl_string(parser);
+  }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_LET:
   case GLMS_TOKEN_TYPE_SPECIAL_CONST:
   case GLMS_TOKEN_TYPE_SPECIAL_STRING:
   case GLMS_TOKEN_TYPE_SPECIAL_NUMBER:
   case GLMS_TOKEN_TYPE_SPECIAL_INT:
+  case GLMS_TOKEN_TYPE_SPECIAL_IN:
+  case GLMS_TOKEN_TYPE_SPECIAL_OUT:
+  case GLMS_TOKEN_TYPE_SPECIAL_INOUT:
   case GLMS_TOKEN_TYPE_SPECIAL_FLOAT:
+  case GLMS_TOKEN_TYPE_SPECIAL_UNIFORM:
+  case GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_2D:
+  case GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_3D:
+  case GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_CUBE:
+  case GLMS_TOKEN_TYPE_SPECIAL_READONLY:
+  case GLMS_TOKEN_TYPE_SPECIAL_BUFFER:
+  case GLMS_TOKEN_TYPE_SPECIAL_VOID:
   case GLMS_TOKEN_TYPE_SPECIAL_ARRAY:
   case GLMS_TOKEN_TYPE_SPECIAL_OBJECT:
   case GLMS_TOKEN_TYPE_SPECIAL_BOOL:
   case GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE:
   case GLMS_TOKEN_TYPE_ID: {
+    if (glms_parser_peek_check_glsl_function(parser)) {
+      return glms_parser_parse_function(parser);
+    }
     return glms_parser_parse_id(parser, false);
   }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_NULL: {
@@ -505,6 +585,9 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   }; break;
   case GLMS_TOKEN_TYPE_TEMPLATE_STRING: {
     return glms_parser_parse_template_string(parser);
+  }; break;
+  case GLMS_TOKEN_TYPE_SPECIAL_LAYOUT: {
+    return glms_parser_parse_layout(parser);
   }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_IMPORT: {
     return glms_parser_parse_import(parser);
@@ -729,7 +812,25 @@ GLMSAST *glms_parser_parse_arrow_function(GLMSParser *parser) {
 
 GLMSAST *glms_parser_parse_function(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_FUNC, false);
-  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_FUNCTION);
+
+  if (glms_token_type_is_flag(parser->token.type)) {
+    GLMSASTList *flags = 0;
+
+    flags = NEW(GLMSASTList);
+    glms_GLMSAST_list_init(flags);
+
+    while (glms_token_type_is_flag(parser->token.type)) {
+      GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_ID, false);
+      ast->as.id.op = parser->token.type;
+      ast->as.id.value = parser->token.value;
+      glms_parser_eat(parser, parser->token.type);
+      glms_GLMSAST_list_push(flags, ast);
+    }
+
+    ast->flags = flags;
+  } else {
+    glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_FUNCTION);
+  }
 
   if (parser->token.type == GLMS_TOKEN_TYPE_ID) {
     ast->as.func.id = glms_parser_parse_id(parser, true);
@@ -918,6 +1019,24 @@ bool glms_parser_peek_check_arrow_function(GLMSParser *parser) {
   int64_t i = lexer->i;
   while (c != 0 && c != ';') {
     if (c == '=' && lexer->source[MIN(i, lexer->length - 1)] == '>') {
+      return true;
+    }
+    c = lexer->source[i++];
+  }
+
+  return false;
+}
+
+bool glms_parser_peek_check_glsl_function(GLMSParser *parser) {
+  GLMSLexer *lexer = &parser->env->lexer;
+
+  char c = lexer->source[lexer->i];
+  int64_t i = lexer->i;
+
+  int parens = 0;
+  while (c != 0 && c != ';' && c != '>') {
+    parens += (int)(c == '(' || c == ')');
+    if (c == '{' && parens >= 2) {
       return true;
     }
     c = lexer->source[i++];

@@ -45,7 +45,12 @@
   TOK(GLMS_TOKEN_TYPE_EXCLAM)                                                  \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_NULL)                                            \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_IMPORT)                                          \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_LAYOUT)                                          \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_GLSL)                                            \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_AS)                                              \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_IN)                                              \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_INOUT)                                           \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_OUT)                                             \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF)                                         \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE)                                       \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_CONST)                                           \
@@ -56,11 +61,18 @@
   TOK(GLMS_TOKEN_TYPE_SPECIAL_VEC4)                                            \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_MAT3)                                            \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_MAT4)                                            \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_UNIFORM)                                         \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_READONLY)                                         \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_BUFFER)                                         \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_2D)                                      \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_3D)                                      \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_CUBE)                                    \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_ENUM)                                            \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_STRING)                                          \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_NUMBER)                                          \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_INT)                                             \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_FLOAT)                                           \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_VOID)                                           \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_ARRAY)                                           \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_OBJECT)                                          \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_FOR)                                             \

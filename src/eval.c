@@ -877,7 +877,7 @@ GLMSAST glms_eval_import_extension(GLMSEval *eval, GLMSAST ast,
   if (!func)
     GLMS_WARNING_RETURN(result, stderr, "Could not load `%s`\n", path);
 
-  GLMSEnv *import_env = NEW(GLMSEnv);
+  GLMSEnv *import_env = NEW(GLMSEnv); // TODO: free this
   glms_env_init(import_env, 0, path, eval->env->config);
   func(import_env);
   // func(eval->env);
