@@ -118,7 +118,20 @@ static int glms_emit_glsl_bool(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
 }
 static int glms_emit_glsl_array(GLMSEmit *emit, GLMSAST ast, int indent) {
-  return glms_emit_glsl_as_is(emit, ast);
+  EMIT_APPEND("[");
+  if (ast.children != 0) {
+    for (int64_t i = 0; i < ast.children->length; i++) {
+      GLMSAST *child = ast.children->items[i];
+      glms_emit_glsl_(emit, *child, 0);
+
+      if ((i+1) < ast.children->length) {
+        EMIT_APPEND(", ");
+      }
+    }
+  }
+  EMIT_APPEND("]");
+
+  return 1;
 }
 static int glms_emit_glsl_vec2(GLMSEmit *emit, GLMSAST ast, int indent) {
   return glms_emit_glsl_as_is(emit, ast);
@@ -211,7 +224,19 @@ static int glms_emit_glsl_unop(GLMSEmit *emit, GLMSAST ast, int indent) {
   return 1;
 }
 static int glms_emit_glsl_access(GLMSEmit *emit, GLMSAST ast, int indent) {
-  return glms_emit_glsl_as_is(emit, ast);
+  GLMSAST* left = ast.as.access.left;
+  GLMSAST* right = ast.as.access.right;
+  if (left == 0 && right == 0) return 0;
+
+  if (left != 0) {
+    glms_emit_glsl_(emit, *left, indent);
+  }
+
+  if (right != 0) {
+    glms_emit_glsl_(emit, *right, indent);
+  }
+
+  return 1;
 }
 static int glms_emit_glsl_block(GLMSEmit *emit, GLMSAST ast, int indent) {
   if (ast.as.block.body != 0) {

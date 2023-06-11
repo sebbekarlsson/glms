@@ -47,5 +47,9 @@ for (int i = 0; i < 10; i++) {
 void main() {
   vec3 col = texture(myTexture, uv);
 
+  float floats[4] = [1, 2, 3, 4];
+
   vec3 normal = mat3(transpose(inverse(model))) * attr_normal;
+  FragColor = vec4(vec3(uv.x, uv.y, 0), 1.0);
 }
+
