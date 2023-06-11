@@ -85,7 +85,7 @@ static char glms_lexer_peek(GLMSLexer* lexer, int i) {
    lexer->c == 10 || lexer->c == 13)
 
 #define GLMS_LEXER_HAS_COMMENT \
-  (lexer->c == '/' && glms_lexer_peek(lexer, 1) == '/')
+  ((lexer->c == '/' && glms_lexer_peek(lexer, 1) == '/') || lexer->c == '#')
 
 static int glms_lexer_advance(GLMSLexer* lexer) {
   if (lexer->i >= lexer->length) return 0;
@@ -107,6 +107,18 @@ static int glms_lexer_skip_line_comment(GLMSLexer* lexer) {
   while (lexer->c == '/') {
     glms_lexer_advance(lexer);
   }
+  while (lexer->c != 0 && lexer->c != '\n' && lexer->c != '\r') {
+    if (!glms_lexer_advance(lexer)) return 0;
+  }
+
+  return lexer->c != 0 && lexer->i < lexer->length;
+}
+
+static int glms_lexer_skip_hash_comment(GLMSLexer* lexer) {
+  while (lexer->c == '#') {
+    glms_lexer_advance(lexer);
+  }
+
   while (lexer->c != 0 && lexer->c != '\n' && lexer->c != '\r') {
     if (!glms_lexer_advance(lexer)) return 0;
   }
@@ -230,13 +242,17 @@ int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
   out->type = GLMS_TOKEN_TYPE_EOF;
 
   while (GLMS_LEXER_HAS_COMMENT || GLMS_LEXER_HAS_WHITESPACE) {
+    while (lexer->c == '#') {
+      if (!glms_lexer_skip_hash_comment(lexer)) return 0;
+    }
+    
     while (GLMS_LEXER_HAS_COMMENT) {
       if (!glms_lexer_skip_line_comment(lexer)) return 0;
     }
 
     while (GLMS_LEXER_HAS_WHITESPACE) {
       if (!glms_lexer_skip_whitespace(lexer)) return 0;
-    }
+    } 
   }
 
   switch (lexer->c) {
