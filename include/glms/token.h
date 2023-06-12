@@ -22,6 +22,7 @@
   TOK(GLMS_TOKEN_TYPE_TEMPLATE_STRING)                                         \
   TOK(GLMS_TOKEN_TYPE_NUMBER)                                                  \
   TOK(GLMS_TOKEN_TYPE_INT)                                                     \
+  TOK(GLMS_TOKEN_TYPE_UINT64)                                                  \
   TOK(GLMS_TOKEN_TYPE_FLOAT)                                                   \
   TOK(GLMS_TOKEN_TYPE_ADD)                                                     \
   TOK(GLMS_TOKEN_TYPE_ADD_ADD)                                                 \
@@ -71,6 +72,7 @@
   TOK(GLMS_TOKEN_TYPE_SPECIAL_STRING)                                          \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_NUMBER)                                          \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_INT)                                             \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_UINT64)                                             \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_FLOAT)                                           \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_VOID)                                           \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_ARRAY)                                           \

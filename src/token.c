@@ -6,6 +6,7 @@ bool glms_token_type_is_flag(GLMSTokenType type) {
          type == GLMS_TOKEN_TYPE_SPECIAL_NUMBER ||
          type == GLMS_TOKEN_TYPE_SPECIAL_INT ||
          type == GLMS_TOKEN_TYPE_SPECIAL_FLOAT ||
+         type == GLMS_TOKEN_TYPE_SPECIAL_UINT64 ||
          type == GLMS_TOKEN_TYPE_SPECIAL_VOID ||
          type == GLMS_TOKEN_TYPE_SPECIAL_IN ||
          type == GLMS_TOKEN_TYPE_SPECIAL_OUT ||

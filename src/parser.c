@@ -146,11 +146,22 @@ GLMSAST *glms_parser_parse_number(GLMSParser *parser) {
 
 GLMSAST *glms_parser_parse_int(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
-  ast->as.number.value = atoi(glms_string_view_get_value(&parser->token.value));
+  ast->as.number.value_int = atoi(glms_string_view_get_value(&parser->token.value));
+  ast->as.number.value = (float)ast->as.number.value_int;
   ast->as.number.type = GLMS_AST_NUMBER_TYPE_INT;
   glms_parser_eat(parser, GLMS_TOKEN_TYPE_INT);
   return ast;
 }
+
+GLMSAST *glms_parser_parse_uint64(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
+  ast->as.number.value_uint64 = atol(glms_string_view_get_value(&parser->token.value));
+  ast->as.number.value = (float) ast->as.number.value_uint64;
+  ast->as.number.type = GLMS_AST_NUMBER_TYPE_UINT64;
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_UINT64);
+  return ast;
+}
+
 GLMSAST *glms_parser_parse_float(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_NUMBER, false);
   ast->as.number.value = atof(glms_string_view_get_value(&parser->token.value));
@@ -560,6 +571,7 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   case GLMS_TOKEN_TYPE_SPECIAL_OUT:
   case GLMS_TOKEN_TYPE_SPECIAL_INOUT:
   case GLMS_TOKEN_TYPE_SPECIAL_FLOAT:
+  case GLMS_TOKEN_TYPE_SPECIAL_UINT64:
   case GLMS_TOKEN_TYPE_SPECIAL_UNIFORM:
   case GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_2D:
   case GLMS_TOKEN_TYPE_SPECIAL_SAMPLER_3D:

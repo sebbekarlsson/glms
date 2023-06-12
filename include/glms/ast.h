@@ -58,13 +58,16 @@ typedef int (*GLMSASTOperatorOverload)(struct GLMS_EVAL_STRUCT* eval,
 
 typedef enum {
   GLMS_AST_NUMBER_TYPE_FLOAT,
-  GLMS_AST_NUMBER_TYPE_INT
+  GLMS_AST_NUMBER_TYPE_INT,
+  GLMS_AST_NUMBER_TYPE_UINT64
 } GLMSASTNumberType;
 
 typedef struct GLMS_AST_STRUCT {
   union {
     struct {
       float value;
+      int value_int;
+      uint64_t value_uint64;
       GLMSASTNumberType type;
     } number;
 

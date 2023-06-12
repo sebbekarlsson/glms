@@ -27,6 +27,7 @@ GLMSAST* glms_parser_parse_id(GLMSParser* parser, bool skip_next);
 
 GLMSAST* glms_parser_parse_number(GLMSParser* parser);
 GLMSAST* glms_parser_parse_int(GLMSParser* parser);
+GLMSAST* glms_parser_parse_uint64(GLMSParser* parser);
 GLMSAST* glms_parser_parse_float(GLMSParser* parser);
 GLMSAST* glms_parser_parse_null(GLMSParser* parser);
 GLMSAST* glms_parser_parse_bool(GLMSParser* parser);
