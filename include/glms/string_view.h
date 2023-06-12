@@ -2,7 +2,7 @@
 #define GLMS_STRING_VIEW_H
 #include <stdint.h>
 
-#define GLMS_STRING_VIEW_CAPACITY 256
+#define GLMS_STRING_VIEW_CAPACITY 1024
 
 typedef struct {
   int64_t length;
