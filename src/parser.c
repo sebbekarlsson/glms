@@ -620,6 +620,9 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   case GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF: {
     return glms_parser_parse_typedef(parser);
   }; break;
+  case GLMS_TOKEN_TYPE_SPECIAL_FDECL: {
+    return glms_parser_parse_fdecl(parser);
+  }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_STRUCT: {
     return glms_parser_parse_struct(parser);
   }; break;
@@ -972,6 +975,20 @@ GLMSAST *glms_parser_parse_typedef(GLMSParser *parser) {
   ast->as.tdef.id = glms_parser_parse_id(parser, true);
 
   const char *name = glms_ast_get_name(ast->as.tdef.id);
+
+  if (name != 0) {
+    hashy_map_set(&parser->symbols, name, ast);
+  }
+
+  return ast;
+}
+
+GLMSAST *glms_parser_parse_fdecl(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_FDECL, false);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_FDECL);
+  ast->as.fdecl.id = glms_parser_parse_id(parser, true);
+
+  const char *name = glms_ast_get_name(ast->as.fdecl.id);
 
   if (name != 0) {
     hashy_map_set(&parser->symbols, name, ast);

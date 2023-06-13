@@ -26,6 +26,7 @@
   TOK(GLMS_AST_TYPE_MAT3)                                                      \
   TOK(GLMS_AST_TYPE_MAT4)                                                      \
   TOK(GLMS_AST_TYPE_TYPEDEF)                                                   \
+  TOK(GLMS_AST_TYPE_FDECL)                                                     \
   TOK(GLMS_AST_TYPE_OBJECT)                                                    \
   TOK(GLMS_AST_TYPE_STRUCT)                                                    \
   TOK(GLMS_AST_TYPE_ENUM)                                                      \

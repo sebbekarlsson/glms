@@ -53,6 +53,7 @@
   TOK(GLMS_TOKEN_TYPE_SPECIAL_INOUT)                                           \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_OUT)                                             \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_TYPEDEF)                                         \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_FDECL)                                         \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_USER_TYPE)                                       \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_CONST)                                           \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_LET)                                             \

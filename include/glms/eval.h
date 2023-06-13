@@ -34,4 +34,6 @@ GLMSAST glms_eval_assign(GLMSEval *eval, GLMSAST left, GLMSAST right,
 
 void glms_eval_push_args(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
                          GLMSASTBuffer args);
+
+GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack);
 #endif
