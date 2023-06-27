@@ -31,6 +31,7 @@ int glms_env_init(GLMSEnv* env, const char* source, const char* entry_path,
   env->root = 0;
   env->entry_path = entry_path;
   env->last_joined_path = 0;
+  memset(&env->position_info[0], 0, GLMS_ENV_POSITION_INFO_STRING_CAP*sizeof(char));
   glms_allocator_string_allocator(&env->string_alloc);
   hashy_map_init(&env->globals, 256);
   hashy_map_init(&env->types, 256);
@@ -676,4 +677,19 @@ const char *glms_env_get_emit(GLMSEnv *env) {
   if (!env || !env->initialized) return 0;
   if (env->emit.builder.length <= 0 || env->emit.builder.buffer == 0) return 0;
   return env->emit.builder.buffer;
+}
+
+const char *glms_env_get_position_info(GLMSEnv *env) {
+  if (!env) return 0;
+  const char* linecol = glms_lexer_get_position_text(&env->lexer);
+  const char* filename = glms_env_get_current_filename(env);
+  memset(&env->position_info[0], 0, GLMS_ENV_POSITION_INFO_STRING_CAP*sizeof(char));
+  snprintf(&env->position_info[0], GLMS_ENV_POSITION_INFO_STRING_CAP-1, "%s:%s", filename, linecol);
+  return env->position_info;
+}
+
+const char *glms_env_get_current_filename(GLMSEnv *env) {
+  if (!env || !env->initialized) return 0;
+  if (!env->entry_path) return "unknown";
+  return env->entry_path;
 }

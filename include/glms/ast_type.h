@@ -33,6 +33,7 @@
   TOK(GLMS_AST_TYPE_UNOP)                                                      \
   TOK(GLMS_AST_TYPE_ACCESS)                                                    \
   TOK(GLMS_AST_TYPE_BLOCK)                                                     \
+  TOK(GLMS_AST_TYPE_TERNARY)                                                   \
   TOK(GLMS_AST_TYPE_LAYOUT)                                                    \
   TOK(GLMS_AST_TYPE_IMPORT)                                                    \
   TOK(GLMS_AST_TYPE_STACK)                                                     \

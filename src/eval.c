@@ -697,6 +697,20 @@ GLMSAST glms_eval_block_switch(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   return ast;
 }
 
+GLMSAST glms_eval_ternary(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
+  if (!ast.as.ternary.condition) GLMS_WARNING_RETURN(ast, stderr, "Conditionless ternary.");
+  if (!ast.as.ternary.expr1) GLMS_WARNING_RETURN(ast, stderr, "Missing expr1 in ternary.");
+  if (!ast.as.ternary.expr2) GLMS_WARNING_RETURN(ast, stderr, "Missing expr2 in ternary.");
+  
+  GLMSAST condition = glms_eval(eval, *ast.as.ternary.condition, stack);
+
+  if (glms_ast_is_truthy(condition)) {
+    return glms_eval(eval, *ast.as.ternary.expr1, stack);
+  }
+
+  return glms_eval(eval, *ast.as.ternary.expr2, stack);
+}
+
 GLMSAST glms_eval_block(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   switch (ast.as.block.op) {
   case GLMS_TOKEN_TYPE_SPECIAL_WHILE: {
@@ -990,6 +1004,9 @@ GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   }; break;
   case GLMS_AST_TYPE_BLOCK: {
     return glms_eval_block(eval, ast, stack);
+  }; break;
+  case GLMS_AST_TYPE_TERNARY: {
+    return glms_eval_ternary(eval, ast, stack);
   }; break;
   case GLMS_AST_TYPE_CALL: {
     return glms_eval_call(eval, ast, stack);

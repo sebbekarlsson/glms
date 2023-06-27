@@ -46,6 +46,7 @@ GLMSAST* glms_parser_parse_call(GLMSParser* parser, GLMSAST* left);
 GLMSAST* glms_parser_parse_arrow_function(GLMSParser* parser);
 GLMSAST* glms_parser_parse_function(GLMSParser* parser);
 GLMSAST* glms_parser_parse_block(GLMSParser* parser);
+GLMSAST* glms_parser_parse_ternary(GLMSParser* parser, GLMSAST* condition);
 GLMSAST* glms_parser_parse_for(GLMSParser* parser);
 
 GLMSAST* glms_parser_parse_binop(GLMSParser* parser, GLMSAST* left);

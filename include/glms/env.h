@@ -12,8 +12,12 @@
 #include <hashy/hashy.h>
 #include <memo/memo.h>
 #include <stdbool.h>
+#include <limits.h>
 
-#include "glms/type.h"
+#include <glms/type.h>
+
+
+#define GLMS_ENV_POSITION_INFO_STRING_CAP PATH_MAX
 
 typedef struct {
   bool debug;
@@ -52,6 +56,8 @@ typedef struct GLMS_ENV_STRUCT {
   GLMSEmit emit;
 
   bool has_builtins;
+
+  char position_info[GLMS_ENV_POSITION_INFO_STRING_CAP];
 } GLMSEnv;
 
 typedef void (*GLMSExtensionEntryFunc)(GLMSEnv *env);
@@ -123,4 +129,7 @@ int glms_env_emit(GLMSEnv *env);
 
 const char* glms_env_get_emit(GLMSEnv* env);
 
+const char *glms_env_get_position_info(GLMSEnv *env);
+
+const char* glms_env_get_current_filename(GLMSEnv* env);
 #endif
