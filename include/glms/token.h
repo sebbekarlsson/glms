@@ -29,6 +29,7 @@
   TOK(GLMS_TOKEN_TYPE_ADD_EQUALS)                                              \
   TOK(GLMS_TOKEN_TYPE_AND_AND)                                                 \
   TOK(GLMS_TOKEN_TYPE_PIPE_PIPE)                                               \
+  TOK(GLMS_TOKEN_TYPE_QUESTION)                                                \
   TOK(GLMS_TOKEN_TYPE_MUL)                                                     \
   TOK(GLMS_TOKEN_TYPE_MUL_EQUALS)                                              \
   TOK(GLMS_TOKEN_TYPE_SUB)                                                     \

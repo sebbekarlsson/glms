@@ -7,6 +7,7 @@
 #include "glms/token.h"
 #include <endian.h>
 #include <glms/emit/glsl/emit_glsl.h>
+#include <mif/utils.h>
 #include <linux/limits.h>
 #include <string.h>
 #include <glms/env.h>
@@ -107,7 +108,11 @@ static int glms_emit_glsl_number(GLMSEmit *emit, GLMSAST ast, int indent) {
 
   default:
   case GLMS_AST_NUMBER_TYPE_FLOAT: {
-    sprintf(&tmp[0], "%1.6f", value);
+    if (mif_fract(value) == 0.0) {
+      sprintf(&tmp[0], "%d.0", (int)roundf(value));
+    }else {
+      sprintf(&tmp[0], "%1.6f", value);
+    }
     EMIT_APPEND_INDENTED(tmp, indent);
   }; break;
   }
@@ -115,7 +120,24 @@ static int glms_emit_glsl_number(GLMSEmit *emit, GLMSAST ast, int indent) {
   return 1;
 }
 static int glms_emit_glsl_bool(GLMSEmit *emit, GLMSAST ast, int indent) {
-  return glms_emit_glsl_as_is(emit, ast);
+  const char* value = ast.as.boolean ? "true" : "false";
+  EMIT_APPEND(value);
+  return 1;
+}
+static int glms_emit_glsl_ternary(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST* condition = ast.as.ternary.condition;
+  GLMSAST* expr1 = ast.as.ternary.expr1;
+  GLMSAST* expr2 = ast.as.ternary.expr2;
+
+  if (!condition || !expr1 || !expr2) return 0;
+
+  glms_emit_glsl_(emit, *condition, indent);
+  EMIT_APPEND(" ? ");
+  glms_emit_glsl_(emit, *expr1, indent);
+  EMIT_APPEND(" : ");
+  glms_emit_glsl_(emit, *expr2, indent);
+
+  return 1;
 }
 static int glms_emit_glsl_array(GLMSEmit *emit, GLMSAST ast, int indent) {
   EMIT_APPEND("[");
@@ -194,6 +216,16 @@ static int glms_emit_glsl_binop(GLMSEmit *emit, GLMSAST ast, int indent) {
   GLMSAST* right = ast.as.binop.right;
   GLMSTokenType op = ast.as.binop.op;
 
+  bool parens = op != GLMS_TOKEN_TYPE_EQUALS && op != GLMS_TOKEN_TYPE_EQUALS_EQUALS && op != GLMS_TOKEN_TYPE_ADD_EQUALS &&
+    op != GLMS_TOKEN_TYPE_ADD_ADD &&
+    op != GLMS_TOKEN_TYPE_SUB_EQUALS &&
+    op != GLMS_TOKEN_TYPE_SUB_SUB &&
+    op != GLMS_TOKEN_TYPE_DIV_EQUALS;
+
+  if (parens) {
+    EMIT_APPEND("(");
+  }
+  
   if (left != 0) {
     glms_emit_glsl_(emit, *left, indent);
   }
@@ -202,6 +234,10 @@ static int glms_emit_glsl_binop(GLMSEmit *emit, GLMSAST ast, int indent) {
   
   if (right != 0) {
     glms_emit_glsl_(emit, *right, 0);
+  }
+
+  if (parens) {
+    EMIT_APPEND(")");
   }
 
   return 1;
@@ -226,18 +262,12 @@ static int glms_emit_glsl_unop(GLMSEmit *emit, GLMSAST ast, int indent) {
 static int glms_emit_glsl_access(GLMSEmit *emit, GLMSAST ast, int indent) {
   GLMSAST* left = ast.as.access.left;
   GLMSAST* right = ast.as.access.right;
-  if (left == 0 && right == 0) return 0;
+  if (!left || !right) return 0;
 
-  if (left != 0) {
-    glms_emit_glsl_(emit, *left, indent);
-  }
-
+  glms_emit_glsl_(emit, *left, indent);
+  EMIT_APPEND(".");
+  glms_emit_glsl_(emit, *right, indent);
   
-  if (right != 0) {
-    EMIT_APPEND(".");
-    glms_emit_glsl_(emit, *right, indent);
-  }
-
   return 1;
 }
 static int glms_emit_glsl_block(GLMSEmit *emit, GLMSAST ast, int indent) {
@@ -493,6 +523,9 @@ static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST ast, int indent) {
     break;
   case GLMS_AST_TYPE_BLOCK:
     return glms_emit_glsl_block(emit, ast, indent);
+    break;
+  case GLMS_AST_TYPE_TERNARY:
+    return glms_emit_glsl_ternary(emit, ast, indent);
     break;
   case GLMS_AST_TYPE_IMPORT:
     return glms_emit_glsl_import(emit, ast, indent);

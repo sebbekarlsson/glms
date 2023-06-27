@@ -2,6 +2,7 @@
 #include <glms/lexer.h>
 #include <glms/macros.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "glms/token.h"
@@ -66,8 +67,13 @@ const GLMSTokenMap GLMS_LEXER_TOKEN_MAP[GLMS_LEXER_TOKEN_MAP_LEN] = {
 int glms_lexer_init(GLMSLexer* lexer, const char* source) {
   if (!lexer || !source) return 0;
   if (lexer->initialized) return 1;
+
+  glms_lexer_reset(lexer);
+  
   lexer->initialized = true;
 
+  lexer->line = 0;
+  lexer->column = 0;
   lexer->source = source;
   lexer->i = 0;
   lexer->length = strlen(lexer->source);
@@ -77,7 +83,7 @@ int glms_lexer_init(GLMSLexer* lexer, const char* source) {
 }
 
 static char glms_lexer_peek(GLMSLexer* lexer, int i) {
-  if ((lexer->i + i) >= lexer->length) return 0;
+  if ((lexer->i + i) >= lexer->length || (lexer->i + i) < 0) return 0;
 
   return lexer->source[lexer->i + i];
 }
@@ -89,11 +95,26 @@ static char glms_lexer_peek(GLMSLexer* lexer, int i) {
 #define GLMS_LEXER_HAS_COMMENT \
   ((lexer->c == '/' && glms_lexer_peek(lexer, 1) == '/') || lexer->c == '#')
 
+#define GLMS_LEXER_HAS_BLOCK_COMMENT \
+  (lexer->c == '/' && glms_lexer_peek(lexer, 1) == '*')
+
 static int glms_lexer_advance(GLMSLexer* lexer) {
   if (lexer->i >= lexer->length) return 0;
   if (lexer->c == 0) return 0;
+
+
+  if (lexer->c == '\n') {
+    lexer->line += 1;
+    lexer->column = 0;
+  } else {
+    lexer->column += 1;
+  }
+
+  
   lexer->i += 1;
   lexer->c = lexer->source[lexer->i];
+
+    
   return lexer->c != 0;
 }
 
@@ -111,6 +132,23 @@ static int glms_lexer_skip_line_comment(GLMSLexer* lexer) {
   }
   while (lexer->c != 0 && lexer->c != '\n' && lexer->c != '\r') {
     if (!glms_lexer_advance(lexer)) return 0;
+  }
+
+  return lexer->c != 0 && lexer->i < lexer->length;
+}
+static int glms_lexer_skip_block_comment(GLMSLexer* lexer) {
+  glms_lexer_advance(lexer); // '/'
+  while (lexer->c != 0 && !(lexer->c == '*' && glms_lexer_peek(lexer, 1) == '/')) {
+    if (!glms_lexer_advance(lexer)) return 0;
+  }
+
+  if (lexer->c == '*') {
+    glms_lexer_advance(lexer);  // '*'
+
+    if (lexer->c != '/') {
+      GLMS_WARNING_RETURN(0, stderr, "Unclosed block-comment.\n");
+    }
+    glms_lexer_advance(lexer); // '/'
   }
 
   return lexer->c != 0 && lexer->i < lexer->length;
@@ -238,18 +276,24 @@ int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
   if (lexer->i >= lexer->length) return 0;
   if (lexer->c == 0) return 0;
 
+  
+
   out->c = 0;
   out->value.ptr = 0;
   out->value.length = 0;
   out->type = GLMS_TOKEN_TYPE_EOF;
 
-  while (GLMS_LEXER_HAS_COMMENT || GLMS_LEXER_HAS_WHITESPACE) {
+  while (GLMS_LEXER_HAS_COMMENT || GLMS_LEXER_HAS_BLOCK_COMMENT || GLMS_LEXER_HAS_WHITESPACE) {
     while (lexer->c == '#') {
       if (!glms_lexer_skip_hash_comment(lexer)) return 0;
     }
     
     while (GLMS_LEXER_HAS_COMMENT) {
       if (!glms_lexer_skip_line_comment(lexer)) return 0;
+    }
+
+    while (GLMS_LEXER_HAS_BLOCK_COMMENT) {
+      if (!glms_lexer_skip_block_comment(lexer)) return 0;
     }
 
     while (GLMS_LEXER_HAS_WHITESPACE) {
@@ -287,6 +331,9 @@ int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
     } break;
     case '.': {
       out->type = GLMS_TOKEN_TYPE_DOT;
+    } break;
+    case '?': {
+      out->type = GLMS_TOKEN_TYPE_QUESTION;
     } break;
     case ':': {
       out->type = GLMS_TOKEN_TYPE_COLON;
@@ -382,7 +429,7 @@ int glms_lexer_next(GLMSLexer* lexer, GLMSToken* out) {
       if (isalpha(lexer->c)) {
         return glms_lexer_parse_id(lexer, out);
       }
-      GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%c`.\n", lexer->c);
+      GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%c` at %s.\n", lexer->c, glms_lexer_get_position_text(lexer));
     }; break;
   }
 
@@ -401,6 +448,16 @@ int glms_lexer_reset(GLMSLexer *lexer) {
   lexer->i = 0;
   lexer->initialized = false;
   lexer->length = 0;
+  lexer->line = 0;
+  lexer->column = 0;
+  memset(&lexer->linecol[0], 0, GLMS_LEXER_LINE_COLUMN_TEXT_CAP * sizeof(char));
 
   return 1;
+}
+
+const char *glms_lexer_get_position_text(GLMSLexer *lexer) {
+  if (!lexer) return 0;
+  memset(&lexer->linecol[0], 0, GLMS_LEXER_LINE_COLUMN_TEXT_CAP * sizeof(char));
+  snprintf(&lexer->linecol[0], GLMS_LEXER_LINE_COLUMN_TEXT_CAP-1, "%ld:%ld", lexer->line, lexer->column);
+  return lexer->linecol;
 }

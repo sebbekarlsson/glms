@@ -150,6 +150,12 @@ typedef struct GLMS_AST_STRUCT {
     } block;
 
     struct {
+      JAST* condition;
+      JAST* expr1;
+      JAST* expr2;
+    } ternary;
+
+    struct {
       struct GLMS_ENV_STRUCT* env;
     } stack;
 

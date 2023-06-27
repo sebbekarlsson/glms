@@ -38,11 +38,14 @@ int glms_parser_init(GLMSParser *parser, GLMSEnv *env) {
 int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
   if (!parser)
     return 0;
+
+  
   if (!parser->initialized)
     GLMS_WARNING_RETURN(0, stderr, "parser not initialized.\n");
 
   if (parser->token.type != token_type) {
-    GLMS_WARNING_RETURN(0, stderr, "Unexpected token `%s`\n",
+    GLMS_WARNING_RETURN(0, stderr, "Error at %s, Unexpected token `%s`\n",
+                        glms_env_get_position_info(parser->env),
                         GLMS_TOKEN_TYPE_STR[parser->token.type]);
   }
 
@@ -62,7 +65,8 @@ int glms_parser_eat(GLMSParser *parser, GLMSTokenType token_type) {
 }
 
 static GLMSAST *glms_parser_error(GLMSParser *parser) {
-  GLMS_WARNING(stderr, "Unexpected token `%s`\n",
+  GLMS_WARNING(stderr, "Error at %s, Unexpected token `%s`\n",
+               glms_env_get_position_info(parser->env),
                GLMS_TOKEN_TYPE_STR[parser->token.type]);
   parser->error = true;
 
@@ -680,7 +684,8 @@ GLMSAST *glms_parser_parse_term(GLMSParser *parser) {
   }
 
   while (parser->token.type == GLMS_TOKEN_TYPE_MUL ||
-         parser->token.type == GLMS_TOKEN_TYPE_DIV) {
+         parser->token.type == GLMS_TOKEN_TYPE_DIV ||
+         parser->token.type == GLMS_TOKEN_TYPE_PERCENT) {
     GLMSAST *binop = glms_env_new_ast(parser->env, GLMS_AST_TYPE_BINOP, false);
     binop->as.binop.left = left;
     binop->as.binop.op = parser->token.type;
@@ -762,6 +767,10 @@ GLMSAST *glms_parser_parse_expr(GLMSParser *parser) {
     glms_parser_eat(parser, parser->token.type);
     binop->as.binop.right = glms_parser_parse_expr(parser);
     left = binop;
+  }
+
+  while (parser->token.type == GLMS_TOKEN_TYPE_QUESTION) {
+    left = glms_parser_parse_ternary(parser, left);
   }
 
   return left;
@@ -937,6 +946,17 @@ GLMSAST *glms_parser_parse_block(GLMSParser *parser) {
 
   return ast;
 }
+
+GLMSAST* glms_parser_parse_ternary(GLMSParser* parser, GLMSAST* condition) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_TERNARY, false);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_QUESTION);
+  ast->as.ternary.condition = condition;
+  ast->as.ternary.expr1 = glms_parser_parse_expr(parser);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_COLON);
+  ast->as.ternary.expr2 = glms_parser_parse_expr(parser);
+  return ast;
+}
+
 
 GLMSAST *glms_parser_parse_for(GLMSParser *parser) {
   GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_FOR, false);
