@@ -37,6 +37,7 @@
   TOK(GLMS_AST_TYPE_TERNARY)                                                   \
   TOK(GLMS_AST_TYPE_LAYOUT)                                                    \
   TOK(GLMS_AST_TYPE_IMPORT)                                                    \
+  TOK(GLMS_AST_TYPE_INCLUDE)                                                   \
   TOK(GLMS_AST_TYPE_STACK)                                                     \
   TOK(GLMS_AST_TYPE_FOR)                                                       \
   TOK(GLMS_AST_TYPE_CALL)                                                      \

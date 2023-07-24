@@ -970,6 +970,29 @@ GLMSAST glms_eval_import(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 		   .as.stackptr.ptr = result_ast};
 }
 
+GLMSAST glms_eval_include(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
+  const char *path = glms_string_view_get_value(&ast.as.include.value);
+  if (!path)
+    return ast;
+
+  const char *abspath =
+      glms_file_exists(path) ? path : glms_env_get_path_for(eval->env, path);
+
+  if (!glms_file_exists(abspath)) {
+    GLMS_WARNING_RETURN((GLMSAST){.type = GLMS_AST_TYPE_UNDEFINED}, stderr,
+			"No such file `%s`.\n", path);
+  }
+
+  char *source = glms_get_file_contents(abspath);
+  if (!source) return ast;
+
+  GLMSAST *result_ast = glms_env_new_ast(eval->env, GLMS_AST_TYPE_STRING, false);
+  result_ast->as.string.heap = source;
+
+  return (GLMSAST){.type = GLMS_AST_TYPE_STACK_PTR,
+		   .as.stackptr.ptr = result_ast};
+}
+
 GLMSAST glms_eval_string(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   glms_eval_construct_string(eval, &ast, stack);
   return ast;
@@ -992,6 +1015,9 @@ GLMSAST glms_eval(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
   }; break;
   case GLMS_AST_TYPE_IMPORT: {
     return glms_eval_import(eval, ast, stack);
+  }; break;
+  case GLMS_AST_TYPE_INCLUDE: {
+    return glms_eval_include(eval, ast, stack);
   }; break;
   case GLMS_AST_TYPE_TYPEDEF: {
     return glms_eval_typedef(eval, ast, stack);

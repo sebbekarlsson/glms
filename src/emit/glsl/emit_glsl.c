@@ -296,6 +296,26 @@ static int glms_emit_glsl_import(GLMSEmit *emit, GLMSAST ast, int indent) {
   
   return glms_emit_glsl_as_is(emit, *ptr);
 }
+static int glms_emit_glsl_include(GLMSEmit *emit, GLMSAST ast, int indent) {
+  GLMSAST result = glms_eval(&emit->env->eval, ast, &emit->env->stack);
+  if (result.type != GLMS_AST_TYPE_STACK_PTR) return 0;
+  GLMSAST* ptr = result.as.stackptr.ptr;
+  if (!ptr) return 0;
+
+  if (ptr->type != GLMS_AST_TYPE_STRING) {
+    GLMS_WARNING_RETURN(0, stderr, "Expected string pointer.\n");
+  }
+
+  const char* value = glms_ast_get_string_value(ptr);
+
+  if (value == 0) {
+    GLMS_WARNING_RETURN(0, stderr, "Invalid empty string.\n");
+  }
+
+  EMIT_APPEND(value);
+  
+  return 1;
+}
 static int glms_emit_glsl_layout(GLMSEmit *emit, GLMSAST ast, int indent) {
   EMIT_APPEND("layout(");
   if (ast.children != 0) {
@@ -426,6 +446,7 @@ static int glms_emit_glsl_compound(GLMSEmit *emit, GLMSAST ast, int indent) {
 
     if (child->type != GLMS_AST_TYPE_FUNC &&
         child->type != GLMS_AST_TYPE_IMPORT &&
+        child->type != GLMS_AST_TYPE_INCLUDE &&
         child->type != GLMS_AST_TYPE_FOR &&
         child->type != GLMS_AST_TYPE_BLOCK &&
         child->type != GLMS_AST_TYPE_RAW_GLSL
@@ -529,6 +550,9 @@ static int glms_emit_glsl_(GLMSEmit *emit, GLMSAST ast, int indent) {
     break;
   case GLMS_AST_TYPE_IMPORT:
     return glms_emit_glsl_import(emit, ast, indent);
+    break;
+  case GLMS_AST_TYPE_INCLUDE:
+    return glms_emit_glsl_include(emit, ast, indent);
     break;
   case GLMS_AST_TYPE_LAYOUT:
     return glms_emit_glsl_layout(emit, ast, indent);

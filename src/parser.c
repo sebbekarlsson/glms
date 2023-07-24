@@ -479,6 +479,14 @@ GLMSAST *glms_parser_parse_import(GLMSParser *parser) {
   return ast;
 }
 
+GLMSAST *glms_parser_parse_include(GLMSParser *parser) {
+  GLMSAST *ast = glms_env_new_ast(parser->env, GLMS_AST_TYPE_INCLUDE, false);
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_SPECIAL_INCLUDE);
+  ast->as.include.value = parser->token.value;
+  glms_parser_eat(parser, GLMS_TOKEN_TYPE_STRING);
+  return ast;
+}
+
 // layout (location = 0) in vec3 attr_vertex;
 
 
@@ -607,6 +615,9 @@ GLMSAST *glms_parser_parse_factor(GLMSParser *parser) {
   }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_IMPORT: {
     return glms_parser_parse_import(parser);
+  }; break;
+  case GLMS_TOKEN_TYPE_SPECIAL_INCLUDE: {
+    return glms_parser_parse_include(parser);
   }; break;
   case GLMS_TOKEN_TYPE_SPECIAL_FALSE:
   case GLMS_TOKEN_TYPE_SPECIAL_TRUE: {

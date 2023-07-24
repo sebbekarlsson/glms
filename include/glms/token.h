@@ -47,6 +47,7 @@
   TOK(GLMS_TOKEN_TYPE_EXCLAM)                                                  \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_NULL)                                            \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_IMPORT)                                          \
+  TOK(GLMS_TOKEN_TYPE_SPECIAL_INCLUDE)                                         \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_LAYOUT)                                          \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_GLSL)                                            \
   TOK(GLMS_TOKEN_TYPE_SPECIAL_AS)                                              \

@@ -87,6 +87,10 @@ typedef struct GLMS_AST_STRUCT {
     } import;
 
     struct {
+      GLMSStringView value;
+    } include;
+
+    struct {
       struct GLMS_AST_STRUCT* right;
     } layout;
 
