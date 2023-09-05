@@ -41,17 +41,19 @@ function (glms_deps TARGET_NAME)
   endif()
 
 
-  if (NOT TARGET curl)
+  if (NOT TARGET curl AND NOT TARGET curl_lib)
     
    find_library(CURL_LIB curl)
 
    if (NOT CURL_LIB)
      FetchContent_Declare(
-       curl
+       curl_lib
        GIT_REPOSITORY https://github.com/curl/curl.git
        GIT_TAG "curl-7_87_0"
      )
-    FetchContent_MakeAvailable(curl)
+     FetchContent_MakeAvailable(curl_lib)
+     include_directories(${curl_lib_INCLUDE_DIRECTORIES})
+     message(${curl_lib_INCLUDE_DIRECTORIES})
    endif()
   endif()
 
