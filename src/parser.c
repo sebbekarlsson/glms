@@ -22,7 +22,7 @@ int glms_parser_init(GLMSParser *parser, GLMSEnv *env) {
   glms_lexer_next(&parser->env->lexer, &parser->token);
 
   if (!parser->symbols.initialized) {
-    hashy_map_init(&parser->symbols, 256);
+    hashy_map_init(&parser->symbols, (HashyConfig){.capacity = 256});
   }
 
   const char *tokname = glms_string_view_get_value(&parser->token.value);

@@ -101,10 +101,10 @@ static void glms_dump_ast(GLMSAST ast, GLMSAllocator alloc) {
   if (ast.props.initialized) {
     HashyIterator it = {0};
     while (hashy_map_iterate(&ast.props, &it)) {
-      if (!it.bucket->key) continue;
+      if (!it.bucket->is_set) continue;
       if (!it.bucket->value) continue;
 
-      const char* key = it.bucket->key;
+      const char* key = it.bucket->key.value;
       GLMSAST* value = (GLMSAST*)it.bucket->value;
 
       printf("%s\n", key);

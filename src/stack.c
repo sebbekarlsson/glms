@@ -10,8 +10,8 @@ int glms_stack_init(GLMSStack* stack) {
   if (!stack) return 0;
   if (stack->initialized) return 1;
   stack->initialized = true;
-  hashy_map_init_v2(&stack->locals,
-                    (HashyMapConfig){.remember_keys = true, .capacity = 256});
+  hashy_map_init(&stack->locals,
+                    (HashyConfig){.capacity = 256});
   stack->return_flag = false;
   stack->depth = 0;
 
@@ -63,10 +63,10 @@ int glms_stack_copy(GLMSStack src, GLMSStack* dest) {
   HashyIterator it = {0};
 
   while (hashy_map_iterate(&src.locals, &it)) {
-    if (!it.bucket->key) continue;
+    if (!it.bucket->is_set) continue;
     if (!it.bucket->value) continue;
 
-    const char* key = it.bucket->key;
+    const char* key = it.bucket->key.value;
     GLMSAST* value = (GLMSAST*)it.bucket->value;
 
     glms_stack_push(dest, key, value);
@@ -80,7 +80,7 @@ int glms_stack_clear(GLMSStack* stack) {
   if (!stack->initialized)
     GLMS_WARNING_RETURN(0, stderr, "stack not initialized.\n");
 
-  hashy_map_clear(&stack->locals, false);
+  hashy_map_clear(&stack->locals);
   return 1;
 }
 
@@ -96,10 +96,10 @@ int glms_stack_clear_trash(GLMSStack* stack) {
   HashyIterator it = {0};
 
   while (hashy_map_iterate(&stack->locals, &it)) {
-    if (!it.bucket->key) continue;
+    if (!it.bucket->is_set) continue;
     if (!it.bucket->value) continue;
 
-    const char* key = it.bucket->key;
+    const char* key = it.bucket->key.value;
     GLMSAST* value = (GLMSAST*)it.bucket->value;
 
     if (value->keep) continue;

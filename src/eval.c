@@ -62,13 +62,13 @@ int glms_eval_init(GLMSEval *eval, struct GLMS_ENV_STRUCT *env) {
     return 1;
   eval->initialized = true;
   eval->env = env;
-  hashy_map_init(&eval->visited_paths, GLMS_EVAL_VISITED_PATHS_MAP_CAPACITY);
+  hashy_map_init(&eval->visited_paths, (HashyConfig){.capacity = GLMS_EVAL_VISITED_PATHS_MAP_CAPACITY});
   return 1;
 }
 
 int glms_eval_clear(GLMSEval *eval) {
   if (!eval || !eval->initialized) return 0;
-  hashy_map_clear(&eval->visited_paths, false);
+  hashy_map_clear(&eval->visited_paths);
   return 1;
 }
 
@@ -185,12 +185,12 @@ GLMSAST glms_eval_call_func(GLMSEval *eval, GLMSStack *stack, GLMSAST *func,
 
       int64_t i = 0;
       while (hashy_map_iterate(&func->props, &it)) {
-	if (!it.bucket->key)
+	if (!it.bucket->is_set)
 	  continue;
 	if (!it.bucket->value)
 	  continue;
 
-	const char *key = it.bucket->key;
+	const char *key = it.bucket->key.value;
 	GLMSAST *val = (GLMSAST *)it.bucket->value;
 	GLMSAST value = glms_eval(eval, *val, &tmp_stack);
 
@@ -873,12 +873,12 @@ GLMSAST glms_eval_struct(GLMSEval *eval, GLMSAST ast, GLMSStack *stack) {
 
   HashyIterator it = {0};
   while (hashy_map_iterate(&ast.props, &it)) {
-    if (!it.bucket->key)
+    if (!it.bucket->is_set)
       continue;
     if (!it.bucket->value)
       continue;
 
-    const char *key = it.bucket->key;
+    const char *key = it.bucket->key.value;
     GLMSAST *value = (GLMSAST *)it.bucket->value;
 
     GLMSAST eval_value = glms_eval(eval, *value, stack);

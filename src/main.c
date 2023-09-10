@@ -31,7 +31,7 @@ typedef struct {
 int cli_args_init(CLIArgs* args, int argc, char* argv[]) {
   if (args->initialized) return 1;
   args->initialized = true;
-  hashy_map_init(&args->args, 16);
+  hashy_map_init(&args->args, (HashyConfig){ .capacity = 16, .free_values_on_destroy = true });
 
   for (int i = 0; i < argc; i++) {
     CLIArg* carg = NEW(CLIArg);
@@ -68,7 +68,8 @@ const char* cli_args_get_string(CLIArgs* args, const char* key) {
 
 int cli_args_destroy(CLIArgs* args) {
   if (!args->initialized) return 0;
-  hashy_map_clear(&args->args, true);
+  hashy_map_clear(&args->args);
+  hashy_map_destroy(&args->args);
   return 1;
 }
 

@@ -33,8 +33,8 @@ int glms_env_init(GLMSEnv* env, const char* source, const char* entry_path,
   env->last_joined_path = 0;
   memset(&env->position_info[0], 0, GLMS_ENV_POSITION_INFO_STRING_CAP*sizeof(char));
   glms_allocator_string_allocator(&env->string_alloc);
-  hashy_map_init(&env->globals, 256);
-  hashy_map_init(&env->types, 256);
+  hashy_map_init(&env->globals, (HashyConfig){.capacity = 256});
+  hashy_map_init(&env->types, (HashyConfig){.capacity = 256});
 
   if (!env->memo_ast.initialized) {
     memo_init(
@@ -81,9 +81,9 @@ int glms_env_clear(GLMSEnv* env) {
     GLMS_WARNING_RETURN(0, stderr, "env not initialized.\n");
 
   env->source = 0;
-  hashy_map_clear(&env->parser.symbols, false);
-  hashy_map_clear(&env->globals, false);
-  hashy_map_clear(&env->types, false);
+  hashy_map_clear(&env->parser.symbols);
+  hashy_map_clear(&env->globals);
+  hashy_map_clear(&env->types);
   glms_stack_clear(&env->stack);
   env->undefined = 0;
   memo_clear(&env->memo_ast);
@@ -390,7 +390,7 @@ GLMSAST* glms_env_register_type(GLMSEnv* env, const char* name, GLMSAST* ast,
   hashy_map_set(&env->types, name, ast);
 
   if (!env->parser.symbols.initialized) {
-    hashy_map_init(&env->parser.symbols, 256);
+    hashy_map_init(&env->parser.symbols, (HashyConfig){ .capacity = 256 });
   }
   hashy_map_set(&env->parser.symbols, name, ast);
 
@@ -594,10 +594,10 @@ char* glms_env_export_docstrings_from_map(GLMSEnv* env, HashyMap map,
 
   GLMSDocstringGenerator gen = {0};
   while (hashy_map_iterate(&map, &it)) {
-    if (!it.bucket->key) continue;
+    if (!it.bucket->is_set) continue;
     if (!it.bucket->value) continue;
 
-    const char* key = it.bucket->key;
+    const char* key = it.bucket->key.value;
     GLMSAST* value = (GLMSAST*)it.bucket->value;
     if (key[0] == '_' || strstr(key, "GLMS_") != 0) continue;
 

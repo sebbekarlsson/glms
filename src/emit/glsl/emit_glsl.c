@@ -196,14 +196,18 @@ static int glms_emit_glsl_object(GLMSEmit *emit, GLMSAST ast, int indent) {
 static int glms_emit_glsl_struct(GLMSEmit *emit, GLMSAST ast, int indent) {
   // EMIT_APPEND_INDENTED("struct {\n", indent);
   if (ast.props.initialized == true) {
-    for (int64_t i = 0; i < ast.props.keys.length; i++) {
-      const char* key = ast.props.keys.items[i];
+    HashyKeyList keys = {0};
+    hashy_map_get_keys(&ast.props, &keys);
+    for (int64_t i = 0; i < keys.length; i++) {
+      const char* key = keys.items[i].value;
       if (!key) continue;
       GLMSAST* child = glms_ast_get_property(&ast, key);
       if (!child) continue;
       glms_emit_glsl_(emit, *child, indent + INDENT_NUM);
       EMIT_APPEND_INDENTED(";\n", indent);
     }
+
+    hashy_key_list_clear(&keys);
   }
   EMIT_APPEND_INDENTED("\n}", indent);
   return 1;

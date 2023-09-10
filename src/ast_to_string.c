@@ -35,10 +35,10 @@ char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc,
 
       HashyIterator it = {0};
       while (hashy_map_iterate(&ast.as.stack.env->types, &it)) {
-        if (!it.bucket->key) continue;
+        if (!it.bucket->is_set) continue;
         if (!it.bucket->value) continue;
 
-        const char* key = it.bucket->key;
+        const char* key = it.bucket->key.value;
         GLMSAST* value = (GLMSAST*)it.bucket->value;
 
         char* strval = glms_ast_to_string(*value, alloc, env);
@@ -52,10 +52,10 @@ char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc,
 
       HashyIterator it2 = {0};
       while (hashy_map_iterate(&ast.as.stack.env->globals, &it2)) {
-        if (!it2.bucket->key) continue;
+        if (!it2.bucket->is_set) continue;
         if (!it2.bucket->value) continue;
 
-        const char* key = it2.bucket->key;
+        const char* key = it2.bucket->key.value;
         GLMSAST* value = (GLMSAST*)it2.bucket->value;
 
         char* strval = glms_ast_to_string(*value, alloc, env);
@@ -78,10 +78,10 @@ char* glms_ast_to_string(GLMSAST ast, GLMSAllocator alloc,
 
       if (ast.props.initialized) {
         while (hashy_map_iterate(&ast.props, &it)) {
-          if (!it.bucket->key) continue;
+          if (!it.bucket->is_set) continue;
           if (!it.bucket->value) continue;
 
-          const char* key = it.bucket->key;
+          const char* key = it.bucket->key.value;
           GLMSAST* value = (GLMSAST*)it.bucket->value;
 
           char* strval = glms_ast_to_string(*value, alloc, env);

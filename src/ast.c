@@ -444,8 +444,8 @@ GLMSAST* glms_ast_object_set_property(GLMSAST* obj, const char* key,
   if (!obj || !key) return 0;
 
   if (!obj->props.initialized) {
-    hashy_map_init_v2(&obj->props,
-                      (HashyMapConfig){.capacity = 256, .remember_keys = true});
+    hashy_map_init(&obj->props,
+                      (HashyConfig){.capacity = 256});
   }
 
   if (value == 0) {
@@ -552,14 +552,14 @@ GLMSAST* glms_ast_copy(GLMSAST src, GLMSEnv* env) {
   }
 
   if (src.props.initialized) {
-    hashy_map_init_v2(&dest->props, src.props.config);
+    hashy_map_init(&dest->props, src.props.config);
     HashyIterator it = {0};
 
     while (hashy_map_iterate(&src.props, &it)) {
-      if (!it.bucket->key) continue;
+      if (!it.bucket->is_set) continue;
       if (!it.bucket->value) continue;
 
-      const char* key = it.bucket->key;
+      const char* key = it.bucket->key.value;
       GLMSAST* value = (GLMSAST*)it.bucket->value;
 
       GLMSAST* copied = glms_ast_copy(*value, env);
@@ -761,7 +761,7 @@ void glms_ast_destructor(GLMSAST* ast) {
   ast->flags = 0;
 
   ast->fptr = 0;
-  hashy_map_clear(&ast->props, false);
+  hashy_map_clear(&ast->props);
 
   if (ast->typename != 0) {
     free(ast->typename);
@@ -783,7 +783,7 @@ int64_t glms_ast_array_get_length(GLMSAST* ast) {
     return ast->children ? ast->children->length : 0;
   }
 
-  if (ast->props.initialized && ast->props.used > 0) return ast->props.used;
+  if (ast->props.initialized && ast->props.num_inserts > 0) return ast->props.num_inserts;
 
   return 0;
 }
@@ -1144,8 +1144,8 @@ GLMSAST* glms_ast_register_func_overload(struct GLMS_ENV_STRUCT* env,
   sprintf(tmp, GLMS_FUNC_OVERLOAD_TEMPLATE, name);
 
   if (!ast->props.initialized) {
-    hashy_map_init_v2(&ast->props,
-                      (HashyMapConfig){.capacity = 256, .remember_keys = true});
+    hashy_map_init(&ast->props,
+                      (HashyConfig){.capacity = 256});
   }
 
   GLMSAST* arb = glms_env_new_ast(env, GLMS_AST_TYPE_FUNC_OVERLOAD_PTR, false);
@@ -1231,10 +1231,10 @@ char* glms_ast_generate_docstring_struct(GLMSAST ast, const char* name,
 
   int64_t count = 0;
   while (hashy_map_iterate(&ast.props, &it)) {
-    if (!it.bucket->key) continue;
+    if (!it.bucket->is_set) continue;
     if (!it.bucket->value) continue;
 
-    const char* key = it.bucket->key;
+    const char* key = it.bucket->key.value;
     GLMSAST* value = (GLMSAST*)it.bucket->value;
 
     if (key[0] == '_' || strstr(key, "GLMS_") != 0) continue;
