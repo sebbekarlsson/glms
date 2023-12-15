@@ -24,7 +24,7 @@ function (glms_deps TARGET_NAME)
   glms_get_dep(text_static https://github.com/sebbekarlsson/text.git)
   glms_get_dep(hashy_static https://github.com/sebbekarlsson/hashy.git)
   glms_get_dep(mif_static https://github.com/sebbekarlsson/mif.git)
-  glms_get_dep(vec3_static https://github.com/sebbekarlsson/vec3.git)
+  #glms_get_dep(vec3_static https://github.com/sebbekarlsson/vec3.git)
   glms_get_dep(fjson_static https://github.com/sebbekarlsson/fastjson.git)
   glms_get_dep(spath_static https://github.com/sebbekarlsson/spath.git -fPIC)
   glms_get_dep(gimg_static https://github.com/sebbekarlsson/gimg.git -fPIC)
@@ -35,7 +35,7 @@ function (glms_deps TARGET_NAME)
     FetchContent_Declare(
       cglm
       GIT_REPOSITORY https://github.com/recp/cglm.git
-      GIT_TAG "v0.8.4"
+      GIT_TAG "v0.9.1"
     )
     FetchContent_MakeAvailable(cglm)
   endif()
@@ -59,7 +59,7 @@ function (glms_deps TARGET_NAME)
 
 
 
-  set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static vec3_static spath_static fjson_static cglm curl dl)
+  set(GLMS_DEPS m gimg_static memo_static arena_static hashy_static text_static mif_static spath_static fjson_static cglm curl dl)
 
   target_link_libraries(${TARGET_NAME} ${GLMS_DEPS})
 endfunction()

@@ -1,5 +1,5 @@
 #include "glms/ast.h"
-#include "vec3/vec3.h"
+#include <mif/linear/vector3/all.h>
 #include <glms/eval.h>
 #include <glms/env.h>
 
@@ -174,7 +174,7 @@ int glms_struct_vec3_func_overload_mix(struct GLMS_EVAL_STRUCT* eval, struct GLM
   Vector3 v2 = args->items[1].as.v3;
   float scale = glms_ast_number(args->items[2]);
 
-  Vector3 v = vector3_lerp_factor(v1, v2, scale);
+  Vector3 v = vector3_lerp(v1, v2, scale);
 
   *out = (GLMSAST){ .type = GLMS_AST_TYPE_VEC3, .as.v3 = v};
 

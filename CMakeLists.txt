@@ -6,6 +6,14 @@ include(glms_deps)
 
 project(glms)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/)
+set(COMMANDS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json)
+
+if (EXISTS ${COMMANDS_FILE})
+  file(COPY ${COMMANDS_FILE} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/)
+endif()
+
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 file(

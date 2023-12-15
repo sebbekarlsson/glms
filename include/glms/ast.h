@@ -15,7 +15,9 @@
 #include <glms/type.h>
 #include <hashy/hashy.h>
 #include <stdbool.h>
-#include <vec3/vec3.h>
+#include <mif/linear/vector2/all.h>
+#include <mif/linear/vector3/all.h>
+#include <mif/linear/vector4/all.h>
 
 #define GLMS_AST_OPERATOR_OVERLOAD_CAP 24
 

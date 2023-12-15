@@ -20,7 +20,10 @@
 #include <math.h>
 #include <mif/utils.h>
 #include <stdlib.h>
-#include <vec3/vec3.h>
+
+#include <mif/linear/vector2/all.h>
+#include <mif/linear/vector3/all.h>
+#include <mif/linear/vector4/all.h>
 
 #include "cglm/mat4.h"
 #include "cglm/struct/quat.h"
@@ -152,7 +155,7 @@ int glms_fptr_distance(GLMSEval* eval, GLMSAST* ast, GLMSASTBuffer* args,
   if (!glms_ast_is_vector(&a) || !glms_ast_is_vector(&b))
     GLMS_WARNING_RETURN(0, stderr, "Not a vector.\n");
 
-  float next_value = vector3_distance3d(a.as.v3, b.as.v3);
+  float next_value = vector3_distance(a.as.v3, b.as.v3);
   *out = (GLMSAST){.type = GLMS_AST_TYPE_NUMBER, .as.number.value = next_value};
   return 1;
 }

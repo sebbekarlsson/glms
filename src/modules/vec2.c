@@ -1,5 +1,5 @@
 #include "glms/ast.h"
-#include "vec3/vec3.h"
+#include <mif/linear/vector2/all.h>
 #include <glms/eval.h>
 #include <glms/env.h>
 
